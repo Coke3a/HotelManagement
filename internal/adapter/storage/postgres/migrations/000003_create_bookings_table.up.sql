@@ -1,0 +1,12 @@
+CREATE TABLE bookings (
+    id SERIAL PRIMARY KEY,
+    customer_id INT REFERENCES customers(id),
+    room_id INT REFERENCES rooms(id),
+    check_in_date TIMESTAMP NOT NULL,
+    check_out_date TIMESTAMP NOT NULL,
+    status VARCHAR(50),
+    total_amount DECIMAL(10, 2),
+    booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

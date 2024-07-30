@@ -1,0 +1,106 @@
+package service
+
+import (
+	"context"
+	"reflect"
+	"time"
+
+	"github.com/Coke3a/HotelManagement/internal/core/domain"
+	"github.com/Coke3a/HotelManagement/internal/core/port"
+)
+
+type CustomerService struct {
+	repo port.CustomerRepository
+	// cache port.CacheRepository (if you are using caching)
+}
+
+func NewCustomerService(repo port.CustomerRepository) *CustomerService {
+	return &CustomerService{
+		repo,
+		// cache,
+	}
+}
+
+func (cs *CustomerService) RegisterCustomer(ctx context.Context, customer *domain.Customer) (*domain.Customer, error) {
+	if customer.Name == "" || customer.Email == "" {
+		return nil, domain.ErrInvalidData
+	}
+
+	// Set join date if it's not already set
+	if customer.JoinDate == nil {
+		now := time.Now()
+		customer.JoinDate = &now
+	}
+
+	createdCustomer, err := cs.repo.CreateCustomer(ctx, customer)
+	if err != nil {
+		if err == domain.ErrConflictingData {
+			return nil, err
+		}
+		return nil, domain.ErrInternal
+	}
+
+	return createdCustomer, nil
+}
+
+func (cs *CustomerService) GetCustomer(ctx context.Context, id uint64) (*domain.Customer, error) {
+	customer, err := cs.repo.GetCustomerByID(ctx, id)
+	if err != nil {
+		if err == domain.ErrDataNotFound {
+			return nil, err
+		}
+		return nil, domain.ErrInternal
+	}
+
+	return customer, nil
+}
+
+func (cs *CustomerService) ListCustomers(ctx context.Context, skip, limit uint64) ([]domain.Customer, error) {
+	customers, err := cs.repo.ListCustomers(ctx, skip, limit)
+	if err != nil {
+		return nil, domain.ErrInternal
+	}
+
+	return customers, nil
+}
+
+func (cs *CustomerService) UpdateCustomer(ctx context.Context, customer *domain.Customer) (*domain.Customer, error) {
+	existingCustomer, err := cs.repo.GetCustomerByID(ctx, customer.ID)
+	if err != nil {
+		if err == domain.ErrDataNotFound {
+			return nil, err
+		}
+		return nil, domain.ErrInternal
+	}
+
+	// Check if there are changes
+	isEmpty := customer.Name == "" && customer.Email == "" && customer.Phone == "" && customer.Address == "" && customer.Gender == "" && customer.MembershipStatus == "" && len(customer.Preferences) == 0
+	isSame := existingCustomer.Name == customer.Name && existingCustomer.Email == customer.Email && existingCustomer.Phone == customer.Phone && existingCustomer.Address == customer.Address && existingCustomer.Gender == customer.Gender && existingCustomer.MembershipStatus == customer.MembershipStatus && reflect.DeepEqual(existingCustomer.Preferences, customer.Preferences)
+
+	if isEmpty || isSame {
+		return nil, domain.ErrNoUpdatedData
+	}
+
+	updatedCustomer, err := cs.repo.UpdateCustomer(ctx, customer)
+	if err != nil {
+		if err == domain.ErrConflictingData {
+			return nil, err
+		}
+		return nil, domain.ErrInternal
+	}
+
+	return updatedCustomer, nil
+}
+
+
+func (cs *CustomerService) DeleteCustomer(ctx context.Context, id uint64) error {
+	_, err := cs.repo.GetCustomerByID(ctx, id)
+	if err != nil {
+		if err == domain.ErrDataNotFound {
+			return err
+		}
+		return domain.ErrInternal
+	}
+
+	return cs.repo.DeleteCustomer(ctx, id)
+}

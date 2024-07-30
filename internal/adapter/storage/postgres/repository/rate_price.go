@@ -1,0 +1,190 @@
+package repository
+
+import (
+	"context"
+
+	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
+	"github.com/Coke3a/HotelManagement/internal/core/domain"
+	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5"
+)
+
+type RatePriceRepository struct {
+	db *postgres.DB
+}
+
+func NewRatePriceRepository(db *postgres.DB) *RatePriceRepository {
+	return &RatePriceRepository{
+		db,
+	}
+}
+
+func (rpr *RatePriceRepository) CreateRatePrice(ctx context.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
+	query := rpr.db.QueryBuilder.Insert("rate_prices").
+		Columns("name", "description", "discount_percentage", "start_date", "end_date", "room_id").
+		Values(ratePrice.Name, ratePrice.Description, ratePrice.DiscountPercentage, ratePrice.StartDate, ratePrice.EndDate, ratePrice.RoomID).
+		Suffix("RETURNING *")
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	err = rpr.db.QueryRow(ctx, sql, args...).Scan(
+		&ratePrice.ID,
+		&ratePrice.Name,
+		&ratePrice.Description,
+		&ratePrice.DiscountPercentage,
+		&ratePrice.StartDate,
+		&ratePrice.EndDate,
+		&ratePrice.RoomID,
+		&ratePrice.CreatedAt,
+		&ratePrice.UpdatedAt,
+	)
+
+	if err != nil {
+		if errCode := rpr.db.ErrorCode(err); errCode == "23505" {
+			return nil, domain.ErrConflictingData
+		}
+		return nil, err
+	}
+
+	return ratePrice, nil
+}
+
+func (rpr *RatePriceRepository) GetRatePriceByID(ctx context.Context, id uint64) (*domain.RatePrice, error) {
+	var ratePrice domain.RatePrice
+
+	query := rpr.db.QueryBuilder.Select("*").
+		From("rate_prices").
+		Where(sq.Eq{"id": id}).
+		Limit(1)
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	err = rpr.db.QueryRow(ctx, sql, args...).Scan(
+		&ratePrice.ID,
+		&ratePrice.Name,
+		&ratePrice.Description,
+		&ratePrice.DiscountPercentage,
+		&ratePrice.StartDate,
+		&ratePrice.EndDate,
+		&ratePrice.RoomID,
+		&ratePrice.CreatedAt,
+		&ratePrice.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, domain.ErrDataNotFound
+		}
+		return nil, err
+	}
+
+	return &ratePrice, nil
+}
+
+func (rpr *RatePriceRepository) ListRatePrices(ctx context.Context, skip, limit uint64) ([]domain.RatePrice, error) {
+	var ratePrices []domain.RatePrice
+
+	query := rpr.db.QueryBuilder.Select("*").
+		From("rate_prices").
+		OrderBy("id").
+		Limit(limit).
+		Offset((skip - 1) * limit)
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := rpr.db.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var ratePrice domain.RatePrice
+		err := rows.Scan(
+			&ratePrice.ID,
+			&ratePrice.Name,
+			&ratePrice.Description,
+			&ratePrice.DiscountPercentage,
+			&ratePrice.StartDate,
+			&ratePrice.EndDate,
+			&ratePrice.RoomID,
+			&ratePrice.CreatedAt,
+			&ratePrice.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		ratePrices = append(ratePrices, ratePrice)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return ratePrices, nil
+}
+
+func (rpr *RatePriceRepository) UpdateRatePrice(ctx context.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
+	query := rpr.db.QueryBuilder.Update("rate_prices").
+		Set("name", sq.Expr("COALESCE(?, name)", ratePrice.Name)).
+		Set("description", sq.Expr("COALESCE(?, description)", ratePrice.Description)).
+		Set("discount_percentage", sq.Expr("COALESCE(?, discount_percentage)", ratePrice.DiscountPercentage)).
+		Set("start_date", sq.Expr("COALESCE(?, start_date)", ratePrice.StartDate)).
+		Set("end_date", sq.Expr("COALESCE(?, end_date)", ratePrice.EndDate)).
+		Set("room_id", sq.Expr("COALESCE(?, room_id)", ratePrice.RoomID)).
+		Where(sq.Eq{"id": ratePrice.ID}).
+		Suffix("RETURNING *")
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	err = rpr.db.QueryRow(ctx, sql, args...).Scan(
+		&ratePrice.ID,
+		&ratePrice.Name,
+		&ratePrice.Description,
+		&ratePrice.DiscountPercentage,
+		&ratePrice.StartDate,
+		&ratePrice.EndDate,
+		&ratePrice.RoomID,
+		&ratePrice.CreatedAt,
+		&ratePrice.UpdatedAt,
+	)
+
+	if err != nil {
+		if errCode := rpr.db.ErrorCode(err); errCode == "23505" {
+			return nil, domain.ErrConflictingData
+		}
+		return nil, err
+	}
+
+	return ratePrice, nil
+}
+
+func (rpr *RatePriceRepository) DeleteRatePrice(ctx context.Context, id uint64) error {
+	query := rpr.db.QueryBuilder.Delete("rate_prices").
+		Where(sq.Eq{"id": id})
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return err
+	}
+
+	_, err = rpr.db.Exec(ctx, sql, args...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
