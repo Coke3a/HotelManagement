@@ -3,106 +3,11 @@ package http
 import (
 	"errors"
 	"net/http"
-	"time"
 
-	"github.com/Coke3a/TalkPenguin/internal/core/domain"
+	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
-
-type CreateConversationResponse struct {
-	ConversId         uint64    `json:"convers_id" example:"1"`
-	UserId            uint64    `json:"user_id" example:"1"`
-	PromptId          uint64    `json:"prompt_id" example:"1"`
-	ConversationStart time.Time `json:"start_at" example:"1970-01-01T00:00:00Z"`
-}
-
-func newCreateConversationResponse(conversation *domain.Conversation) CreateConversationResponse {
-	return CreateConversationResponse{
-		ConversId:         conversation.ConversationId,
-		UserId:            conversation.UserId,
-		PromptId:          conversation.PromptId,
-		ConversationStart: *conversation.ConversationStart,
-	}
-}
-
-type CreateConversationWithMessage struct {
-	ConversId         uint64    `json:"convers_id" example:"1"`
-	UserId            uint64    `json:"user_id" example:"1"`
-	PromptId          uint64    `json:"prompt_id" example:"1"`
-	MessageText       string    `json:"message_text" example:"Hello, how are you?"`
-	MessageAudio      string    `json:"message_audio" example:"https://example.com/audio.mp3"`
-	MessageDate       time.Time `json:"message_date" example:"1970-01-01T00:00:00Z"`
-	ConversationStart time.Time `json:"start_at" example:"1970-01-01T00:00:00Z"`
-}
-
-func newCreateConversationWithMessageResponse(conversation *domain.Conversation, message *domain.Message) CreateConversationWithMessage {
-	return CreateConversationWithMessage{
-		ConversId:         conversation.ConversationId,
-		UserId:            conversation.UserId,
-		PromptId:          conversation.PromptId,
-		MessageText:       message.MessageText,
-		MessageAudio:      message.MessageAudio,
-		MessageDate:       *message.MessageDate,
-		ConversationStart: *conversation.ConversationStart,
-	}
-}
-
-type ExchangingMessageResponse struct {
-	MessageText  string    `json:"message_text" example:"Hello, how are you?"`
-	MessageAudio string    `json:"message_audio" example:"https://example.com/audio.mp3"`
-	MessageDate  time.Time `json:"message_date" example:"1970-01-01T00:00:00Z"`
-}
-
-func newExchangingMessageResponse(message *domain.Message) ExchangingMessageResponse {
-	var messageDate time.Time
-	if message.MessageDate != nil {
-		messageDate = *message.MessageDate
-	}
-	return ExchangingMessageResponse{
-		MessageText:  message.MessageText,
-		MessageAudio: message.MessageAudio,
-		MessageDate:  messageDate,
-	}
-}
-
-type GetAllMessagesResponse struct {
-	ConversId uint64            `json:"convers_id" example:"1"`
-	Messages  *[]domain.Message `json:"messages"`
-}
-
-func newGetAllMessagesResponse(conversationId uint64, messages *[]domain.Message) GetAllMessagesResponse {
-	return GetAllMessagesResponse{
-		ConversId: conversationId,
-		Messages:  messages,
-	}
-}
-
-// userResponse represents a user response body
-type userResponse struct {
-	UserId         uint64    `json:"user_id" example:"1"`
-	UserName       string    `json:"name" example:"John Doe"`
-	PassWord       string    `json:"password" example:"12345678"`
-	Email          string    `json:"email" example:"test@example.com"`
-	UserRank       uint64    `json:"user_rank" example:"1"`
-	IncorrectLogin uint64    `json:"incorrect_login" example:"0"`
-	LastLogin      time.Time `json:"last_login" example:"1970-01-01T00:00:00Z"`
-	CreateDate     time.Time `json:"create_date" example:"1970-01-01T00:00:00Z"`
-}
-
-// newUserResponse is a helper function to create a response body for handling user data
-func newUserResponse(user *domain.User) userResponse {
-	return userResponse{
-		UserId:         user.UserId,
-		UserName:       user.UserName,
-		PassWord:       user.PassWord,
-		Email:          user.Email,
-		UserRank:       user.UserRank,
-		IncorrectLogin: user.IncorrectLogin,
-		LastLogin:      *user.LastLogin,
-		CreateDate:     *user.CreateDate,
-	}
-}
 
 // meta represents metadata for a paginated response
 type meta struct {

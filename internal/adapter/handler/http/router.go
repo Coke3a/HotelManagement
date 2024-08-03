@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/Coke3a/TalkPenguin/internal/adapter/config"
+	"github.com/Coke3a/HotelManagement/internal/adapter/config"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	sloggin "github.com/samber/slog-gin"
@@ -20,12 +20,14 @@ type Router struct {
 // NewRouter creates a new HTTP router
 func NewRouter(
 	config *config.HTTP,
-	// token port.TokenService,
-	// userHandler UserHandler,
-	// authHandler AuthHandler,
-	messageHandler MessageHandler,
-	conversationHandler ConversationHandler,
+	bookingHandler BookingHandler,
+	customerHandler CustomerHandler,
+	paymentHandler PaymentHandler,
+	rankHandler RankHandler,
+	ratePriceHandler RatePriceHandler,
+	roomHandler RoomHandler,
 	userHandler UserHandler,
+	// authHandler AuthHandler,
 ) (*Router, error) {
 	// Disable debug mode in production
 	if config.Env == "production" {
@@ -62,22 +64,60 @@ func NewRouter(
 
 		user := v1.Group("/users")
 		{
-			user.POST("/", userHandler.Register)
+			user.POST("/", userHandler.CreateUser)
 			// user.POST("/login", authHandler.Login)
 			user.GET("/", userHandler.ListUsers)
 			user.GET("/:id", userHandler.GetUser)
 			user.PUT("/:id", userHandler.UpdateUser)
 			user.DELETE("/:id", userHandler.DeleteUser)
 		}
-		conversation := v1.Group("/conversations")
+		conversation := v1.Group("/booking")
 		{
-			conversation.POST("/create", conversationHandler.CreateConversation)
-			conversation.POST("/create_with_message", conversationHandler.CreateConversationWithMessage)
+			conversation.POST("/", bookingHandler.CreateBooking)
+			conversation.GET("/", bookingHandler.ListBookings)
+			conversation.GET("/:id", bookingHandler.GetBooking)
+			conversation.PUT("/:id", bookingHandler.UpdateBooking)
+			conversation.DELETE("/:id", bookingHandler.DeleteBooking)
 		}
-		message := v1.Group("/messages")
+		customer := v1.Group("/customer")
 		{
-			message.POST("/exchange", messageHandler.ExchangingMessage)
-			message.GET("/all/:user_id/:conversation_id", messageHandler.GetAllMessages)
+			customer.POST("/", customerHandler.RegisterCustomer)
+			customer.GET("/", customerHandler.ListCustomers)
+			customer.GET("/:id", customerHandler.GetCustomer)
+			customer.PUT("/:id", customerHandler.UpdateCustomer)
+			customer.DELETE("/:id", customerHandler.DeleteCustomer)
+		}
+		payment := v1.Group("/payment")
+		{
+			payment.POST("/", paymentHandler.CreatePayment)
+			payment.GET("/", paymentHandler.ListPayments)
+			payment.GET("/:id", paymentHandler.GetPayment)
+			payment.PUT("/:id", paymentHandler.UpdatePayment)
+			payment.DELETE("/:id", paymentHandler.DeletePayment)
+		}
+		rank := v1.Group("/rank")
+		{
+			rank.POST("/", rankHandler.CreateRank)
+			rank.GET("/", rankHandler.ListRanks)
+			rank.GET("/:id", rankHandler.GetRank)
+			rank.PUT("/:id", rankHandler.UpdateRank)
+			rank.DELETE("/:id", rankHandler.DeleteRank)
+		}
+		ratePrice := v1.Group("/rate_price")
+		{
+			ratePrice.POST("/", ratePriceHandler.CreateRatePrice)
+			ratePrice.GET("/", ratePriceHandler.ListRatePrices)
+			ratePrice.GET("/:id", ratePriceHandler.GetRatePrice)
+			ratePrice.PUT("/:id", ratePriceHandler.UpdateRatePrice)
+			ratePrice.DELETE("/:id", ratePriceHandler.DeleteRatePrice)
+		}
+		room := v1.Group("/room")
+		{
+			room.POST("/", roomHandler.CreateRoom)
+			room.GET("/", roomHandler.ListRooms)
+			room.GET("/:id", roomHandler.GetRoom)
+			room.PUT("/:id", roomHandler.UpdateRoom)
+			room.DELETE("/:id", roomHandler.DeleteRoom)
 		}
 	}
 

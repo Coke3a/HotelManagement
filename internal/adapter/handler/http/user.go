@@ -1,9 +1,10 @@
 package http
 
 import (
-	"github.com/Coke3a/TalkPenguin/internal/core/domain"
-	"github.com/Coke3a/TalkPenguin/internal/core/port"
+	"github.com/Coke3a/HotelManagement/internal/core/domain"
+	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
+	"time"
 )
 
 // UserHandler represents the HTTP handler for user-related requests
@@ -18,31 +19,31 @@ func NewUserHandler(svc port.UserService) *UserHandler {
 	}
 }
 
-// registerRequest represents the request body for creating a user
-type registerRequest struct {
-	UserName string `json:"user_name" binding:"required" example:"John Doe"`
-	PassWord string `json:"password" binding:"required,min=8" example:"12345678"`
-	Email    string `json:"email" binding:"required,email" example:"test@example.com"`
-	UserRank uint64 `json:"user_rank" binding:"required" example:"1"`
+// createUserRequest represents the request body for creating a user
+type createUserRequest struct {
+	UserName string `json:"username" binding:"required" example:"johndoe"`
+	Password string `json:"password" binding:"required" example:"P@ssw0rd"`
+	Email    string `json:"email" binding:"required" example:"john.doe@example.com"`
+	Role     string `json:"role" binding:"required" example:"admin"`
+	Rank     string `json:"rank" example:"Manager"`
+	Status   string `json:"status" binding:"required" example:"active"`
 }
 
-// Register godoc
+// CreateUser godoc
 //
 //	@Summary		Register a new user
-//	@Description	create a new user account with default role "cashier"
+//	@Description	Create a new user in the system
 //	@Tags			Users
 //	@Accept			json
 //	@Produce		json
-//	@Param			registerRequest	body		registerRequest	true	"Register request"
-//	@Success		200				{object}	userResponse	"User created"
-//	@Failure		400				{object}	errorResponse	"Validation error"
-//	@Failure		401				{object}	errorResponse	"Unauthorized error"
-//	@Failure		404				{object}	errorResponse	"Data not found error"
-//	@Failure		409				{object}	errorResponse	"Data conflict error"
-//	@Failure		500				{object}	errorResponse	"Internal server error"
+//	@Param			createUserRequest	body		createUserRequest	true	"Create user request"
+//	@Success		200					{object}	userResponse		"User registered"
+//	@Failure		400					{object}	errorResponse		"Validation error"
+//	@Failure		409					{object}	errorResponse		"Data conflict error"
+//	@Failure		500					{object}	errorResponse		"Internal server error"
 //	@Router			/users [post]
-func (uh *UserHandler) Register(ctx *gin.Context) {
-	var req registerRequest
+func (uh *UserHandler) CreateUser(ctx *gin.Context) {
+	var req createUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		validationError(ctx, err)
 		return
@@ -50,18 +51,20 @@ func (uh *UserHandler) Register(ctx *gin.Context) {
 
 	user := domain.User{
 		UserName: req.UserName,
-		PassWord: req.PassWord,
+		Password: req.Password,
 		Email:    req.Email,
-		UserRank: req.UserRank,
+		Role:     req.Role,
+		Rank:     req.Rank,
+		Status:   req.Status,
 	}
 
-	_, err := uh.svc.Register(ctx, &user)
+	createdUser, err := uh.svc.RegisterUser(ctx, &user)
 	if err != nil {
 		handleError(ctx, err)
 		return
 	}
 
-	rsp := newUserResponse(&user)
+	rsp := newUserResponse(createdUser)
 
 	handleSuccess(ctx, rsp)
 }
@@ -114,7 +117,7 @@ func (uh *UserHandler) ListUsers(ctx *gin.Context) {
 
 // getUserRequest represents the request body for getting a user
 type getUserRequest struct {
-	UserId uint64 `uri:"user_id" binding:"required,min=1" example:"1"`
+	UserID uint64 `uri:"user_id" binding:"required,min=1" example:"1"`
 }
 
 // GetUser godoc
@@ -138,7 +141,7 @@ func (uh *UserHandler) GetUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := uh.svc.GetUser(ctx, req.UserId)
+	user, err := uh.svc.GetUser(ctx, req.UserID)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -151,17 +154,19 @@ func (uh *UserHandler) GetUser(ctx *gin.Context) {
 
 // updateUserRequest represents the request body for updating a user
 type updateUserRequest struct {
-	UserId   uint64 `json:"user_id" binding:"required" example:"1"`
-	UserName string `json:"user_name" binding:"required" example:"John Doe"`
-	PassWord string `json:"password" binding:"required,min=8" example:"12345678"`
-	Email    string `json:"email" binding:"required,email" example:"test@example.com"`
-	UserRank uint64 `json:"user_rank" binding:"required" example:"1"`
+	UserID   uint64 `json:"user_id" binding:"required" example:"1"`
+	UserName string `json:"username" example:"johndoe"`
+	Password string `json:"password" example:"NewP@ssw0rd"`
+	Email    string `json:"email" example:"john.doe@example.com"`
+	Role     string `json:"role" example:"admin"`
+	Rank     string `json:"rank" example:"Manager"`
+	Status   string `json:"status" example:"active"`
 }
 
 // UpdateUser godoc
 //
 //	@Summary		Update a user
-//	@Description	Update a user's name, email, password, or role by id
+//	@Description	Update a user's details by id
 //	@Tags			Users
 //	@Accept			json
 //	@Produce		json
@@ -169,9 +174,7 @@ type updateUserRequest struct {
 //	@Param			updateUserRequest	body		updateUserRequest	true	"Update user request"
 //	@Success		200					{object}	userResponse		"User updated"
 //	@Failure		400					{object}	errorResponse		"Validation error"
-//	@Failure		401					{object}	errorResponse		"Unauthorized error"
-//	@Failure		403					{object}	errorResponse		"Forbidden error"
-//	@Failure		404					{object}	errorResponse		"Data not found error"
+//	@Failure		409					{object}	errorResponse		"Data conflict error"
 //	@Failure		500					{object}	errorResponse		"Internal server error"
 //	@Router			/users/{id} [put]
 //	@Security		BearerAuth
@@ -183,27 +186,29 @@ func (uh *UserHandler) UpdateUser(ctx *gin.Context) {
 	}
 
 	user := domain.User{
-		UserId:   req.UserId,
+		ID:       req.UserID,
 		UserName: req.UserName,
-		PassWord: req.PassWord,
+		Password: req.Password,
 		Email:    req.Email,
-		UserRank: req.UserRank,
+		Role:     req.Role,
+		Rank:     req.Rank,
+		Status:   req.Status,
 	}
 
-	_, err := uh.svc.UpdateUser(ctx, &user)
+	updatedUser, err := uh.svc.UpdateUser(ctx, &user)
 	if err != nil {
 		handleError(ctx, err)
 		return
 	}
 
-	rsp := newUserResponse(&user)
+	rsp := newUserResponse(updatedUser)
 
 	handleSuccess(ctx, rsp)
 }
 
 // deleteUserRequest represents the request body for deleting a user
 type deleteUserRequest struct {
-	UserId uint64 `uri:"user_id" binding:"required,min=1" example:"1"`
+	UserID uint64 `uri:"user_id" binding:"required,min=1" example:"1"`
 }
 
 // DeleteUser godoc
@@ -216,8 +221,6 @@ type deleteUserRequest struct {
 //	@Param			id	path		uint64			true	"User ID"
 //	@Success		200	{object}	response		"User deleted"
 //	@Failure		400	{object}	errorResponse	"Validation error"
-//	@Failure		401	{object}	errorResponse	"Unauthorized error"
-//	@Failure		403	{object}	errorResponse	"Forbidden error"
 //	@Failure		404	{object}	errorResponse	"Data not found error"
 //	@Failure		500	{object}	errorResponse	"Internal server error"
 //	@Router			/users/{id} [delete]
@@ -229,11 +232,41 @@ func (uh *UserHandler) DeleteUser(ctx *gin.Context) {
 		return
 	}
 
-	err := uh.svc.DeleteUser(ctx, req.UserId)
+	err := uh.svc.DeleteUser(ctx, req.UserID)
 	if err != nil {
 		handleError(ctx, err)
 		return
 	}
 
-	handleSuccess(ctx, nil)
+	handleSuccess(ctx, "User deleted successfully")
+}
+
+// userResponse represents the response body for a user
+type userResponse struct {
+	ID        uint64    `json:"id" example:"1"`
+	UserName  string    `json:"username" example:"johndoe"`
+	Email     string    `json:"email" example:"john.doe@example.com"`
+	Role      string    `json:"role" example:"admin"`
+	Rank      string    `json:"rank" example:"Manager"`
+	HireDate  time.Time `json:"hire_date" example:"2024-07-01T15:04:05Z"`
+	LastLogin time.Time `json:"last_login" example:"2024-08-01T15:04:05Z"`
+	Status    string    `json:"status" example:"active"`
+	CreatedAt time.Time `json:"created_at" example:"2024-07-01T15:04:05Z"`
+	UpdatedAt time.Time `json:"updated_at" example:"2024-08-01T15:04:05Z"`
+}
+
+// newUserResponse creates a new user response
+func newUserResponse(user *domain.User) userResponse {
+	return userResponse{
+		ID:        user.ID,
+		UserName:  user.UserName,
+		Email:     user.Email,
+		Role:      user.Role,
+		Rank:      user.Rank,
+		HireDate:  *user.HireDate,
+		LastLogin: *user.LastLogin,
+		Status:    user.Status,
+		CreatedAt: *user.CreatedAt,
+		UpdatedAt: *user.UpdatedAt,
+	}
 }
