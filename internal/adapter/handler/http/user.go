@@ -48,7 +48,6 @@ func (uh *UserHandler) CreateUser(ctx *gin.Context) {
 		validationError(ctx, err)
 		return
 	}
-
 	user := domain.User{
 		UserName: req.UserName,
 		Password: req.Password,
@@ -117,7 +116,7 @@ func (uh *UserHandler) ListUsers(ctx *gin.Context) {
 
 // getUserRequest represents the request body for getting a user
 type getUserRequest struct {
-	UserID uint64 `uri:"user_id" binding:"required,min=1" example:"1"`
+	UserID uint64 `uri:"id" binding:"required,min=1" example:"1"`
 }
 
 // GetUser godoc
@@ -154,7 +153,7 @@ func (uh *UserHandler) GetUser(ctx *gin.Context) {
 
 // updateUserRequest represents the request body for updating a user
 type updateUserRequest struct {
-	UserID   uint64 `json:"user_id" binding:"required" example:"1"`
+	UserID   uint64 `json:"id" binding:"required" example:"1"`
 	UserName string `json:"username" example:"johndoe"`
 	Password string `json:"password" example:"NewP@ssw0rd"`
 	Email    string `json:"email" example:"john.doe@example.com"`
@@ -208,7 +207,7 @@ func (uh *UserHandler) UpdateUser(ctx *gin.Context) {
 
 // deleteUserRequest represents the request body for deleting a user
 type deleteUserRequest struct {
-	UserID uint64 `uri:"user_id" binding:"required,min=1" example:"1"`
+	UserID uint64 `uri:"id" binding:"required,min=1" example:"1"`
 }
 
 // DeleteUser godoc

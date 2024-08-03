@@ -111,7 +111,7 @@ func (ph *PaymentHandler) ListPayments(ctx *gin.Context) {
 
 // getPaymentRequest represents the request body for getting a payment
 type getPaymentRequest struct {
-	PaymentID uint64 `uri:"payment_id" binding:"required,min=1" example:"1"`
+	ID uint64 `uri:"id" binding:"required,min=1" example:"1"`
 }
 
 // GetPayment godoc
@@ -135,7 +135,7 @@ func (ph *PaymentHandler) GetPayment(ctx *gin.Context) {
 		return
 	}
 
-	payment, err := ph.svc.GetPayment(ctx, req.PaymentID)
+	payment, err := ph.svc.GetPayment(ctx, req.ID)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -148,7 +148,7 @@ func (ph *PaymentHandler) GetPayment(ctx *gin.Context) {
 
 // updatePaymentRequest represents the request body for updating a payment
 type updatePaymentRequest struct {
-	PaymentID     uint64  `json:"payment_id" binding:"required" example:"1"`
+	ID     uint64  `json:"id" binding:"required" example:"1"`
 	Amount        float64 `json:"amount" binding:"required" example:"1000.50"`
 	PaymentMethod string  `json:"payment_method" binding:"required" example:"credit_card"`
 	Status        string  `json:"status" binding:"required" example:"completed"`
@@ -177,7 +177,7 @@ func (ph *PaymentHandler) UpdatePayment(ctx *gin.Context) {
 	}
 
 	payment := domain.Payment{
-		ID:            req.PaymentID,
+		ID:            req.ID,
 		Amount:        req.Amount,
 		PaymentMethod: req.PaymentMethod,
 		Status:        req.Status,
@@ -196,7 +196,7 @@ func (ph *PaymentHandler) UpdatePayment(ctx *gin.Context) {
 
 // deletePaymentRequest represents the request body for deleting a payment
 type deletePaymentRequest struct {
-	PaymentID uint64 `uri:"payment_id" binding:"required,min=1" example:"1"`
+	ID uint64 `uri:"id" binding:"required,min=1" example:"1"`
 }
 
 // DeletePayment godoc
@@ -220,7 +220,7 @@ func (ph *PaymentHandler) DeletePayment(ctx *gin.Context) {
 		return
 	}
 
-	err := ph.svc.DeletePayment(ctx, req.PaymentID)
+	err := ph.svc.DeletePayment(ctx, req.ID)
 	if err != nil {
 		handleError(ctx, err)
 		return

@@ -35,6 +35,8 @@ func (us *UserService) RegisterUser(ctx context.Context, user *domain.User) (*do
 
 	// Set the hire date to now
 	now := time.Now()
+	nullTime := time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+	user.LastLogin = &nullTime
 	user.HireDate = &now
 
 	createdUser, err := us.repo.CreateUser(ctx, user)

@@ -119,7 +119,7 @@ func (rh *RoomHandler) ListRooms(ctx *gin.Context) {
 
 // getRoomRequest represents the request body for getting a room
 type getRoomRequest struct {
-	RoomID uint64 `uri:"room_id" binding:"required,min=1" example:"1"`
+	ID uint64 `uri:"id" binding:"required,min=1" example:"1"`
 }
 
 // GetRoom godoc
@@ -143,7 +143,7 @@ func (rh *RoomHandler) GetRoom(ctx *gin.Context) {
 		return
 	}
 
-	room, err := rh.svc.GetRoom(ctx, req.RoomID)
+	room, err := rh.svc.GetRoom(ctx, req.ID)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -156,7 +156,7 @@ func (rh *RoomHandler) GetRoom(ctx *gin.Context) {
 
 // updateRoomRequest represents the request body for updating a room
 type updateRoomRequest struct {
-	RoomID         uint64  `json:"room_id" binding:"required" example:"1"`
+	ID         uint64  `json:"id" binding:"required" example:"1"`
 	RoomNumber     string  `json:"room_number" binding:"required" example:"101"`
 	Type           string  `json:"type" binding:"required" example:"Deluxe"`
 	Description    string  `json:"description" example:"A spacious room with ocean view"`
@@ -189,7 +189,7 @@ func (rh *RoomHandler) UpdateRoom(ctx *gin.Context) {
 	}
 
 	room := domain.Room{
-		ID:            req.RoomID,
+		ID:            req.ID,
 		RoomNumber:    req.RoomNumber,
 		Type:          req.Type,
 		Description:   req.Description,

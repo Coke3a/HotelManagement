@@ -129,7 +129,7 @@ func (rph *RatePriceHandler) ListRatePrices(ctx *gin.Context) {
 
 // getRatePriceRequest represents the request body for getting a rate price
 type getRatePriceRequest struct {
-	RatePriceID uint64 `uri:"rate_price_id" binding:"required,min=1" example:"1"`
+	ID uint64 `uri:"id" binding:"required,min=1" example:"1"`
 }
 
 // GetRatePrice godoc
@@ -153,7 +153,7 @@ func (rph *RatePriceHandler) GetRatePrice(ctx *gin.Context) {
 		return
 	}
 
-	ratePrice, err := rph.svc.GetRatePrice(ctx, req.RatePriceID)
+	ratePrice, err := rph.svc.GetRatePrice(ctx, req.ID)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -166,7 +166,7 @@ func (rph *RatePriceHandler) GetRatePrice(ctx *gin.Context) {
 
 // updateRatePriceRequest represents the request body for updating a rate price
 type updateRatePriceRequest struct {
-	RatePriceID       uint64  `json:"rate_price_id" binding:"required" example:"1"`
+	ID       uint64  `json:"id" binding:"required" example:"1"`
 	Name              string  `json:"name" binding:"required" example:"Winter Sale"`
 	Description       string  `json:"description" example:"Discount for winter season"`
 	DiscountPercentage float64 `json:"discount_percentage" binding:"required" example:"15.5"`
@@ -210,7 +210,7 @@ func (rph *RatePriceHandler) UpdateRatePrice(ctx *gin.Context) {
 	}
 
 	ratePrice := domain.RatePrice{
-		ID:                 req.RatePriceID,
+		ID:                 req.ID,
 		Name:               req.Name,
 		Description:        req.Description,
 		DiscountPercentage: req.DiscountPercentage,
@@ -232,7 +232,7 @@ func (rph *RatePriceHandler) UpdateRatePrice(ctx *gin.Context) {
 
 // deleteRatePriceRequest represents the request body for deleting a rate price
 type deleteRatePriceRequest struct {
-	RatePriceID uint64 `uri:"rate_price_id" binding:"required,min=1" example:"1"`
+	ID uint64 `uri:"id" binding:"required,min=1" example:"1"`
 }
 
 // DeleteRatePrice godoc
@@ -256,7 +256,7 @@ func (rph *RatePriceHandler) DeleteRatePrice(ctx *gin.Context) {
 		return
 	}
 
-	err := rph.svc.DeleteRatePrice(ctx, req.RatePriceID)
+	err := rph.svc.DeleteRatePrice(ctx, req.ID)
 	if err != nil {
 		handleError(ctx, err)
 		return

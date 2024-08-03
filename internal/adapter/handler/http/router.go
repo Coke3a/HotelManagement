@@ -68,7 +68,7 @@ func NewRouter(
 			// user.POST("/login", authHandler.Login)
 			user.GET("/", userHandler.ListUsers)
 			user.GET("/:id", userHandler.GetUser)
-			user.PUT("/:id", userHandler.UpdateUser)
+			user.PUT("/", userHandler.UpdateUser)
 			user.DELETE("/:id", userHandler.DeleteUser)
 		}
 		conversation := v1.Group("/booking")
@@ -79,7 +79,7 @@ func NewRouter(
 			conversation.PUT("/:id", bookingHandler.UpdateBooking)
 			conversation.DELETE("/:id", bookingHandler.DeleteBooking)
 		}
-		customer := v1.Group("/customer")
+		customer := v1.Group("/customers")
 		{
 			customer.POST("/", customerHandler.RegisterCustomer)
 			customer.GET("/", customerHandler.ListCustomers)
@@ -87,7 +87,7 @@ func NewRouter(
 			customer.PUT("/:id", customerHandler.UpdateCustomer)
 			customer.DELETE("/:id", customerHandler.DeleteCustomer)
 		}
-		payment := v1.Group("/payment")
+		payment := v1.Group("/payments")
 		{
 			payment.POST("/", paymentHandler.CreatePayment)
 			payment.GET("/", paymentHandler.ListPayments)
@@ -95,7 +95,7 @@ func NewRouter(
 			payment.PUT("/:id", paymentHandler.UpdatePayment)
 			payment.DELETE("/:id", paymentHandler.DeletePayment)
 		}
-		rank := v1.Group("/rank")
+		rank := v1.Group("/ranks")
 		{
 			rank.POST("/", rankHandler.CreateRank)
 			rank.GET("/", rankHandler.ListRanks)
@@ -103,7 +103,7 @@ func NewRouter(
 			rank.PUT("/:id", rankHandler.UpdateRank)
 			rank.DELETE("/:id", rankHandler.DeleteRank)
 		}
-		ratePrice := v1.Group("/rate_price")
+		ratePrice := v1.Group("/rate_prices")
 		{
 			ratePrice.POST("/", ratePriceHandler.CreateRatePrice)
 			ratePrice.GET("/", ratePriceHandler.ListRatePrices)
@@ -111,7 +111,7 @@ func NewRouter(
 			ratePrice.PUT("/:id", ratePriceHandler.UpdateRatePrice)
 			ratePrice.DELETE("/:id", ratePriceHandler.DeleteRatePrice)
 		}
-		room := v1.Group("/room")
+		room := v1.Group("/rooms")
 		{
 			room.POST("/", roomHandler.CreateRoom)
 			room.GET("/", roomHandler.ListRooms)

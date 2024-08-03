@@ -23,10 +23,10 @@ func NewCustomerHandler(svc port.CustomerService) *CustomerHandler {
 // registerCustomerRequest represents the request body for registering a customer
 type registerCustomerRequest struct { 
 	Name             string    `json:"name" binding:"required"`
-	Email            string    `json:"email" binding:"required,email"`
+	Email            string    `json:"email" binding:"email"`
 	Phone            string    `json:"phone"`
 	Address          string    `json:"address"`
-	DateOfBirth      *time.Time `json:"date_of_birth"`
+	DateOfBirth      *time.Time `json:"date_of_birth" example:"2024-08-01T15:04:05Z"`
 	Gender           string    `json:"gender"`
 	MembershipStatus string    `json:"membership_status"`
 	Preferences		 string	`json:"preferences"`
@@ -160,31 +160,31 @@ type customerResponse struct {
 	Email            string                 `json:"email"`
 	Phone            string                 `json:"phone"`
 	Address          string                 `json:"address"`
-	DateOfBirth      *time.Time              `json:"date_of_birth"`
+	DateOfBirth      time.Time              `json:"date_of_birth"`
 	Gender           string                 `json:"gender"`
 	MembershipStatus string                 `json:"membership_status"`
-	JoinDate         *time.Time              `json:"join_date"`
+	JoinDate         time.Time              `json:"join_date"`
 	Preferences      string				 	`json:"preferences"`
-	LastVisitDate    *time.Time              `json:"last_visit_date"`
-	CreatedAt        *time.Time              `json:"created_at"`
-	UpdatedAt        *time.Time              `json:"updated_at"`
+	LastVisitDate    time.Time              `json:"last_visit_date"`
+	CreatedAt        time.Time              `json:"created_at"`
+	UpdatedAt        time.Time              `json:"updated_at"`
 }
 
 // newBookingResponse creates a new booking response
 func (ch *CustomerHandler) newCustomerResponse(customer *domain.Customer) customerResponse {
-	return customerResponse{
-		ID:				  customer.ID,
-		Name:             customer.Name,
-		Email:            customer.Email,
-		Phone:            customer.Phone,
-		Address:          customer.Address,
-		DateOfBirth:      customer.DateOfBirth,
-		Gender:           customer.Gender,
-		MembershipStatus: customer.MembershipStatus,
-		JoinDate:         customer.JoinDate,
-		Preferences:      customer.Preferences,
-		LastVisitDate:    customer.LastVisitDate,
-		CreatedAt:        customer.CreatedAt,
-		UpdatedAt:        customer.UpdatedAt,
-	}
+    return customerResponse{
+        ID:              customer.ID,
+        Name:            customer.Name,
+        Email:           customer.Email,
+        Phone:           customer.Phone,
+        Address:         customer.Address,
+        DateOfBirth:     derefTime(customer.DateOfBirth),
+        Gender:          customer.Gender,
+        MembershipStatus: customer.MembershipStatus,
+        JoinDate:        derefTime(customer.JoinDate),
+        Preferences:     customer.Preferences,
+        LastVisitDate:   derefTime(customer.LastVisitDate),
+        CreatedAt:       derefTime(customer.CreatedAt),
+        UpdatedAt:       derefTime(customer.UpdatedAt),
+    }
 }

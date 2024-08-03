@@ -108,7 +108,7 @@ func (rh *RankHandler) ListRanks(ctx *gin.Context) {
 
 // getRankRequest represents the request body for getting a rank
 type getRankRequest struct {
-	RankID uint64 `uri:"rank_id" binding:"required,min=1" example:"1"`
+	ID uint64 `uri:"id" binding:"required,min=1" example:"1"`
 }
 
 // GetRank godoc
@@ -132,7 +132,7 @@ func (rh *RankHandler) GetRank(ctx *gin.Context) {
 		return
 	}
 
-	rank, err := rh.svc.GetRank(ctx, req.RankID)
+	rank, err := rh.svc.GetRank(ctx, req.ID)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -145,7 +145,7 @@ func (rh *RankHandler) GetRank(ctx *gin.Context) {
 
 // updateRankRequest represents the request body for updating a rank
 type updateRankRequest struct {
-	RankID      uint64 `json:"rank_id" binding:"required" example:"1"`
+	ID      uint64 `json:"id" binding:"required" example:"1"`
 	RankName    string `json:"rank_name" binding:"required" example:"Manager"`
 	Description string `json:"description" example:"Managerial position"`
 }
@@ -173,7 +173,7 @@ func (rh *RankHandler) UpdateRank(ctx *gin.Context) {
 	}
 
 	rank := domain.Rank{
-		ID:          req.RankID,
+		ID:          req.ID,
 		RankName:    req.RankName,
 		Description: req.Description,
 	}
@@ -191,7 +191,7 @@ func (rh *RankHandler) UpdateRank(ctx *gin.Context) {
 
 // deleteRankRequest represents the request body for deleting a rank
 type deleteRankRequest struct {
-	RankID uint64 `uri:"rank_id" binding:"required,min=1" example:"1"`
+	ID uint64 `uri:"id" binding:"required,min=1" example:"1"`
 }
 
 // DeleteRank godoc
@@ -215,7 +215,7 @@ func (rh *RankHandler) DeleteRank(ctx *gin.Context) {
 		return
 	}
 
-	err := rh.svc.DeleteRank(ctx, req.RankID)
+	err := rh.svc.DeleteRank(ctx, req.ID)
 	if err != nil {
 		handleError(ctx, err)
 		return

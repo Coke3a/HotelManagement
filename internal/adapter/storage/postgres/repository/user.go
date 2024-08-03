@@ -132,6 +132,44 @@ func (ur *UserRepository) GetUserByEmail(ctx context.Context, email string) (*do
 	return &user, nil
 }
 
+func (ur *UserRepository) GetUserByUserName(ctx context.Context, userName string) (*domain.User, error) {
+	var user domain.User
+
+	query := ur.db.QueryBuilder.Select("*").
+		From("users").
+		Where(sq.Eq{"username": userName}).
+		Limit(1)
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	slog.Debug("SQL QUERY", "query", query)
+
+	err = ur.db.QueryRow(ctx, sql, args...).Scan(
+		&user.ID,
+		&user.UserName,
+		&user.Password,
+		&user.Email,
+		&user.Role,
+		&user.Rank,
+		&user.HireDate,
+		&user.LastLogin,
+		&user.Status,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, domain.ErrDataNotFound
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (ur *UserRepository) ListUsers(ctx context.Context, skip, limit uint64) ([]domain.User, error) {
 	var users []domain.User
 
