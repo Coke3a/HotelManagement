@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"log/slog"
+
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	sq "github.com/Masterminds/squirrel"
@@ -28,6 +30,7 @@ func (ur *UserRepository) CreateUser(ctx context.Context, user *domain.User) (*d
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = ur.db.QueryRow(ctx, sql, args...).Scan(
 		&user.ID,
@@ -65,6 +68,7 @@ func (ur *UserRepository) GetUserByID(ctx context.Context, id uint64) (*domain.U
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = ur.db.QueryRow(ctx, sql, args...).Scan(
 		&user.ID,
@@ -102,6 +106,7 @@ func (ur *UserRepository) GetUserByEmail(ctx context.Context, email string) (*do
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = ur.db.QueryRow(ctx, sql, args...).Scan(
 		&user.ID,
@@ -140,6 +145,7 @@ func (ur *UserRepository) ListUsers(ctx context.Context, skip, limit uint64) ([]
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := ur.db.Query(ctx, sql, args...)
 	if err != nil {
@@ -193,6 +199,7 @@ func (ur *UserRepository) UpdateUser(ctx context.Context, user *domain.User) (*d
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = ur.db.QueryRow(ctx, sql, args...).Scan(
 		&user.ID,
@@ -226,6 +233,7 @@ func (ur *UserRepository) DeleteUser(ctx context.Context, id uint64) error {
 	if err != nil {
 		return err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	_, err = ur.db.Exec(ctx, sql, args...)
 	if err != nil {

@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"log/slog"
+
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	sq "github.com/Masterminds/squirrel"
@@ -28,6 +30,7 @@ func (rr *RoomRepository) CreateRoom(ctx context.Context, room *domain.Room) (*d
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = rr.db.QueryRow(ctx, sql, args...).Scan(
 		&room.ID,
@@ -64,6 +67,7 @@ func (rr *RoomRepository) GetRoomByID(ctx context.Context, id uint64) (*domain.R
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = rr.db.QueryRow(ctx, sql, args...).Scan(
 		&room.ID,
@@ -101,6 +105,7 @@ func (rr *RoomRepository) ListRooms(ctx context.Context, skip, limit uint64) ([]
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := rr.db.Query(ctx, sql, args...)
 	if err != nil {
@@ -152,6 +157,7 @@ func (rr *RoomRepository) UpdateRoom(ctx context.Context, room *domain.Room) (*d
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = rr.db.QueryRow(ctx, sql, args...).Scan(
 		&room.ID,
@@ -184,6 +190,7 @@ func (rr *RoomRepository) DeleteRoom(ctx context.Context, id uint64) error {
 	if err != nil {
 		return err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	_, err = rr.db.Exec(ctx, sql, args...)
 	if err != nil {

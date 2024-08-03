@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"log/slog"
+
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	sq "github.com/Masterminds/squirrel"
@@ -28,6 +30,7 @@ func (cr *CustomerRepository) CreateCustomer(ctx context.Context, customer *doma
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = cr.db.QueryRow(ctx, sql, args...).Scan(
 		&customer.ID,
@@ -67,6 +70,7 @@ func (cr *CustomerRepository) GetCustomerByID(ctx context.Context, id uint64) (*
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = cr.db.QueryRow(ctx, sql, args...).Scan(
 		&customer.ID,
@@ -107,6 +111,7 @@ func (cr *CustomerRepository) ListCustomers(ctx context.Context, skip, limit uin
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := cr.db.Query(ctx, sql, args...)
 	if err != nil {
@@ -162,6 +167,7 @@ func (cr *CustomerRepository) UpdateCustomer(ctx context.Context, customer *doma
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = cr.db.QueryRow(ctx, sql, args...).Scan(
 		&customer.ID,
@@ -197,6 +203,7 @@ func (cr *CustomerRepository) DeleteCustomer(ctx context.Context, id uint64) err
 	if err != nil {
 		return err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	_, err = cr.db.Exec(ctx, sql, args...)
 	if err != nil {

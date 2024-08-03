@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
@@ -29,6 +30,7 @@ func (rpr *RatePriceRepository) CreateRatePrice(ctx context.Context, ratePrice *
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = rpr.db.QueryRow(ctx, sql, args...).Scan(
 		&ratePrice.ID,
@@ -64,6 +66,7 @@ func (rpr *RatePriceRepository) GetRatePriceByID(ctx context.Context, id uint64)
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = rpr.db.QueryRow(ctx, sql, args...).Scan(
 		&ratePrice.ID,
@@ -100,6 +103,7 @@ func (rpr *RatePriceRepository) ListRatePrices(ctx context.Context, skip, limit 
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := rpr.db.Query(ctx, sql, args...)
 	if err != nil {
@@ -149,6 +153,7 @@ func (rpr *RatePriceRepository) UpdateRatePrice(ctx context.Context, ratePrice *
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = rpr.db.QueryRow(ctx, sql, args...).Scan(
 		&ratePrice.ID,
@@ -180,6 +185,7 @@ func (rpr *RatePriceRepository) DeleteRatePrice(ctx context.Context, id uint64) 
 	if err != nil {
 		return err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	_, err = rpr.db.Exec(ctx, sql, args...)
 	if err != nil {

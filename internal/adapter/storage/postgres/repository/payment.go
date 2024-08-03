@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"log/slog"
+
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	sq "github.com/Masterminds/squirrel"
@@ -28,6 +30,7 @@ func (pr *PaymentRepository) CreatePayment(ctx context.Context, payment *domain.
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = pr.db.QueryRow(ctx, sql, args...).Scan(
 		&payment.ID,
@@ -62,6 +65,7 @@ func (pr *PaymentRepository) GetPaymentByID(ctx context.Context, id uint64) (*do
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = pr.db.QueryRow(ctx, sql, args...).Scan(
 		&payment.ID,
@@ -97,6 +101,7 @@ func (pr *PaymentRepository) ListPayments(ctx context.Context, skip, limit uint6
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := pr.db.Query(ctx, sql, args...)
 	if err != nil {
@@ -144,6 +149,7 @@ func (pr *PaymentRepository) UpdatePayment(ctx context.Context, payment *domain.
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = pr.db.QueryRow(ctx, sql, args...).Scan(
 		&payment.ID,
@@ -174,6 +180,7 @@ func (pr *PaymentRepository) DeletePayment(ctx context.Context, id uint64) error
 	if err != nil {
 		return err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	_, err = pr.db.Exec(ctx, sql, args...)
 	if err != nil {

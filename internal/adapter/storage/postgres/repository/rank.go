@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
@@ -29,6 +30,7 @@ func (rr *RankRepository) CreateRank(ctx context.Context, rank *domain.Rank) (*d
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = rr.db.QueryRow(ctx, sql, args...).Scan(
 		&rank.ID,
@@ -58,6 +60,7 @@ func (rr *RankRepository) GetRankByID(ctx context.Context, id uint64) (*domain.R
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = rr.db.QueryRow(ctx, sql, args...).Scan(
 		&rank.ID,
@@ -88,6 +91,7 @@ func (rr *RankRepository) ListRanks(ctx context.Context, skip, limit uint64) ([]
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := rr.db.Query(ctx, sql, args...)
 	if err != nil {
@@ -127,6 +131,7 @@ func (rr *RankRepository) UpdateRank(ctx context.Context, rank *domain.Rank) (*d
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = rr.db.QueryRow(ctx, sql, args...).Scan(
 		&rank.ID,
@@ -152,6 +157,7 @@ func (rr *RankRepository) DeleteRank(ctx context.Context, id uint64) error {
 	if err != nil {
 		return err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	_, err = rr.db.Exec(ctx, sql, args...)
 	if err != nil {

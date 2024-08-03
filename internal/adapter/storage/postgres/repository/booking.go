@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"log/slog"
+
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	sq "github.com/Masterminds/squirrel"
@@ -28,6 +30,7 @@ func (br *BookingRepository) CreateBooking(ctx context.Context, booking *domain.
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = br.db.QueryRow(ctx, sql, args...).Scan(
 		&booking.ID,
@@ -64,6 +67,7 @@ func (br *BookingRepository) GetBookingByID(ctx context.Context, id uint64) (*do
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = br.db.QueryRow(ctx, sql, args...).Scan(
 		&booking.ID,
@@ -101,6 +105,7 @@ func (br *BookingRepository) ListBookings(ctx context.Context, skip, limit uint6
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := br.db.Query(ctx, sql, args...)
 	if err != nil {
@@ -152,6 +157,7 @@ func (br *BookingRepository) UpdateBooking(ctx context.Context, booking *domain.
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	err = br.db.QueryRow(ctx, sql, args...).Scan(
 		&booking.ID,
@@ -184,6 +190,7 @@ func (br *BookingRepository) DeleteBooking(ctx context.Context, id uint64) error
 	if err != nil {
 		return err
 	}
+	slog.Debug("SQL QUERY", "query", query)
 
 	_, err = br.db.Exec(ctx, sql, args...)
 	if err != nil {
