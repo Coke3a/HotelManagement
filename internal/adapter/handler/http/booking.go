@@ -1,10 +1,11 @@
 package http
 
 import (
+	"time"
+
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
-	"time"
 )
 
 // BookingHandler represents the HTTP handler for booking-related requests
@@ -21,11 +22,11 @@ func NewBookingHandler(svc port.BookingService) *BookingHandler {
 
 // createBookingRequest represents the request body for creating a booking
 type createBookingRequest struct {
-	CustomerID   uint64     `json:"customer_id" binding:"required" example:"1"`
-	RoomID       uint64     `json:"room_id" binding:"required" example:"101"`
-	CheckInDate  time.Time  `json:"check_in_date" binding:"required" example:"2024-08-01T15:04:05Z"`
-	CheckOutDate time.Time  `json:"check_out_date" binding:"required" example:"2024-08-10T15:04:05Z"`
-	TotalAmount  float64    `json:"total_amount" binding:"required,gt=0" example:"1000.50"`
+	CustomerID   uint64    `json:"customer_id" binding:"required" example:"1"`
+	RatePriceId  uint64    `json:"rate_prices_id" binding:"required" example:"1"`
+	CheckInDate  time.Time `json:"check_in_date" binding:"required" example:"2024-08-01T15:04:05Z"`
+	CheckOutDate time.Time `json:"check_out_date" binding:"required" example:"2024-08-10T15:04:05Z"`
+	TotalAmount  float64   `json:"total_amount" binding:"required,gt=0" example:"1000.50"`
 }
 
 // CreateBooking godoc
@@ -50,7 +51,7 @@ func (bh *BookingHandler) CreateBooking(ctx *gin.Context) {
 
 	booking := domain.Booking{
 		CustomerID:   req.CustomerID,
-		RoomID:       req.RoomID,
+		RatePriceId:  req.RatePriceId,
 		CheckInDate:  &req.CheckInDate,
 		CheckOutDate: &req.CheckOutDate,
 		TotalAmount:  req.TotalAmount,
@@ -154,7 +155,7 @@ func (bh *BookingHandler) GetBooking(ctx *gin.Context) {
 type updateBookingRequest struct {
 	BookingID    uint64    `json:"booking_id" binding:"required" example:"1"`
 	CustomerID   uint64    `json:"customer_id" binding:"required" example:"1"`
-	RoomID       uint64    `json:"room_id" binding:"required" example:"101"`
+	RatePriceId  uint64    `json:"rate_prices_id" binding:"required" example:"1"`
 	CheckInDate  time.Time `json:"check_in_date" binding:"required" example:"2024-08-01T15:04:05Z"`
 	CheckOutDate time.Time `json:"check_out_date" binding:"required" example:"2024-08-10T15:04:05Z"`
 	Status       string    `json:"status" binding:"required" example:"confirmed"`
@@ -186,7 +187,7 @@ func (bh *BookingHandler) UpdateBooking(ctx *gin.Context) {
 	booking := domain.Booking{
 		ID:           req.BookingID,
 		CustomerID:   req.CustomerID,
-		RoomID:       req.RoomID,
+		RatePriceId:  req.RatePriceId,
 		CheckInDate:  &req.CheckInDate,
 		CheckOutDate: &req.CheckOutDate,
 		Status:       req.Status,
@@ -243,7 +244,7 @@ func (bh *BookingHandler) DeleteBooking(ctx *gin.Context) {
 type bookingResponse struct {
 	ID           uint64    `json:"id" example:"1"`
 	CustomerID   uint64    `json:"customer_id" example:"1"`
-	RoomID       uint64    `json:"room_id" example:"101"`
+	RatePriceId  uint64    `json:"rate_prices_id" example:"1"`
 	CheckInDate  time.Time `json:"check_in_date" example:"2024-08-01T15:04:05Z"`
 	CheckOutDate time.Time `json:"check_out_date" example:"2024-08-10T15:04:05Z"`
 	Status       string    `json:"status" example:"confirmed"`
@@ -256,7 +257,7 @@ func newBookingResponse(booking *domain.Booking) bookingResponse {
 	return bookingResponse{
 		ID:           booking.ID,
 		CustomerID:   booking.CustomerID,
-		RoomID:       booking.RoomID,
+		RatePriceId:  booking.RatePriceId,
 		CheckInDate:  *booking.CheckInDate,
 		CheckOutDate: *booking.CheckOutDate,
 		Status:       booking.Status,

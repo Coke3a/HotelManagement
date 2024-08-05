@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"reflect"
 	"time"
 
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
@@ -11,25 +10,25 @@ import (
 
 type CustomerService struct {
 	repo port.CustomerRepository
-	// cache port.CacheRepository (if you are using caching)
 }
 
 func NewCustomerService(repo port.CustomerRepository) *CustomerService {
 	return &CustomerService{
 		repo,
-		// cache,
 	}
 }
 
 func (cs *CustomerService) RegisterCustomer(ctx context.Context, customer *domain.Customer) (*domain.Customer, error) {
-	if customer.Name == "" || customer.Email == "" {
+	if customer.Name == "" {
 		return nil, domain.ErrInvalidData
 	}
 
-	// Set join date if it's not already set
-	if customer.JoinDate == nil {
-		now := time.Now()
-		customer.JoinDate = &now
+	// Set default values for join date and membership status
+	now := time.Now()
+	customer.JoinDate = &now
+
+	if customer.MembershipStatus == "" {
+		customer.MembershipStatus = "Regular"
 	}
 
 	createdCustomer, err := cs.repo.CreateCustomer(ctx, customer)
@@ -74,8 +73,8 @@ func (cs *CustomerService) UpdateCustomer(ctx context.Context, customer *domain.
 	}
 
 	// Check if there are changes
-	isEmpty := customer.Name == "" && customer.Email == "" && customer.Phone == "" && customer.Address == "" && customer.Gender == "" && customer.MembershipStatus == "" && len(customer.Preferences) == 0
-	isSame := existingCustomer.Name == customer.Name && existingCustomer.Email == customer.Email && existingCustomer.Phone == customer.Phone && existingCustomer.Address == customer.Address && existingCustomer.Gender == customer.Gender && existingCustomer.MembershipStatus == customer.MembershipStatus && reflect.DeepEqual(existingCustomer.Preferences, customer.Preferences)
+	isEmpty := customer.Name == "" && customer.Email == "" && customer.Phone == "" && customer.Address == "" && customer.Gender == "" && customer.MembershipStatus == "" && customer.Preferences == ""
+	isSame := existingCustomer.Name == customer.Name && existingCustomer.Email == customer.Email && existingCustomer.Phone == customer.Phone && existingCustomer.Address == customer.Address && existingCustomer.Gender == customer.Gender && existingCustomer.MembershipStatus == customer.MembershipStatus && existingCustomer.Preferences == customer.Preferences
 
 	if isEmpty || isSame {
 		return nil, domain.ErrNoUpdatedData
@@ -91,7 +90,6 @@ func (cs *CustomerService) UpdateCustomer(ctx context.Context, customer *domain.
 
 	return updatedCustomer, nil
 }
-
 
 func (cs *CustomerService) DeleteCustomer(ctx context.Context, id uint64) error {
 	_, err := cs.repo.GetCustomerByID(ctx, id)

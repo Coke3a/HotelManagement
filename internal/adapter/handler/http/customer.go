@@ -1,11 +1,11 @@
 package http
 
 import (
+	"time"
+
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
-	"net/http"
-	"time"
 )
 
 // CustomerHandler represents the HTTP handler for customer-related requests
@@ -16,28 +16,51 @@ type CustomerHandler struct {
 // NewCustomerHandler creates a new CustomerHandler instance
 func NewCustomerHandler(svc port.CustomerService) *CustomerHandler {
 	return &CustomerHandler{
-		svc: svc,
+		svc,
 	}
 }
 
-// registerCustomerRequest represents the request body for registering a customer
-type registerCustomerRequest struct { 
-	Name             string    `json:"name" binding:"required"`
-	Email            string    `json:"email" binding:"email"`
-	Phone            string    `json:"phone"`
-	Address          string    `json:"address"`
-	DateOfBirth      *time.Time `json:"date_of_birth" example:"2024-08-01T15:04:05Z"`
-	Gender           string    `json:"gender"`
-	MembershipStatus string    `json:"membership_status"`
-	Preferences		 string	`json:"preferences"`
+// createCustomerRequest represents the request body for creating a customer
+type createCustomerRequest struct {
+	Name             string `json:"name" binding:"required" example:"John Doe"`
+	Email            string `json:"email" example:"john.doe@example.com"`
+	Phone            string `json:"phone" example:"123-456-7890"`
+	Address          string `json:"address" example:"123 Elm Street"`
+	DateOfBirth      string `json:"date_of_birth" example:"1990-01-01"`
+	Gender           string `json:"gender" example:"male"`
+	MembershipStatus string `json:"membership_status" example:"gold"`
+	Preferences      string `json:"preferences" example:"sea view, non-smoking"`
 }
 
-// RegisterCustomer handles the HTTP request to register a new customer
-func (ch *CustomerHandler) RegisterCustomer(ctx *gin.Context) {
-	var req registerCustomerRequest
+// CreateCustomer godoc
+//
+//	@Summary		Register a new customer
+//	@Description	Create a new customer in the system
+//	@Tags			Customers
+//	@Accept			json
+//	@Produce		json
+//	@Param			createCustomerRequest	body		createCustomerRequest	true	"Create customer request"
+//	@Success		200						{object}	customerResponse		"Customer registered"
+//	@Failure		400						{object}	errorResponse			"Validation error"
+//	@Failure		409						{object}	errorResponse			"Data conflict error"
+//	@Failure		500						{object}	errorResponse			"Internal server error"
+//	@Router			/customers [post]
+func (ch *CustomerHandler) CreateCustomer(ctx *gin.Context) {
+	var req createCustomerRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		validationError(ctx, err)
 		return
+	}
+
+	// Parse the date of birth if provided
+	var dob *time.Time
+	if req.DateOfBirth != "" {
+		parsedDOB, err := time.Parse("2006-01-02", req.DateOfBirth)
+		if err != nil {
+			validationError(ctx, err)
+			return
+		}
+		dob = &parsedDOB
 	}
 
 	customer := domain.Customer{
@@ -45,146 +68,272 @@ func (ch *CustomerHandler) RegisterCustomer(ctx *gin.Context) {
 		Email:            req.Email,
 		Phone:            req.Phone,
 		Address:          req.Address,
-		DateOfBirth:      req.DateOfBirth,
+		DateOfBirth:      dob,
 		Gender:           req.Gender,
 		MembershipStatus: req.MembershipStatus,
-		Preferences: 	  req.Preferences,
+		Preferences:      req.Preferences,
 	}
 
 	createdCustomer, err := ch.svc.RegisterCustomer(ctx, &customer)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		handleError(ctx, err)
 		return
 	}
-	resp := ch.newCustomerResponse(createdCustomer)
 
-	ctx.JSON(http.StatusOK, resp)
+	rsp := newCustomerResponse(createdCustomer)
+
+	handleSuccess(ctx, rsp)
 }
 
-// GetCustomer handles the HTTP request to retrieve a customer by ID
-func (ch *CustomerHandler) GetCustomer(ctx *gin.Context) {
-	customerIDStr, exists := ctx.Params.Get("customer_id")
-	if !exists {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "customer_id parameter is required"})
-		return
-	}
-
-	customerID, err := convertStringToUint64(customerIDStr)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid customer_id format"})
-		return
-	}
-
-	customer, err := ch.svc.GetCustomer(ctx, customerID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	resp := ch.newCustomerResponse(customer)
-
-	ctx.JSON(http.StatusOK, resp)
+// listCustomersRequest represents the request body for listing customers
+type listCustomersRequest struct {
+	Skip  uint64 `form:"skip" binding:"required,min=0" example:"0"`
+	Limit uint64 `form:"limit" binding:"required,min=5" example:"5"`
 }
 
-// ListCustomers handles the HTTP request to list all customers
+// ListCustomers godoc
+//
+//	@Summary		List customers
+//	@Description	List customers with pagination
+//	@Tags			Customers
+//	@Accept			json
+//	@Produce		json
+//	@Param			skip	query		uint64			true	"Skip"
+//	@Param			limit	query		uint64			true	"Limit"
+//	@Success		200		{object}	meta			"Customers displayed"
+//	@Failure		400		{object}	errorResponse	"Validation error"
+//	@Failure		500		{object}	errorResponse	"Internal server error"
+//	@Router			/customers [get]
+//	@Security		BearerAuth
 func (ch *CustomerHandler) ListCustomers(ctx *gin.Context) {
-	var req struct {
-		Skip  uint64 `form:"skip,default=0"`
-		Limit uint64 `form:"limit,default=10"`
-	}
+	var req listCustomersRequest
+	var customersList []customerResponse
 
 	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		validationError(ctx, err)
 		return
 	}
 
 	customers, err := ch.svc.ListCustomers(ctx, req.Skip, req.Limit)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		handleError(ctx, err)
 		return
 	}
 
-	resp := make([]customerResponse, len(customers))
-	for i, customer := range customers {
-		resp[i] = ch.newCustomerResponse(&customer)
+	for _, customer := range customers {
+		customersList = append(customersList, newCustomerResponse(&customer))
 	}
 
-	ctx.JSON(http.StatusOK, resp)
+	total := uint64(len(customersList))
+	meta := newMeta(total, req.Limit, req.Skip)
+	rsp := toMap(meta, customersList, "customers")
+
+	handleSuccess(ctx, rsp)
 }
 
-// UpdateCustomer handles the HTTP request to update an existing customer
+// getCustomerRequest represents the request body for getting a customer
+type getCustomerRequest struct {
+	CustomerID uint64 `uri:"id" binding:"required,min=1" example:"1"`
+}
+
+// GetCustomer godoc
+//
+//	@Summary		Get a customer
+//	@Description	Get a customer by id
+//	@Tags			Customers
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		uint64				true	"Customer ID"
+//	@Success		200	{object}	customerResponse	"Customer displayed"
+//	@Failure		400	{object}	errorResponse		"Validation error"
+//	@Failure		404	{object}	errorResponse		"Data not found error"
+//	@Failure		500	{object}	errorResponse		"Internal server error"
+//	@Router			/customers/{id} [get]
+//	@Security		BearerAuth
+func (ch *CustomerHandler) GetCustomer(ctx *gin.Context) {
+	var req getCustomerRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		validationError(ctx, err)
+		return
+	}
+
+	customer, err := ch.svc.GetCustomer(ctx, req.CustomerID)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
+
+	rsp := newCustomerResponse(customer)
+
+	handleSuccess(ctx, rsp)
+}
+
+// updateCustomerRequest represents the request body for updating a customer
+type updateCustomerRequest struct {
+	ID               uint64 `json:"id" binding:"required" example:"1"`
+	Name             string `json:"name" example:"John Doe"`
+	Email            string `json:"email" example:"john.doe@example.com"`
+	Phone            string `json:"phone" example:"123-456-7890"`
+	Address          string `json:"address" example:"123 Elm Street"`
+	DateOfBirth      string `json:"date_of_birth" example:"1990-01-01"`
+	Gender           string `json:"gender" example:"male"`
+	MembershipStatus string `json:"membership_status" example:"gold"`
+	JoinDate         string `json:"join_date" example:"2024-08-01T15:04:05Z"`
+	Preferences      string `json:"preferences" example:"sea view, non-smoking"`
+	LastVisitDate    string `json:"last_visit_date" example:"2024-08-01T15:04:05Z"`
+}
+
+// UpdateCustomer godoc
+//
+//	@Summary		Update a customer
+//	@Description	Update a customer's details by id
+//	@Tags			Customers
+//	@Accept			json
+//	@Produce		json
+//	@Param			id					path		uint64					true	"Customer ID"
+//	@Param			updateCustomerRequest	body		updateCustomerRequest	true	"Update customer request"
+//	@Success		200					{object}	customerResponse		"Customer updated"
+//	@Failure		400					{object}	errorResponse			"Validation error"
+//	@Failure		409					{object}	errorResponse			"Data conflict error"
+//	@Failure		500					{object}	errorResponse			"Internal server error"
+//	@Router			/customers/{id} [put]
+//	@Security		BearerAuth
 func (ch *CustomerHandler) UpdateCustomer(ctx *gin.Context) {
-	var req domain.Customer
+	var req updateCustomerRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		validationError(ctx, err)
 		return
 	}
 
-	updatedCustomer, err := ch.svc.UpdateCustomer(ctx, &req)
+	// Parse the date of birth if provided
+	var dob time.Time
+	if req.DateOfBirth != "" {
+		parsedDOB, err := time.Parse("2006-01-02", req.DateOfBirth)
+		if err != nil {
+			validationError(ctx, err)
+			return
+		}
+		dob = parsedDOB
+	}
+	var lvd time.Time
+	if req.DateOfBirth != "" {
+		parsedLVD, err := time.Parse("2006-01-02", req.LastVisitDate)
+		if err != nil {
+			validationError(ctx, err)
+			return
+		}
+		lvd = parsedLVD
+	}
+
+	customer := domain.Customer{
+		ID:               req.ID,
+		Name:             req.Name,
+		Email:            req.Email,
+		Phone:            req.Phone,
+		Address:          req.Address,
+		DateOfBirth:      &dob,
+		Gender:           req.Gender,
+		MembershipStatus: req.MembershipStatus,
+		Preferences:      req.Preferences,
+		LastVisitDate:    &lvd,
+	}
+
+	updatedCustomer, err := ch.svc.UpdateCustomer(ctx, &customer)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		handleError(ctx, err)
 		return
 	}
-	resp := ch.newCustomerResponse(updatedCustomer)
 
-	ctx.JSON(http.StatusOK, resp)
+	rsp := newCustomerResponse(updatedCustomer)
+
+	handleSuccess(ctx, rsp)
 }
 
-// DeleteCustomer handles the HTTP request to delete a customer by ID
+// deleteCustomerRequest represents the request body for deleting a customer
+type deleteCustomerRequest struct {
+	ID uint64 `uri:"id" binding:"required,min=1" example:"1"`
+}
+
+// DeleteCustomer godoc
+//
+//	@Summary		Delete a customer
+//	@Description	Delete a customer by id
+//	@Tags			Customers
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		uint64			true	"Customer ID"
+//	@Success		200	{object}	response		"Customer deleted"
+//	@Failure		400	{object}	errorResponse	"Validation error"
+//	@Failure		404	{object}	errorResponse	"Data not found error"
+//	@Failure		500	{object}	errorResponse	"Internal server error"
+//	@Router			/customers/{id} [delete]
+//	@Security		BearerAuth
 func (ch *CustomerHandler) DeleteCustomer(ctx *gin.Context) {
-	customerIDStr, exists := ctx.Params.Get("customer_id")
-	if !exists {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "customer_id parameter is required"})
+	var req deleteCustomerRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		validationError(ctx, err)
 		return
 	}
 
-	customerID, err := convertStringToUint64(customerIDStr)
+	err := ch.svc.DeleteCustomer(ctx, req.ID)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid customer_id format"})
+		handleError(ctx, err)
 		return
 	}
 
-	err = ch.svc.DeleteCustomer(ctx, customerID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"message": "Customer deleted successfully"})
+	handleSuccess(ctx, "Customer deleted successfully")
 }
 
-// customerResponse represents the response structure for customer-related responses
+// customerResponse represents the response body for a customer
 type customerResponse struct {
-	ID               uint64                 `json:"id"`
-	Name             string                 `json:"name"`
-	Email            string                 `json:"email"`
-	Phone            string                 `json:"phone"`
-	Address          string                 `json:"address"`
-	DateOfBirth      time.Time              `json:"date_of_birth"`
-	Gender           string                 `json:"gender"`
-	MembershipStatus string                 `json:"membership_status"`
-	JoinDate         time.Time              `json:"join_date"`
-	Preferences      string				 	`json:"preferences"`
-	LastVisitDate    time.Time              `json:"last_visit_date"`
-	CreatedAt        time.Time              `json:"created_at"`
-	UpdatedAt        time.Time              `json:"updated_at"`
+	ID               uint64    `json:"id" example:"1"`
+	Name             string    `json:"name" example:"John Doe"`
+	Email            string    `json:"email" example:"john.doe@example.com"`
+	Phone            string    `json:"phone" example:"123-456-7890"`
+	Address          string    `json:"address" example:"123 Elm Street"`
+	DateOfBirth      time.Time `json:"date_of_birth" example:"1990-01-01"`
+	Gender           string    `json:"gender" example:"male"`
+	MembershipStatus string    `json:"membership_status" example:"gold"`
+	JoinDate         time.Time `json:"join_date" example:"2024-08-01T15:04:05Z"`
+	Preferences      string    `json:"preferences" example:"sea view, non-smoking"`
+	LastVisitDate    time.Time `json:"last_visit_date" example:"2024-08-01T15:04:05Z"`
+	CreatedAt        time.Time `json:"created_at" example:"2024-07-01T15:04:05Z"`
+	UpdatedAt        time.Time `json:"updated_at" example:"2024-08-01T15:04:05Z"`
 }
 
-// newBookingResponse creates a new booking response
-func (ch *CustomerHandler) newCustomerResponse(customer *domain.Customer) customerResponse {
-    return customerResponse{
-        ID:              customer.ID,
-        Name:            customer.Name,
-        Email:           customer.Email,
-        Phone:           customer.Phone,
-        Address:         customer.Address,
-        DateOfBirth:     derefTime(customer.DateOfBirth),
-        Gender:          customer.Gender,
-        MembershipStatus: customer.MembershipStatus,
-        JoinDate:        derefTime(customer.JoinDate),
-        Preferences:     customer.Preferences,
-        LastVisitDate:   derefTime(customer.LastVisitDate),
-        CreatedAt:       derefTime(customer.CreatedAt),
-        UpdatedAt:       derefTime(customer.UpdatedAt),
-    }
+// newCustomerResponse creates a new customer response
+func newCustomerResponse(customer *domain.Customer) customerResponse {
+	var dob, lastVisitDate, createdAt, updatedAt, joinDate time.Time
+
+	if customer.DateOfBirth != nil {
+		dob = *customer.DateOfBirth
+	}
+	if customer.LastVisitDate != nil {
+		lastVisitDate = *customer.LastVisitDate
+	}
+	if customer.CreatedAt != nil {
+		createdAt = *customer.CreatedAt
+	}
+	if customer.UpdatedAt != nil {
+		updatedAt = *customer.UpdatedAt
+	}
+	if customer.JoinDate != nil {
+		joinDate = *customer.JoinDate
+	}
+
+	return customerResponse{
+		ID:               customer.ID,
+		Name:             customer.Name,
+		Email:            customer.Email,
+		Phone:            customer.Phone,
+		Address:          customer.Address,
+		DateOfBirth:      dob,
+		Gender:           customer.Gender,
+		MembershipStatus: customer.MembershipStatus,
+		JoinDate:         joinDate,
+		Preferences:      customer.Preferences,
+		LastVisitDate:    lastVisitDate,
+		CreatedAt:        createdAt,
+		UpdatedAt:        updatedAt,
+	}
 }

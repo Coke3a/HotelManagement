@@ -76,15 +76,15 @@ func NewRouter(
 			conversation.POST("/", bookingHandler.CreateBooking)
 			conversation.GET("/", bookingHandler.ListBookings)
 			conversation.GET("/:id", bookingHandler.GetBooking)
-			conversation.PUT("/:id", bookingHandler.UpdateBooking)
+			conversation.PUT("/", bookingHandler.UpdateBooking)
 			conversation.DELETE("/:id", bookingHandler.DeleteBooking)
 		}
 		customer := v1.Group("/customers")
 		{
-			customer.POST("/", customerHandler.RegisterCustomer)
+			customer.POST("/", customerHandler.CreateCustomer)
 			customer.GET("/", customerHandler.ListCustomers)
 			customer.GET("/:id", customerHandler.GetCustomer)
-			customer.PUT("/:id", customerHandler.UpdateCustomer)
+			customer.PUT("/", customerHandler.UpdateCustomer)
 			customer.DELETE("/:id", customerHandler.DeleteCustomer)
 		}
 		payment := v1.Group("/payments")
@@ -92,7 +92,7 @@ func NewRouter(
 			payment.POST("/", paymentHandler.CreatePayment)
 			payment.GET("/", paymentHandler.ListPayments)
 			payment.GET("/:id", paymentHandler.GetPayment)
-			payment.PUT("/:id", paymentHandler.UpdatePayment)
+			payment.PUT("/", paymentHandler.UpdatePayment)
 			payment.DELETE("/:id", paymentHandler.DeletePayment)
 		}
 		rank := v1.Group("/ranks")
@@ -100,7 +100,7 @@ func NewRouter(
 			rank.POST("/", rankHandler.CreateRank)
 			rank.GET("/", rankHandler.ListRanks)
 			rank.GET("/:id", rankHandler.GetRank)
-			rank.PUT("/:id", rankHandler.UpdateRank)
+			rank.PUT("/", rankHandler.UpdateRank)
 			rank.DELETE("/:id", rankHandler.DeleteRank)
 		}
 		ratePrice := v1.Group("/rate_prices")
@@ -108,7 +108,7 @@ func NewRouter(
 			ratePrice.POST("/", ratePriceHandler.CreateRatePrice)
 			ratePrice.GET("/", ratePriceHandler.ListRatePrices)
 			ratePrice.GET("/:id", ratePriceHandler.GetRatePrice)
-			ratePrice.PUT("/:id", ratePriceHandler.UpdateRatePrice)
+			ratePrice.PUT("/", ratePriceHandler.UpdateRatePrice)
 			ratePrice.DELETE("/:id", ratePriceHandler.DeleteRatePrice)
 		}
 		room := v1.Group("/rooms")
@@ -116,7 +116,7 @@ func NewRouter(
 			room.POST("/", roomHandler.CreateRoom)
 			room.GET("/", roomHandler.ListRooms)
 			room.GET("/:id", roomHandler.GetRoom)
-			room.PUT("/:id", roomHandler.UpdateRoom)
+			room.PUT("/", roomHandler.UpdateRoom)
 			room.DELETE("/:id", roomHandler.DeleteRoom)
 		}
 	}

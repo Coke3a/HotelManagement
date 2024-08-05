@@ -10,7 +10,7 @@ type Room struct {
 	Status        string
 	Floor         int
 	Capacity      int
-	PricePerNight float64
+	DefaultPrice float64
 	CreatedAt     *time.Time
 	UpdatedAt     *time.Time
 }

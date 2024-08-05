@@ -21,7 +21,7 @@ func NewBookingService(repo port.BookingRepository) *BookingService {
 }
 
 func (bs *BookingService) CreateBooking(ctx context.Context, booking *domain.Booking) (*domain.Booking, error) {
-	if booking.CustomerID == 0 || booking.RoomID == 0 || booking.CheckInDate == nil || booking.CheckOutDate == nil || booking.TotalAmount <= 0 {
+	if booking.CustomerID == 0 || booking.RatePriceId == 0 || booking.CheckInDate == nil || booking.CheckOutDate == nil || booking.TotalAmount <= 0 {
 		return nil, domain.ErrInvalidData
 	}
 
@@ -73,7 +73,7 @@ func (bs *BookingService) UpdateBooking(ctx context.Context, booking *domain.Boo
 
 	// Check if there are changes
 	if booking.CustomerID == existingBooking.CustomerID &&
-		booking.RoomID == existingBooking.RoomID &&
+		booking.RatePriceId == existingBooking.RatePriceId &&
 		booking.CheckInDate.Equal(*existingBooking.CheckInDate) &&
 		booking.CheckOutDate.Equal(*existingBooking.CheckOutDate) &&
 		booking.Status == existingBooking.Status &&

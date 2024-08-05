@@ -72,7 +72,7 @@ func (rs *RoomService) UpdateRoom(ctx context.Context, room *domain.Room) (*doma
 		room.Status == "" &&
 		room.Floor == 0 &&
 		room.Capacity == 0 &&
-		room.PricePerNight == 0
+		room.DefaultPrice == 0
 
 	sameData := existingRoom.RoomNumber == room.RoomNumber &&
 		existingRoom.Type == room.Type &&
@@ -80,7 +80,7 @@ func (rs *RoomService) UpdateRoom(ctx context.Context, room *domain.Room) (*doma
 		existingRoom.Status == room.Status &&
 		existingRoom.Floor == room.Floor &&
 		existingRoom.Capacity == room.Capacity &&
-		existingRoom.PricePerNight == room.PricePerNight
+		existingRoom.DefaultPrice == room.DefaultPrice
 
 	if emptyData || sameData {
 		return nil, domain.ErrNoUpdatedData

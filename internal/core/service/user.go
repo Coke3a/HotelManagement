@@ -11,13 +11,11 @@ import (
 
 type UserService struct {
 	repo port.UserRepository
-	// cache port.CacheRepository (if you are using caching)
 }
 
 func NewUserService(repo port.UserRepository) *UserService {
 	return &UserService{
 		repo,
-		// cache,
 	}
 }
 

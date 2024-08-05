@@ -21,7 +21,7 @@ func NewRatePriceService(repo port.RatePriceRepository) *RatePriceService {
 }
 
 func (rps *RatePriceService) RegisterRatePrice(ctx context.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
-	if ratePrice.Name == "" || ratePrice.DiscountPercentage < 0 || ratePrice.RoomID == 0 {
+	if ratePrice.Name == "" || ratePrice.PricePerNight < 0 || ratePrice.RoomID == 0 {
 		return nil, domain.ErrInvalidData
 	}
 
@@ -74,16 +74,12 @@ func (rps *RatePriceService) UpdateRatePrice(ctx context.Context, ratePrice *dom
 	// Check if there are changes
 	emptyData := ratePrice.Name == "" &&
 		ratePrice.Description == "" &&
-		ratePrice.DiscountPercentage == 0 &&
-		ratePrice.StartDate == nil &&
-		ratePrice.EndDate == nil &&
+		ratePrice.PricePerNight == 0 &&
 		ratePrice.RoomID == 0
 
 	sameData := existingRatePrice.Name == ratePrice.Name &&
 		existingRatePrice.Description == ratePrice.Description &&
-		existingRatePrice.DiscountPercentage == ratePrice.DiscountPercentage &&
-		existingRatePrice.StartDate.Equal(*ratePrice.StartDate) &&
-		existingRatePrice.EndDate.Equal(*ratePrice.EndDate) &&
+		existingRatePrice.PricePerNight == ratePrice.PricePerNight &&
 		existingRatePrice.RoomID == ratePrice.RoomID
 
 	if emptyData || sameData {

@@ -23,7 +23,7 @@ func NewRoomRepository(db *postgres.DB) *RoomRepository {
 func (rr *RoomRepository) CreateRoom(ctx context.Context, room *domain.Room) (*domain.Room, error) {
 	query := rr.db.QueryBuilder.Insert("rooms").
 		Columns("room_number", "type", "description", "status", "floor", "capacity", "price_per_night").
-		Values(room.RoomNumber, room.Type, room.Description, room.Status, room.Floor, room.Capacity, room.PricePerNight).
+		Values(room.RoomNumber, room.Type, room.Description, room.Status, room.Floor, room.Capacity, room.DefaultPrice).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -40,7 +40,7 @@ func (rr *RoomRepository) CreateRoom(ctx context.Context, room *domain.Room) (*d
 		&room.Status,
 		&room.Floor,
 		&room.Capacity,
-		&room.PricePerNight,
+		&room.DefaultPrice,
 		&room.CreatedAt,
 		&room.UpdatedAt,
 	)
@@ -77,7 +77,7 @@ func (rr *RoomRepository) GetRoomByID(ctx context.Context, id uint64) (*domain.R
 		&room.Status,
 		&room.Floor,
 		&room.Capacity,
-		&room.PricePerNight,
+		&room.DefaultPrice,
 		&room.CreatedAt,
 		&room.UpdatedAt,
 	)
@@ -123,7 +123,7 @@ func (rr *RoomRepository) ListRooms(ctx context.Context, skip, limit uint64) ([]
 			&room.Status,
 			&room.Floor,
 			&room.Capacity,
-			&room.PricePerNight,
+			&room.DefaultPrice,
 			&room.CreatedAt,
 			&room.UpdatedAt,
 		)
@@ -149,7 +149,7 @@ func (rr *RoomRepository) UpdateRoom(ctx context.Context, room *domain.Room) (*d
 		Set("status", sq.Expr("COALESCE(?, status)", room.Status)).
 		Set("floor", sq.Expr("COALESCE(?, floor)", room.Floor)).
 		Set("capacity", sq.Expr("COALESCE(?, capacity)", room.Capacity)).
-		Set("price_per_night", sq.Expr("COALESCE(?, price_per_night)", room.PricePerNight)).
+		Set("default_price", sq.Expr("COALESCE(?, default_price)", room.DefaultPrice)).
 		Where(sq.Eq{"id": room.ID}).
 		Suffix("RETURNING *")
 
@@ -167,7 +167,7 @@ func (rr *RoomRepository) UpdateRoom(ctx context.Context, room *domain.Room) (*d
 		&room.Status,
 		&room.Floor,
 		&room.Capacity,
-		&room.PricePerNight,
+		&room.DefaultPrice,
 		&room.CreatedAt,
 		&room.UpdatedAt,
 	)

@@ -4,7 +4,6 @@ import (
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
-	"time"
 )
 
 // RatePriceHandler represents the HTTP handler for rate price-related requests
@@ -21,12 +20,10 @@ func NewRatePriceHandler(svc port.RatePriceService) *RatePriceHandler {
 
 // createRatePriceRequest represents the request body for creating a rate price
 type createRatePriceRequest struct {
-	Name               string  `json:"name" binding:"required" example:"Winter Sale"`
-	Description        string  `json:"description" example:"Discount for winter season"`
-	DiscountPercentage float64 `json:"discount_percentage" binding:"required,gt=0" example:"10.5"`
-	StartDate          string  `json:"start_date" binding:"required" example:"2024-12-01T00:00:00Z"`
-	EndDate            string  `json:"end_date" binding:"required" example:"2025-01-31T23:59:59Z"`
-	RoomID             uint64  `json:"room_id" binding:"required" example:"101"`
+	Name          string  `json:"name" binding:"required" example:"Winter Sale"`
+	Description   string  `json:"description" example:"Discount for winter season"`
+	PricePerNight float64 `json:"price_per_night" binding:"required,gt=0" example:"10.5"`
+	RoomID        uint64  `json:"room_id" binding:"required" example:"101"`
 }
 
 // CreateRatePrice godoc
@@ -49,25 +46,11 @@ func (rph *RatePriceHandler) CreateRatePrice(ctx *gin.Context) {
 		return
 	}
 
-	startDate, err := time.Parse(time.RFC3339, req.StartDate)
-	if err != nil {
-		validationError(ctx, err)
-		return
-	}
-
-	endDate, err := time.Parse(time.RFC3339, req.EndDate)
-	if err != nil {
-		validationError(ctx, err)
-		return
-	}
-
 	ratePrice := domain.RatePrice{
-		Name:              req.Name,
-		Description:       req.Description,
-		DiscountPercentage: req.DiscountPercentage,
-		StartDate:         &startDate,
-		EndDate:           &endDate,
-		RoomID:            req.RoomID,
+		Name:          req.Name,
+		Description:   req.Description,
+		PricePerNight: req.PricePerNight,
+		RoomID:        req.RoomID,
 	}
 
 	createdRatePrice, err := rph.svc.RegisterRatePrice(ctx, &ratePrice)
@@ -166,13 +149,11 @@ func (rph *RatePriceHandler) GetRatePrice(ctx *gin.Context) {
 
 // updateRatePriceRequest represents the request body for updating a rate price
 type updateRatePriceRequest struct {
-	ID       uint64  `json:"id" binding:"required" example:"1"`
-	Name              string  `json:"name" binding:"required" example:"Winter Sale"`
-	Description       string  `json:"description" example:"Discount for winter season"`
-	DiscountPercentage float64 `json:"discount_percentage" binding:"required" example:"15.5"`
-	StartDate         string  `json:"start_date" binding:"required" example:"2024-12-01T00:00:00Z"`
-	EndDate           string  `json:"end_date" binding:"required" example:"2025-01-31T23:59:59Z"`
-	RoomID            uint64  `json:"room_id" binding:"required" example:"101"`
+	ID            uint64  `json:"id" binding:"required" example:"1"`
+	Name          string  `json:"name" binding:"required" example:"Winter Sale"`
+	Description   string  `json:"description" example:"Discount for winter season"`
+	PricePerNight float64 `json:"price_per_night" binding:"required" example:"15.5"`
+	RoomID        uint64  `json:"room_id" binding:"required" example:"101"`
 }
 
 // UpdateRatePrice godoc
@@ -197,26 +178,12 @@ func (rph *RatePriceHandler) UpdateRatePrice(ctx *gin.Context) {
 		return
 	}
 
-	startDate, err := time.Parse(time.RFC3339, req.StartDate)
-	if err != nil {
-		validationError(ctx, err)
-		return
-	}
-
-	endDate, err := time.Parse(time.RFC3339, req.EndDate)
-	if err != nil {
-		validationError(ctx, err)
-		return
-	}
-
 	ratePrice := domain.RatePrice{
-		ID:                 req.ID,
-		Name:               req.Name,
-		Description:        req.Description,
-		DiscountPercentage: req.DiscountPercentage,
-		StartDate:          &startDate,
-		EndDate:            &endDate,
-		RoomID:             req.RoomID,
+		ID:            req.ID,
+		Name:          req.Name,
+		Description:   req.Description,
+		PricePerNight: req.PricePerNight,
+		RoomID:        req.RoomID,
 	}
 
 	updatedRatePrice, err := rph.svc.UpdateRatePrice(ctx, &ratePrice)
@@ -267,24 +234,20 @@ func (rph *RatePriceHandler) DeleteRatePrice(ctx *gin.Context) {
 
 // ratePriceResponse represents the response body for a rate price
 type ratePriceResponse struct {
-	ID                uint64    `json:"id" example:"1"`
-	Name              string    `json:"name" example:"Winter Sale"`
-	Description       string    `json:"description" example:"Discount for winter season"`
-	DiscountPercentage float64   `json:"discount_percentage" example:"15.5"`
-	StartDate         time.Time `json:"start_date" example:"2024-12-01T00:00:00Z"`
-	EndDate           time.Time `json:"end_date" example:"2025-01-31T23:59:59Z"`
-	RoomID            uint64    `json:"room_id" example:"101"`
+	ID            uint64  `json:"id" example:"1"`
+	Name          string  `json:"name" example:"Winter Sale"`
+	Description   string  `json:"description" example:"Discount for winter season"`
+	PricePerNight float64 `json:"price_per_night" example:"15.5"`
+	RoomID        uint64  `json:"room_id" example:"101"`
 }
 
 // newRatePriceResponse creates a new rate price response
 func newRatePriceResponse(ratePrice *domain.RatePrice) ratePriceResponse {
 	return ratePriceResponse{
-		ID:                ratePrice.ID,
-		Name:              ratePrice.Name,
-		Description:       ratePrice.Description,
-		DiscountPercentage: ratePrice.DiscountPercentage,
-		StartDate:         *ratePrice.StartDate,
-		EndDate:           *ratePrice.EndDate,
-		RoomID:            ratePrice.RoomID,
+		ID:            ratePrice.ID,
+		Name:          ratePrice.Name,
+		Description:   ratePrice.Description,
+		PricePerNight: ratePrice.PricePerNight,
+		RoomID:        ratePrice.RoomID,
 	}
 }

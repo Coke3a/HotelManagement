@@ -1,10 +1,11 @@
 package http
 
 import (
+	"time"
+
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
-	"time"
 )
 
 // RoomHandler represents the HTTP handler for room-related requests
@@ -21,13 +22,13 @@ func NewRoomHandler(svc port.RoomService) *RoomHandler {
 
 // createRoomRequest represents the request body for creating a room
 type createRoomRequest struct {
-	RoomNumber    string  `json:"room_number" binding:"required" example:"101"`
-	Type          string  `json:"type" binding:"required" example:"Deluxe"`
-	Description   string  `json:"description" example:"A spacious room with ocean view"`
-	Status        string  `json:"status" binding:"required" example:"available"`
-	Floor         int     `json:"floor" binding:"required" example:"1"`
-	Capacity      int     `json:"capacity" binding:"required,min=1" example:"2"`
-	PricePerNight float64 `json:"price_per_night" binding:"required,gt=0" example:"150.0"`
+	RoomNumber   string  `json:"room_number" binding:"required" example:"101"`
+	Type         string  `json:"type" binding:"required" example:"Deluxe"`
+	Description  string  `json:"description" example:"A spacious room with ocean view"`
+	Status       string  `json:"status" binding:"required" example:"available"`
+	Floor        int     `json:"floor" binding:"required" example:"1"`
+	Capacity     int     `json:"capacity" binding:"required,min=1" example:"2"`
+	DefaultPrice float64 `json:"price_per_night" binding:"required,gt=0" example:"150.0"`
 }
 
 // CreateRoom godoc
@@ -51,13 +52,13 @@ func (rh *RoomHandler) CreateRoom(ctx *gin.Context) {
 	}
 
 	room := domain.Room{
-		RoomNumber:    req.RoomNumber,
-		Type:          req.Type,
-		Description:   req.Description,
-		Status:        req.Status,
-		Floor:         req.Floor,
-		Capacity:      req.Capacity,
-		PricePerNight: req.PricePerNight,
+		RoomNumber:   req.RoomNumber,
+		Type:         req.Type,
+		Description:  req.Description,
+		Status:       req.Status,
+		Floor:        req.Floor,
+		Capacity:     req.Capacity,
+		DefaultPrice: req.DefaultPrice,
 	}
 
 	createdRoom, err := rh.svc.RegisterRoom(ctx, &room)
@@ -156,14 +157,14 @@ func (rh *RoomHandler) GetRoom(ctx *gin.Context) {
 
 // updateRoomRequest represents the request body for updating a room
 type updateRoomRequest struct {
-	ID         uint64  `json:"id" binding:"required" example:"1"`
-	RoomNumber     string  `json:"room_number" binding:"required" example:"101"`
-	Type           string  `json:"type" binding:"required" example:"Deluxe"`
-	Description    string  `json:"description" example:"A spacious room with ocean view"`
-	Status         string  `json:"status" binding:"required" example:"available"`
-	Floor          int     `json:"floor" binding:"required" example:"1"`
-	Capacity       int     `json:"capacity" binding:"required,min=1" example:"2"`
-	PricePerNight  float64 `json:"price_per_night" binding:"required,gt=0" example:"150.0"`
+	ID           uint64  `json:"id" binding:"required" example:"1"`
+	RoomNumber   string  `json:"room_number" binding:"required" example:"101"`
+	Type         string  `json:"type" binding:"required" example:"Deluxe"`
+	Description  string  `json:"description" example:"A spacious room with ocean view"`
+	Status       string  `json:"status" binding:"required" example:"available"`
+	Floor        int     `json:"floor" binding:"required" example:"1"`
+	Capacity     int     `json:"capacity" binding:"required,min=1" example:"2"`
+	DefaultPrice float64 `json:"default_price" binding:"required,gt=0" example:"150.0"`
 }
 
 // UpdateRoom godoc
@@ -189,14 +190,14 @@ func (rh *RoomHandler) UpdateRoom(ctx *gin.Context) {
 	}
 
 	room := domain.Room{
-		ID:            req.ID,
-		RoomNumber:    req.RoomNumber,
-		Type:          req.Type,
-		Description:   req.Description,
-		Status:        req.Status,
-		Floor:         req.Floor,
-		Capacity:      req.Capacity,
-		PricePerNight: req.PricePerNight,
+		ID:           req.ID,
+		RoomNumber:   req.RoomNumber,
+		Type:         req.Type,
+		Description:  req.Description,
+		Status:       req.Status,
+		Floor:        req.Floor,
+		Capacity:     req.Capacity,
+		DefaultPrice: req.DefaultPrice,
 	}
 
 	updatedRoom, err := rh.svc.UpdateRoom(ctx, &room)
@@ -212,7 +213,7 @@ func (rh *RoomHandler) UpdateRoom(ctx *gin.Context) {
 
 // deleteRoomRequest represents the request body for deleting a room
 type deleteRoomRequest struct {
-	RoomID uint64 `uri:"room_id" binding:"required,min=1" example:"1"`
+	RoomID uint64 `uri:"id" binding:"required,min=1" example:"1"`
 }
 
 // DeleteRoom godoc
@@ -247,30 +248,30 @@ func (rh *RoomHandler) DeleteRoom(ctx *gin.Context) {
 
 // roomResponse represents the response body for a room
 type roomResponse struct {
-	ID            uint64    `json:"id" example:"1"`
-	RoomNumber    string    `json:"room_number" example:"101"`
-	Type          string    `json:"type" example:"Deluxe"`
-	Description   string    `json:"description" example:"A spacious room with ocean view"`
-	Status        string    `json:"status" example:"available"`
-	Floor         int       `json:"floor" example:"1"`
-	Capacity      int       `json:"capacity" example:"2"`
-	PricePerNight float64   `json:"price_per_night" example:"150.0"`
-	CreatedAt     time.Time `json:"created_at" example:"2024-07-01T15:04:05Z"`
-	UpdatedAt     time.Time `json:"updated_at" example:"2024-07-01T15:04:05Z"`
+	ID           uint64    `json:"id" example:"1"`
+	RoomNumber   string    `json:"room_number" example:"101"`
+	Type         string    `json:"type" example:"Deluxe"`
+	Description  string    `json:"description" example:"A spacious room with ocean view"`
+	Status       string    `json:"status" example:"available"`
+	Floor        int       `json:"floor" example:"1"`
+	Capacity     int       `json:"capacity" example:"2"`
+	DefaultPrice float64   `json:"default_price" example:"150.0"`
+	CreatedAt    time.Time `json:"created_at" example:"2024-07-01T15:04:05Z"`
+	UpdatedAt    time.Time `json:"updated_at" example:"2024-07-01T15:04:05Z"`
 }
 
 // newRoomResponse creates a new room response
 func newRoomResponse(room *domain.Room) roomResponse {
 	return roomResponse{
-		ID:            room.ID,
-		RoomNumber:    room.RoomNumber,
-		Type:          room.Type,
-		Description:   room.Description,
-		Status:        room.Status,
-		Floor:         room.Floor,
-		Capacity:      room.Capacity,
-		PricePerNight: room.PricePerNight,
-		CreatedAt:     *room.CreatedAt,
-		UpdatedAt:     *room.UpdatedAt,
+		ID:           room.ID,
+		RoomNumber:   room.RoomNumber,
+		Type:         room.Type,
+		Description:  room.Description,
+		Status:       room.Status,
+		Floor:        room.Floor,
+		Capacity:     room.Capacity,
+		DefaultPrice: room.DefaultPrice,
+		CreatedAt:    *room.CreatedAt,
+		UpdatedAt:    *room.UpdatedAt,
 	}
 }

@@ -6,9 +6,7 @@ type RatePrice struct {
 	ID                uint64
 	Name              string
 	Description       string
-	DiscountPercentage float64
-	StartDate         *time.Time
-	EndDate           *time.Time
+	PricePerNight float64
 	RoomID            uint64
 	CreatedAt         *time.Time
 	UpdatedAt         *time.Time

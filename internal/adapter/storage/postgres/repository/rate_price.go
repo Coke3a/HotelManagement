@@ -22,8 +22,8 @@ func NewRatePriceRepository(db *postgres.DB) *RatePriceRepository {
 
 func (rpr *RatePriceRepository) CreateRatePrice(ctx context.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
 	query := rpr.db.QueryBuilder.Insert("rate_prices").
-		Columns("name", "description", "discount_percentage", "start_date", "end_date", "room_id").
-		Values(ratePrice.Name, ratePrice.Description, ratePrice.DiscountPercentage, ratePrice.StartDate, ratePrice.EndDate, ratePrice.RoomID).
+		Columns("name", "description", "price_per_night", "room_id").
+		Values(ratePrice.Name, ratePrice.Description, ratePrice.PricePerNight, ratePrice.RoomID).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -36,9 +36,7 @@ func (rpr *RatePriceRepository) CreateRatePrice(ctx context.Context, ratePrice *
 		&ratePrice.ID,
 		&ratePrice.Name,
 		&ratePrice.Description,
-		&ratePrice.DiscountPercentage,
-		&ratePrice.StartDate,
-		&ratePrice.EndDate,
+		&ratePrice.PricePerNight,
 		&ratePrice.RoomID,
 		&ratePrice.CreatedAt,
 		&ratePrice.UpdatedAt,
@@ -72,9 +70,7 @@ func (rpr *RatePriceRepository) GetRatePriceByID(ctx context.Context, id uint64)
 		&ratePrice.ID,
 		&ratePrice.Name,
 		&ratePrice.Description,
-		&ratePrice.DiscountPercentage,
-		&ratePrice.StartDate,
-		&ratePrice.EndDate,
+		&ratePrice.PricePerNight,
 		&ratePrice.RoomID,
 		&ratePrice.CreatedAt,
 		&ratePrice.UpdatedAt,
@@ -117,9 +113,7 @@ func (rpr *RatePriceRepository) ListRatePrices(ctx context.Context, skip, limit 
 			&ratePrice.ID,
 			&ratePrice.Name,
 			&ratePrice.Description,
-			&ratePrice.DiscountPercentage,
-			&ratePrice.StartDate,
-			&ratePrice.EndDate,
+			&ratePrice.PricePerNight,
 			&ratePrice.RoomID,
 			&ratePrice.CreatedAt,
 			&ratePrice.UpdatedAt,
@@ -142,9 +136,7 @@ func (rpr *RatePriceRepository) UpdateRatePrice(ctx context.Context, ratePrice *
 	query := rpr.db.QueryBuilder.Update("rate_prices").
 		Set("name", sq.Expr("COALESCE(?, name)", ratePrice.Name)).
 		Set("description", sq.Expr("COALESCE(?, description)", ratePrice.Description)).
-		Set("discount_percentage", sq.Expr("COALESCE(?, discount_percentage)", ratePrice.DiscountPercentage)).
-		Set("start_date", sq.Expr("COALESCE(?, start_date)", ratePrice.StartDate)).
-		Set("end_date", sq.Expr("COALESCE(?, end_date)", ratePrice.EndDate)).
+		Set("price_per_night", sq.Expr("COALESCE(?, price_per_night)", ratePrice.PricePerNight)).
 		Set("room_id", sq.Expr("COALESCE(?, room_id)", ratePrice.RoomID)).
 		Where(sq.Eq{"id": ratePrice.ID}).
 		Suffix("RETURNING *")
@@ -159,9 +151,7 @@ func (rpr *RatePriceRepository) UpdateRatePrice(ctx context.Context, ratePrice *
 		&ratePrice.ID,
 		&ratePrice.Name,
 		&ratePrice.Description,
-		&ratePrice.DiscountPercentage,
-		&ratePrice.StartDate,
-		&ratePrice.EndDate,
+		&ratePrice.PricePerNight,
 		&ratePrice.RoomID,
 		&ratePrice.CreatedAt,
 		&ratePrice.UpdatedAt,

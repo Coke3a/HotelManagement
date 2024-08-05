@@ -1,7 +1,7 @@
 CREATE TABLE bookings (
     id SERIAL PRIMARY KEY,
     customer_id INT REFERENCES customers(id),
-    room_id INT REFERENCES rooms(id),
+    rate_prices_id INT REFERENCES rate_prices(id),
     check_in_date TIMESTAMP NOT NULL,
     check_out_date TIMESTAMP NOT NULL,
     status VARCHAR(50),

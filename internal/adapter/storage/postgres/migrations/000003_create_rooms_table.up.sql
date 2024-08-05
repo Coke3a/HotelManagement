@@ -6,7 +6,7 @@ CREATE TABLE rooms (
     status VARCHAR(50),
     floor INT,
     capacity INT,
-    price_per_night DECIMAL(10, 2),
+    default_price DECIMAL(10, 2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
