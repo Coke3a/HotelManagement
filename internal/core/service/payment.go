@@ -10,13 +10,11 @@ import (
 
 type PaymentService struct {
 	repo port.PaymentRepository
-	// cache port.CacheRepository (if you are using caching)
 }
 
 func NewPaymentService(repo port.PaymentRepository) *PaymentService {
 	return &PaymentService{
 		repo,
-		// cache,
 	}
 }
 

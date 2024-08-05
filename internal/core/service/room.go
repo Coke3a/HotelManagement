@@ -9,13 +9,11 @@ import (
 
 type RoomService struct {
 	repo port.RoomRepository
-	// cache port.CacheRepository (if you are using caching)
 }
 
 func NewRoomService(repo port.RoomRepository) *RoomService {
 	return &RoomService{
 		repo,
-		// cache,
 	}
 }
 

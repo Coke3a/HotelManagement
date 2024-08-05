@@ -10,13 +10,11 @@ import (
 
 type BookingService struct {
 	repo port.BookingRepository
-	// cache port.CacheRepository (if you are using caching)
 }
 
 func NewBookingService(repo port.BookingRepository) *BookingService {
 	return &BookingService{
 		repo,
-		// cache,
 	}
 }
 

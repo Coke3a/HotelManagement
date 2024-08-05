@@ -9,13 +9,11 @@ import (
 
 type RankService struct {
 	repo port.RankRepository
-	// cache port.CacheRepository (if you are using caching)
 }
 
 func NewRankService(repo port.RankRepository) *RankService {
 	return &RankService{
 		repo,
-		// cache,
 	}
 }
 

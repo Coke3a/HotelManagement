@@ -10,13 +10,11 @@ import (
 
 type RatePriceService struct {
 	repo port.RatePriceRepository
-	// cache port.CacheRepository (if you are using caching)
 }
 
 func NewRatePriceService(repo port.RatePriceRepository) *RatePriceService {
 	return &RatePriceService{
 		repo,
-		// cache,
 	}
 }
 
