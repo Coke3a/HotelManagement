@@ -116,7 +116,7 @@ func (bh *BookingHandler) ListBookings(ctx *gin.Context) {
 
 // getBookingRequest represents the request body for getting a booking
 type getBookingRequest struct {
-	BookingID uint64 `uri:"booking_id" binding:"required,min=1" example:"1"`
+	BookingID uint64 `uri:"id" binding:"required,min=1" example:"1"`
 }
 
 // GetBooking godoc
@@ -153,7 +153,7 @@ func (bh *BookingHandler) GetBooking(ctx *gin.Context) {
 
 // updateBookingRequest represents the request body for updating a booking
 type updateBookingRequest struct {
-	BookingID    uint64    `json:"booking_id" binding:"required" example:"1"`
+	BookingID    uint64    `json:"id" binding:"required" example:"1"`
 	CustomerID   uint64    `json:"customer_id" binding:"required" example:"1"`
 	RatePriceId  uint64    `json:"rate_prices_id" binding:"required" example:"1"`
 	CheckInDate  time.Time `json:"check_in_date" binding:"required" example:"2024-08-01T15:04:05Z"`
@@ -207,7 +207,7 @@ func (bh *BookingHandler) UpdateBooking(ctx *gin.Context) {
 
 // deleteBookingRequest represents the request body for deleting a booking
 type deleteBookingRequest struct {
-	BookingID uint64 `uri:"booking_id" binding:"required,min=1" example:"1"`
+	BookingID uint64 `uri:"id" binding:"required,min=1" example:"1"`
 }
 
 // DeleteBooking godoc

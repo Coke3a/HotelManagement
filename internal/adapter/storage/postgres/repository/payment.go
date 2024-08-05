@@ -137,7 +137,6 @@ func (pr *PaymentRepository) ListPayments(ctx context.Context, skip, limit uint6
 
 func (pr *PaymentRepository) UpdatePayment(ctx context.Context, payment *domain.Payment) (*domain.Payment, error) {
 	query := pr.db.QueryBuilder.Update("payments").
-		Set("booking_id", sq.Expr("COALESCE(?, booking_id)", payment.BookingID)).
 		Set("amount", sq.Expr("COALESCE(?, amount)", payment.Amount)).
 		Set("payment_method", sq.Expr("COALESCE(?, payment_method)", payment.PaymentMethod)).
 		Set("payment_date", sq.Expr("COALESCE(?, payment_date)", payment.PaymentDate)).

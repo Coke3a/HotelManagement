@@ -23,7 +23,7 @@ type createRatePriceRequest struct {
 	Name          string  `json:"name" binding:"required" example:"Winter Sale"`
 	Description   string  `json:"description" example:"Discount for winter season"`
 	PricePerNight float64 `json:"price_per_night" binding:"required,gt=0" example:"10.5"`
-	RoomID        uint64  `json:"room_id" binding:"required" example:"101"`
+	RoomID        uint64  `json:"room_id" binding:"required" example:"1"`
 }
 
 // CreateRatePrice godoc

@@ -22,7 +22,7 @@ func NewRoomRepository(db *postgres.DB) *RoomRepository {
 
 func (rr *RoomRepository) CreateRoom(ctx context.Context, room *domain.Room) (*domain.Room, error) {
 	query := rr.db.QueryBuilder.Insert("rooms").
-		Columns("room_number", "type", "description", "status", "floor", "capacity", "price_per_night").
+		Columns("room_number", "type", "description", "status", "floor", "capacity", "default_price").
 		Values(room.RoomNumber, room.Type, room.Description, room.Status, room.Floor, room.Capacity, room.DefaultPrice).
 		Suffix("RETURNING *")
 

@@ -1,10 +1,11 @@
 package http
 
 import (
+	"time"
+
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
-	"time"
 )
 
 // PaymentHandler represents the HTTP handler for payment-related requests
@@ -24,6 +25,7 @@ type createPaymentRequest struct {
 	BookingID     uint64  `json:"booking_id" binding:"required" example:"1"`
 	Amount        float64 `json:"amount" binding:"required,gt=0" example:"1000.50"`
 	PaymentMethod string  `json:"payment_method" binding:"required" example:"credit_card"`
+	Status        string  `json:"status" binding:"required" example:"Pending"`
 }
 
 // CreatePayment godoc
@@ -50,6 +52,7 @@ func (ph *PaymentHandler) CreatePayment(ctx *gin.Context) {
 		BookingID:     req.BookingID,
 		Amount:        req.Amount,
 		PaymentMethod: req.PaymentMethod,
+		Status:        req.Status,
 	}
 
 	createdPayment, err := ph.svc.ProcessPayment(ctx, &payment)
@@ -148,7 +151,7 @@ func (ph *PaymentHandler) GetPayment(ctx *gin.Context) {
 
 // updatePaymentRequest represents the request body for updating a payment
 type updatePaymentRequest struct {
-	ID     uint64  `json:"id" binding:"required" example:"1"`
+	ID            uint64  `json:"id" binding:"required" example:"1"`
 	Amount        float64 `json:"amount" binding:"required" example:"1000.50"`
 	PaymentMethod string  `json:"payment_method" binding:"required" example:"credit_card"`
 	Status        string  `json:"status" binding:"required" example:"completed"`

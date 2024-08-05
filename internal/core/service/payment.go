@@ -86,6 +86,10 @@ func (ps *PaymentService) UpdatePayment(ctx context.Context, payment *domain.Pay
 		return nil, domain.ErrNoUpdatedData
 	}
 
+	// Update timestamp
+	now := time.Now()
+	payment.PaymentDate = &now
+	
 	updatedPayment, err := ps.repo.UpdatePayment(ctx, payment)
 	if err != nil {
 		if err == domain.ErrConflictingData {

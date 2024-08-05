@@ -28,7 +28,7 @@ type createRoomRequest struct {
 	Status       string  `json:"status" binding:"required" example:"available"`
 	Floor        int     `json:"floor" binding:"required" example:"1"`
 	Capacity     int     `json:"capacity" binding:"required,min=1" example:"2"`
-	DefaultPrice float64 `json:"price_per_night" binding:"required,gt=0" example:"150.0"`
+	DefaultPrice float64 `json:"default_price" binding:"required,gt=0" example:"150.0"`
 }
 
 // CreateRoom godoc
