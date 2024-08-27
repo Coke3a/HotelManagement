@@ -26,25 +26,25 @@ func NewAuthService(repo port.UserRepository, ts port.TokenService) *AuthService
 	}
 }
 
-// Login gives a registered user an access token if the credentials are valid
-func (as *AuthService) Login(ctx context.Context, userName, password string) (string, error) {
+// Login gives a registered user an access token and role if the credentials are valid
+func (as *AuthService) Login(ctx context.Context, userName, password string) (string, string, error) {
 	user, err := as.repo.GetUserByUserName(ctx, userName)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
-			return "", domain.ErrInvalidCredentials
+			return "", "", domain.ErrInvalidCredentials
 		}
-		return "", domain.ErrInternal
+		return "", "", domain.ErrInternal
 	}
 
 	err = util.ComparePassword(password, user.Password)
 	if err != nil {
-		return "", domain.ErrInvalidCredentials
+		return "", "", domain.ErrInvalidCredentials
 	}
 
 	accessToken, err := as.ts.CreateToken(user)
 	if err != nil {
-		return "", domain.ErrTokenCreation
+		return "", "", domain.ErrTokenCreation
 	}
 
-	return accessToken, nil
+	return accessToken, user.Role, nil
 }

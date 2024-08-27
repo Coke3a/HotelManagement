@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/Coke3a/HotelManagement/internal/adapter/auth/paseto"
 	"github.com/Coke3a/HotelManagement/internal/adapter/config"
 	"github.com/Coke3a/HotelManagement/internal/adapter/handler/http"
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
@@ -44,6 +45,12 @@ func main() {
 	
 		slog.Info("Successfully migrated the database")
 
+		// Init token service
+		token, err := paseto.New(config.Token)
+		if err != nil {
+			slog.Error("Error initializing token service", "error", err)
+			os.Exit(1)
+		}
 
 		userRepository := repository.NewUserRepository(db)
 		userService := service.NewUserService(userRepository)
@@ -73,6 +80,9 @@ func main() {
 		roomService := service.NewRoomService(roomRepository)
 		roomHandler := http.NewRoomHandler(roomService)
 
+
+		authService := service.NewAuthService(userRepository, token)
+		authHandler := http.NewAuthHandler(authService)
 		// Init router
 		router, err := http.NewRouter(
 			config.HTTP,
@@ -83,6 +93,7 @@ func main() {
 			*ratePriceHandler,
 			*roomHandler,
 			*userHandler,
+			*authHandler,
 		)
 		if err != nil {
 			slog.Error("Error initializing router", "error", err)

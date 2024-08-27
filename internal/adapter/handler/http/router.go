@@ -1,11 +1,12 @@
 package http
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"log/slog"
-	"strings"
 
 	"github.com/Coke3a/HotelManagement/internal/adapter/config"
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	sloggin "github.com/samber/slog-gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -27,34 +28,50 @@ func NewRouter(
 	ratePriceHandler RatePriceHandler,
 	roomHandler RoomHandler,
 	userHandler UserHandler,
-	// authHandler AuthHandler,
+	authHandler AuthHandler,
 ) (*Router, error) {
 	// Disable debug mode in production
 	if config.Env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// CORS
-	ginConfig := cors.DefaultConfig()
-	allowedOrigins := config.AllowedOrigins
-	originsList := strings.Split(allowedOrigins, ",")
-	ginConfig.AllowOrigins = originsList
+	router := gin.Default()
+	router.Use(CORSMiddleware(config))
 
-	router := gin.New()
-	router.Use(sloggin.New(slog.Default()), gin.Recovery(), cors.New(ginConfig))
+	//
+	// START LOG FOR DEBUGGING
+	//
+	router.Use(func(c *gin.Context) {
+		var bodyBytes []byte
+		if c.Request.Body != nil {
+			bodyBytes, _ = io.ReadAll(c.Request.Body)
+		}
+		// Restore the io.ReadCloser to its original state
+		c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
-	// // Custom validators
-	// v, ok := binding.Validator.Engine().(*validator.Validate)
-	// if ok {
-	// 	if err := v.RegisterValidation("user_role", userRoleValidator); err != nil {
-	// 		return nil, err
-	// 	}
+		// Parse the body as JSON
+		var bodyJSON interface{}
+		if len(bodyBytes) > 0 {
+			if err := json.Unmarshal(bodyBytes, &bodyJSON); err != nil {
+				bodyJSON = string(bodyBytes) // If not JSON, use the raw string
+			}
+		}
 
-	// 	if err := v.RegisterValidation("payment_type", paymentTypeValidator); err != nil {
-	// 		return nil, err
-	// 	}
+		// Log the request
+		slog.Info("Incoming request",
+			"method", c.Request.Method,
+			"path", c.Request.URL.Path,
+			"remote_addr", c.ClientIP(),
+			"user_agent", c.Request.UserAgent(),
+			"body", bodyJSON)
 
-	// }
+		c.Next()
+	})
+	//
+	// END LOG FOR DEBUGGING
+	//
+
+	router.Use(sloggin.New(slog.Default()), gin.Recovery())
 
 	// Swagger
 	router.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
@@ -65,19 +82,19 @@ func NewRouter(
 		user := v1.Group("/users")
 		{
 			user.POST("/", userHandler.CreateUser)
-			// user.POST("/login", authHandler.Login)
+			user.POST("/login", authHandler.Login)
 			user.GET("/", userHandler.ListUsers)
 			user.GET("/:id", userHandler.GetUser)
 			user.PUT("/", userHandler.UpdateUser)
 			user.DELETE("/:id", userHandler.DeleteUser)
 		}
-		conversation := v1.Group("/booking")
+		booking := v1.Group("/booking")
 		{
-			conversation.POST("/", bookingHandler.CreateBooking)
-			conversation.GET("/", bookingHandler.ListBookings)
-			conversation.GET("/:id", bookingHandler.GetBooking)
-			conversation.PUT("/", bookingHandler.UpdateBooking)
-			conversation.DELETE("/:id", bookingHandler.DeleteBooking)
+			booking.POST("/", bookingHandler.CreateBooking)
+			booking.GET("/", bookingHandler.ListBookings)
+			booking.GET("/:id", bookingHandler.GetBooking)
+			booking.PUT("/", bookingHandler.UpdateBooking)
+			booking.DELETE("/:id", bookingHandler.DeleteBooking)
 		}
 		customer := v1.Group("/customers")
 		{

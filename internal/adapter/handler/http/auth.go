@@ -19,7 +19,7 @@ func NewAuthHandler(svc port.AuthService) *AuthHandler {
 
 // loginRequest represents the request body for logging in a user
 type loginRequest struct {
-	Email    string `json:"email" binding:"required,email" example:"test@example.com"`
+	Username    string `json:"username" binding:"required" example:"username1234"`
 	Password string `json:"password" binding:"required,min=8" example:"12345678" minLength:"8"`
 }
 
@@ -43,13 +43,13 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	token, err := ah.svc.Login(ctx, req.Email, req.Password)
+	token, role, err := ah.svc.Login(ctx, req.Username, req.Password)
 	if err != nil {
 		handleError(ctx, err)
 		return
 	}
 
-	rsp := newAuthResponse(token)
+	rsp := newAuthResponse(token, role)
 
 	handleSuccess(ctx, rsp)
 }
@@ -57,11 +57,13 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 // authResponse represents an authentication response body
 type authResponse struct {
 	AccessToken string `json:"token" example:"v2.local.Gdh5kiOTyyaQ3_bNykYDeYHO21Jg2..."`
+	Role        string `json:"role" example:"admin"`
 }
 
 // newAuthResponse is a helper function to create a response body for handling authentication data
-func newAuthResponse(token string) authResponse {
+func newAuthResponse(token string, role string) authResponse {
 	return authResponse{
 		AccessToken: token,
+		Role:        role,
 	}
 }

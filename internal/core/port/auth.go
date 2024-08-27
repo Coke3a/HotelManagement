@@ -16,8 +16,8 @@ type TokenService interface {
 	VerifyToken(token string) (*domain.TokenPayload, error)
 }
 
-// UserService is an interface for interacting with user authentication-related business logic
+// AuthService is an interface for interacting with user authentication-related business logic
 type AuthService interface {
-	// Login authenticates a user by email and password and returns a token
-	Login(ctx context.Context, email, password string) (string, error)
+	// Login authenticates a user by email and password and returns a token and role
+	Login(ctx context.Context, username, password string) (token string, role string, err error)
 }
