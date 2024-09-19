@@ -11,3 +11,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Insert the first user with hashed password
+INSERT INTO users (username, password, role, rank, status)
+VALUES ('admin', '$2a$10$k.HrLQjLb/ymtTaYG4gwfeXIgGzUrTYxUZF0.qxk0STgupDwg/Lwm', 'admin', 'admin', 'active');

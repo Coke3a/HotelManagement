@@ -6,6 +6,8 @@ import (
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
+	"errors"
+	"strconv"
 )
 
 // PaymentHandler represents the HTTP handler for payment-related requests
@@ -61,7 +63,11 @@ func (ph *PaymentHandler) CreatePayment(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newPaymentResponse(createdPayment)
+	rsp, err := newPaymentResponse(createdPayment)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -90,19 +96,34 @@ func (ph *PaymentHandler) ListPayments(ctx *gin.Context) {
 	var req listPaymentsRequest
 	var paymentsList []paymentResponse
 
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		validationError(ctx, err)
-		return
-	}
+    skip := ctx.Query("skip")
+    limit := ctx.Query("limit")
 
-	payments, err := ph.svc.ListPayments(ctx, req.Skip, req.Limit)
+    skipUint, err := strconv.ParseUint(skip, 10, 64)
+    if err != nil {
+        validationError(ctx, err)
+        return
+    }
+
+    limitUint, err := strconv.ParseUint(limit, 10, 64)
+    if err != nil {
+        validationError(ctx, err)
+        return
+    }
+
+	payments, err := ph.svc.ListPayments(ctx, skipUint, limitUint)
 	if err != nil {
 		handleError(ctx, err)
 		return
 	}
 
 	for _, payment := range payments {
-		paymentsList = append(paymentsList, newPaymentResponse(&payment))
+		rsp, err := newPaymentResponse(&payment)
+		if err != nil {
+			handleError(ctx, err)
+			return
+		}
+		paymentsList = append(paymentsList, rsp)
 	}
 
 	total := uint64(len(paymentsList))
@@ -144,7 +165,11 @@ func (ph *PaymentHandler) GetPayment(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newPaymentResponse(payment)
+	rsp, err := newPaymentResponse(payment)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -192,7 +217,11 @@ func (ph *PaymentHandler) UpdatePayment(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newPaymentResponse(updatedPayment)
+	rsp, err := newPaymentResponse(updatedPayment)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -243,13 +272,22 @@ type paymentResponse struct {
 }
 
 // newPaymentResponse creates a new payment response
-func newPaymentResponse(payment *domain.Payment) paymentResponse {
+func newPaymentResponse(payment *domain.Payment) (paymentResponse, error) {
+	if payment == nil {
+		return paymentResponse{}, errors.New("payment is nil")
+	}
+
+	var paymentDate time.Time
+	if payment.PaymentDate != nil {
+		paymentDate = *payment.PaymentDate
+	}
+
 	return paymentResponse{
 		ID:            payment.ID,
 		BookingID:     payment.BookingID,
 		Amount:        payment.Amount,
 		PaymentMethod: payment.PaymentMethod,
-		PaymentDate:   *payment.PaymentDate,
+		PaymentDate:   paymentDate,
 		Status:        payment.Status,
-	}
+	}, nil
 }

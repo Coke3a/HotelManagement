@@ -51,7 +51,7 @@ func (pt *PasetoToken) CreateToken(user *domain.User) (string, error) {
 	payload := &domain.TokenPayload{
 		ID:     id,
 		UserID: user.ID,
-		Role:   user.Role,
+		Role:   *user.Role,
 	}
 
 	err = pt.token.Set("payload", payload)

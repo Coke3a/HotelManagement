@@ -49,7 +49,7 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newAuthResponse(token, role)
+	rsp := newAuthResponse(token, role, req.Username)
 
 	handleSuccess(ctx, rsp)
 }
@@ -58,12 +58,14 @@ func (ah *AuthHandler) Login(ctx *gin.Context) {
 type authResponse struct {
 	AccessToken string `json:"token" example:"v2.local.Gdh5kiOTyyaQ3_bNykYDeYHO21Jg2..."`
 	Role        string `json:"role" example:"admin"`
+	Username    string `json:"username" example:"johndoe"`
 }
 
 // newAuthResponse is a helper function to create a response body for handling authentication data
-func newAuthResponse(token string, role string) authResponse {
+func newAuthResponse(token string, role string, username string) authResponse {
 	return authResponse{
 		AccessToken: token,
 		Role:        role,
+		Username:    username,
 	}
 }

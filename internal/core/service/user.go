@@ -20,7 +20,7 @@ func NewUserService(repo port.UserRepository) *UserService {
 }
 
 func (us *UserService) RegisterUser(ctx context.Context, user *domain.User) (*domain.User, error) {
-	if user.UserName == "" || user.Email == "" || user.Password == "" {
+	if user.UserName == "" || user.Email == nil || user.Password == "" {
 		return nil, domain.ErrInvalidData
 	}
 
@@ -47,7 +47,6 @@ func (us *UserService) RegisterUser(ctx context.Context, user *domain.User) (*do
 
 	return createdUser, nil
 }
-
 
 func (us *UserService) GetUser(ctx context.Context, id uint64) (*domain.User, error) {
 	user, err := us.repo.GetUserByID(ctx, id)
@@ -92,7 +91,7 @@ func (us *UserService) UpdateUser(ctx context.Context, user *domain.User) (*doma
 	}
 
 	// Check if there are changes
-	isEmpty := user.UserName == "" && user.Email == "" && user.Password == "" && user.Role == "" && user.Rank == "" && user.Status == ""
+	isEmpty := user.UserName == "" && user.Email == nil && user.Password == "" && user.Role == nil && user.Rank == nil && user.Status == nil
 	isSame := existingUser.UserName == user.UserName && existingUser.Email == user.Email && existingUser.Password == user.Password && existingUser.Role == user.Role && existingUser.Rank == user.Rank && existingUser.Status == user.Status
 
 	if isEmpty || isSame {

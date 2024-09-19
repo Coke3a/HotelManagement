@@ -21,9 +21,23 @@ func convertStringToUint64(str string) (i uint64, err error) {
 	return i, nil
 }
 
-func derefTime(t *time.Time) time.Time {
-    if t == nil {
-        return time.Time{}
-    }
-    return *t
+func zeroValueOrDefault[T comparable](val *T, defaultValue T) T {
+	if val != nil {
+		return *val
+	}
+	return defaultValue
+}
+
+func safeString(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func safeTime(t *time.Time) *time.Time {
+	if t == nil {
+		return nil
+	}
+	return t
 }

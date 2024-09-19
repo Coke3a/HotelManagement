@@ -83,15 +83,15 @@ func NewRouter(
 		{
 			user.POST("/", userHandler.CreateUser)
 			user.POST("/login", authHandler.Login)
-			user.GET("/", userHandler.ListUsers)
 			user.GET("/:id", userHandler.GetUser)
+			user.GET("/", userHandler.ListUsers)
 			user.PUT("/", userHandler.UpdateUser)
 			user.DELETE("/:id", userHandler.DeleteUser)
 		}
 		booking := v1.Group("/booking")
 		{
 			booking.POST("/", bookingHandler.CreateBooking)
-			booking.GET("/", bookingHandler.ListBookings)
+			booking.GET("/", bookingHandler.ListBookings) // TODO: Add filter
 			booking.GET("/:id", bookingHandler.GetBooking)
 			booking.PUT("/", bookingHandler.UpdateBooking)
 			booking.DELETE("/:id", bookingHandler.DeleteBooking)

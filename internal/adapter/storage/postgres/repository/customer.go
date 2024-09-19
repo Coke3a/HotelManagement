@@ -104,8 +104,11 @@ func (cr *CustomerRepository) ListCustomers(ctx context.Context, skip, limit uin
 	query := cr.db.QueryBuilder.Select("*").
 		From("customers").
 		OrderBy("id").
-		Limit(limit).
-		Offset((skip - 1) * limit)
+		Limit(limit)
+
+	if skip > 0 {
+		query = query.Offset(skip)
+	}
 
 	sql, args, err := query.ToSql()
 	if err != nil {

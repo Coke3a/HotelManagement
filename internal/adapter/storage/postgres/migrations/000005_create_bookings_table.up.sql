@@ -4,7 +4,7 @@ CREATE TABLE bookings (
     rate_prices_id INT REFERENCES rate_prices(id),
     check_in_date TIMESTAMP NOT NULL,
     check_out_date TIMESTAMP NOT NULL,
-    status VARCHAR(50),
+    status INT,
     total_amount DECIMAL(10, 2),
     booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

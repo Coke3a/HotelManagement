@@ -6,6 +6,8 @@ import (
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
+	"strconv"
+	"errors"
 )
 
 // CustomerHandler represents the HTTP handler for customer-related requests
@@ -55,7 +57,7 @@ func (ch *CustomerHandler) CreateCustomer(ctx *gin.Context) {
 	// Parse the date of birth if provided
 	var dob *time.Time
 	if req.DateOfBirth != "" {
-		parsedDOB, err := time.Parse("2006-01-02", req.DateOfBirth)
+		parsedDOB, err := time.Parse(time.RFC3339, req.DateOfBirth)
 		if err != nil {
 			validationError(ctx, err)
 			return
@@ -80,7 +82,11 @@ func (ch *CustomerHandler) CreateCustomer(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newCustomerResponse(createdCustomer)
+	rsp, err := newCustomerResponse(createdCustomer)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -109,19 +115,34 @@ func (ch *CustomerHandler) ListCustomers(ctx *gin.Context) {
 	var req listCustomersRequest
 	var customersList []customerResponse
 
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		validationError(ctx, err)
-		return
-	}
+    skip := ctx.Query("skip")
+    limit := ctx.Query("limit")
 
-	customers, err := ch.svc.ListCustomers(ctx, req.Skip, req.Limit)
+    skipUint, err := strconv.ParseUint(skip, 10, 64)
+    if err != nil {
+        validationError(ctx, err)
+        return
+    }
+
+    limitUint, err := strconv.ParseUint(limit, 10, 64)
+    if err != nil {
+        validationError(ctx, err)
+        return
+    }
+
+	customers, err := ch.svc.ListCustomers(ctx, skipUint, limitUint)
 	if err != nil {
 		handleError(ctx, err)
 		return
 	}
 
 	for _, customer := range customers {
-		customersList = append(customersList, newCustomerResponse(&customer))
+		customerResponse, err := newCustomerResponse(&customer)
+		if err != nil {
+			handleError(ctx, err)
+			return
+		}
+		customersList = append(customersList, customerResponse)
 	}
 
 	total := uint64(len(customersList))
@@ -163,7 +184,11 @@ func (ch *CustomerHandler) GetCustomer(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newCustomerResponse(customer)
+	rsp, err := newCustomerResponse(customer)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -208,7 +233,7 @@ func (ch *CustomerHandler) UpdateCustomer(ctx *gin.Context) {
 	// Parse the date of birth if provided
 	var dob time.Time
 	if req.DateOfBirth != "" {
-		parsedDOB, err := time.Parse("2006-01-02", req.DateOfBirth)
+		parsedDOB, err := time.Parse(time.RFC3339, req.DateOfBirth)
 		if err != nil {
 			validationError(ctx, err)
 			return
@@ -216,8 +241,8 @@ func (ch *CustomerHandler) UpdateCustomer(ctx *gin.Context) {
 		dob = parsedDOB
 	}
 	var lvd time.Time
-	if req.DateOfBirth != "" {
-		parsedLVD, err := time.Parse("2006-01-02", req.LastVisitDate)
+	if req.LastVisitDate != "" {
+		parsedLVD, err := time.Parse(time.RFC3339, req.LastVisitDate)
 		if err != nil {
 			validationError(ctx, err)
 			return
@@ -244,7 +269,11 @@ func (ch *CustomerHandler) UpdateCustomer(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newCustomerResponse(updatedCustomer)
+	rsp, err := newCustomerResponse(updatedCustomer)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -296,19 +325,23 @@ type customerResponse struct {
 	MembershipStatus string    `json:"membership_status" example:"gold"`
 	JoinDate         time.Time `json:"join_date" example:"2024-08-01T15:04:05Z"`
 	Preferences      string    `json:"preferences" example:"sea view, non-smoking"`
-	LastVisitDate    time.Time `json:"last_visit_date" example:"2024-08-01T15:04:05Z"`
+	LastVisitDate    *time.Time `json:"last_visit_date,omitempty" example:"2024-08-01T15:04:05Z"`
 	CreatedAt        time.Time `json:"created_at" example:"2024-07-01T15:04:05Z"`
 	UpdatedAt        time.Time `json:"updated_at" example:"2024-08-01T15:04:05Z"`
 }
 
 // newCustomerResponse creates a new customer response
-func newCustomerResponse(customer *domain.Customer) customerResponse {
+func newCustomerResponse(customer *domain.Customer) (customerResponse, error) {
+	if customer == nil {
+		return customerResponse{}, errors.New("customer is nil")
+	}
+
 	var dob, lastVisitDate, createdAt, updatedAt, joinDate time.Time
 
 	if customer.DateOfBirth != nil {
 		dob = *customer.DateOfBirth
 	}
-	if customer.LastVisitDate != nil {
+	if customer.LastVisitDate != nil && !customer.LastVisitDate.IsZero() {
 		lastVisitDate = *customer.LastVisitDate
 	}
 	if customer.CreatedAt != nil {
@@ -332,8 +365,8 @@ func newCustomerResponse(customer *domain.Customer) customerResponse {
 		MembershipStatus: customer.MembershipStatus,
 		JoinDate:         joinDate,
 		Preferences:      customer.Preferences,
-		LastVisitDate:    lastVisitDate,
+		LastVisitDate:    &lastVisitDate,
 		CreatedAt:        createdAt,
 		UpdatedAt:        updatedAt,
-	}
+	}, nil
 }

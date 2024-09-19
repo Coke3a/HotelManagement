@@ -6,6 +6,8 @@ import (
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
+	"strconv"
+	"errors"
 )
 
 // RoomHandler represents the HTTP handler for room-related requests
@@ -67,7 +69,11 @@ func (rh *RoomHandler) CreateRoom(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newRoomResponse(createdRoom)
+	rsp, err := newRoomResponse(createdRoom)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -96,19 +102,35 @@ func (rh *RoomHandler) ListRooms(ctx *gin.Context) {
 	var req listRoomsRequest
 	var roomsList []roomResponse
 
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		validationError(ctx, err)
-		return
-	}
+    skip := ctx.Query("skip")
+    limit := ctx.Query("limit")
 
-	rooms, err := rh.svc.ListRooms(ctx, req.Skip, req.Limit)
+    skipUint, err := strconv.ParseUint(skip, 10, 64)
+    if err != nil {
+        validationError(ctx, err)
+        return
+    }
+
+    limitUint, err := strconv.ParseUint(limit, 10, 64)
+    if err != nil {
+        validationError(ctx, err)
+        return
+    }
+
+	rooms, err := rh.svc.ListRooms(ctx, skipUint, limitUint)
 	if err != nil {
 		handleError(ctx, err)
 		return
 	}
 
 	for _, room := range rooms {
-		roomsList = append(roomsList, newRoomResponse(&room))
+		// roomsList = append(roomsList, newRoomResponse(&room))
+		roomResponse, err := newRoomResponse(&room)
+		if err != nil {
+			handleError(ctx, err)
+			return
+		}
+		roomsList = append(roomsList, roomResponse)
 	}
 
 	total := uint64(len(roomsList))
@@ -150,7 +172,11 @@ func (rh *RoomHandler) GetRoom(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newRoomResponse(room)
+	rsp, err := newRoomResponse(room)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -206,7 +232,11 @@ func (rh *RoomHandler) UpdateRoom(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newRoomResponse(updatedRoom)
+	rsp, err := newRoomResponse(updatedRoom)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -261,7 +291,21 @@ type roomResponse struct {
 }
 
 // newRoomResponse creates a new room response
-func newRoomResponse(room *domain.Room) roomResponse {
+func newRoomResponse(room *domain.Room) (roomResponse, error) {
+
+	if room == nil {
+		return roomResponse{}, errors.New("room is nil")
+	}
+
+	var createdAt, updatedAt time.Time
+
+	if room.CreatedAt != nil {
+		createdAt = *room.CreatedAt
+	}
+	if room.UpdatedAt != nil {
+		updatedAt = *room.UpdatedAt
+	}	
+
 	return roomResponse{
 		ID:           room.ID,
 		RoomNumber:   room.RoomNumber,
@@ -271,7 +315,7 @@ func newRoomResponse(room *domain.Room) roomResponse {
 		Floor:        room.Floor,
 		Capacity:     room.Capacity,
 		DefaultPrice: room.DefaultPrice,
-		CreatedAt:    *room.CreatedAt,
-		UpdatedAt:    *room.UpdatedAt,
-	}
+		CreatedAt:    createdAt,
+		UpdatedAt:    updatedAt,
+	}, nil
 }

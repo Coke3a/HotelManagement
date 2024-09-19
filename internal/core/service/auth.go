@@ -46,5 +46,5 @@ func (as *AuthService) Login(ctx context.Context, userName, password string) (st
 		return "", "", domain.ErrTokenCreation
 	}
 
-	return accessToken, user.Role, nil
+	return accessToken, *user.Role, nil
 }

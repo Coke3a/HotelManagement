@@ -4,6 +4,8 @@ import (
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
+	"errors"
+	"strconv"
 )
 
 // RatePriceHandler represents the HTTP handler for rate price-related requests
@@ -59,7 +61,11 @@ func (rph *RatePriceHandler) CreateRatePrice(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newRatePriceResponse(createdRatePrice)
+	rsp, err := newRatePriceResponse(createdRatePrice)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -88,19 +94,34 @@ func (rph *RatePriceHandler) ListRatePrices(ctx *gin.Context) {
 	var req listRatePricesRequest
 	var ratePricesList []ratePriceResponse
 
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		validationError(ctx, err)
-		return
-	}
+    skip := ctx.Query("skip")
+    limit := ctx.Query("limit")
 
-	ratePrices, err := rph.svc.ListRatePrices(ctx, req.Skip, req.Limit)
+    skipUint, err := strconv.ParseUint(skip, 10, 64)
+    if err != nil {
+        validationError(ctx, err)
+        return
+    }
+
+    limitUint, err := strconv.ParseUint(limit, 10, 64)
+    if err != nil {
+        validationError(ctx, err)
+        return
+    }
+
+	ratePrices, err := rph.svc.ListRatePrices(ctx, skipUint, limitUint)
 	if err != nil {
 		handleError(ctx, err)
 		return
 	}
 
 	for _, ratePrice := range ratePrices {
-		ratePricesList = append(ratePricesList, newRatePriceResponse(&ratePrice))
+		rsp, err := newRatePriceResponse(&ratePrice)
+		if err != nil {
+			handleError(ctx, err)
+			return
+		}
+		ratePricesList = append(ratePricesList, rsp)
 	}
 
 	total := uint64(len(ratePricesList))
@@ -142,7 +163,11 @@ func (rph *RatePriceHandler) GetRatePrice(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newRatePriceResponse(ratePrice)
+	rsp, err := newRatePriceResponse(ratePrice)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -192,7 +217,11 @@ func (rph *RatePriceHandler) UpdateRatePrice(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newRatePriceResponse(updatedRatePrice)
+	rsp, err := newRatePriceResponse(updatedRatePrice)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -242,12 +271,16 @@ type ratePriceResponse struct {
 }
 
 // newRatePriceResponse creates a new rate price response
-func newRatePriceResponse(ratePrice *domain.RatePrice) ratePriceResponse {
+func newRatePriceResponse(ratePrice *domain.RatePrice) (ratePriceResponse, error) {
+	if ratePrice == nil {
+		return ratePriceResponse{}, errors.New("rate price is nil")
+	}
+
 	return ratePriceResponse{
 		ID:            ratePrice.ID,
 		Name:          ratePrice.Name,
 		Description:   ratePrice.Description,
 		PricePerNight: ratePrice.PricePerNight,
 		RoomID:        ratePrice.RoomID,
-	}
+	}, nil
 }

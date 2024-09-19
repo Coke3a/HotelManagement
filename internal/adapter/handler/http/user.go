@@ -4,7 +4,9 @@ import (
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
+	"strconv"
 	"time"
+	"errors"
 )
 
 // UserHandler handles HTTP requests related to user operations.
@@ -55,10 +57,10 @@ func (uh *UserHandler) CreateUser(ctx *gin.Context) {
 	user := domain.User{
 		UserName: req.UserName,
 		Password: req.Password,
-		Email:    req.Email,
-		Role:     req.Role,
-		Rank:     req.Rank,
-		Status:   req.Status,
+		Email:    &req.Email,
+		Role:     &req.Role,
+		Rank:     &req.Rank,
+		Status:   &req.Status,
 	}
 
 	createdUser, err := uh.svc.RegisterUser(ctx, &user)
@@ -67,16 +69,18 @@ func (uh *UserHandler) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newUserResponse(createdUser)
-
+	rsp, err := newUserResponse(createdUser)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 	handleSuccess(ctx, rsp)
 }
 
 // listUsersRequest defines the query parameters for listing users.
-// It includes fields for pagination: skip and limit.
 type listUsersRequest struct {
-	Skip  uint64 `form:"skip" binding:"required,min=0" example:"0"`
-	Limit uint64 `form:"limit" binding:"required,min=5" example:"5"`
+    Skip  uint64 `form:"skip" binding:"required,min=0" example:"0"`
+    Limit uint64 `form:"limit" binding:"required,min=5" example:"10"`
 }
 
 // ListUsers godoc
@@ -94,29 +98,43 @@ type listUsersRequest struct {
 //	@Router			/users [get]
 //	@Security		BearerAuth
 func (uh *UserHandler) ListUsers(ctx *gin.Context) {
-	var req listUsersRequest
-	var usersList []userResponse
+    var usersList []userResponse
 
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		validationError(ctx, err)
-		return
-	}
+    skip := ctx.Query("skip")
+    limit := ctx.Query("limit")
 
-	users, err := uh.svc.ListUsers(ctx, req.Skip, req.Limit)
-	if err != nil {
-		handleError(ctx, err)
-		return
-	}
+    skipUint, err := strconv.ParseUint(skip, 10, 64)
+    if err != nil {
+        validationError(ctx, err)
+        return
+    }
 
-	for _, user := range users {
-		usersList = append(usersList, newUserResponse(&user))
-	}
+    limitUint, err := strconv.ParseUint(limit, 10, 64)
+    if err != nil {
+        validationError(ctx, err)
+        return
+    }
 
-	total := uint64(len(usersList))
-	meta := newMeta(total, req.Limit, req.Skip)
-	rsp := toMap(meta, usersList, "users")
+    users, err := uh.svc.ListUsers(ctx, skipUint, limitUint)
+    if err != nil {
+        handleError(ctx, err)
+        return
+    }
 
-	handleSuccess(ctx, rsp)
+    for _, user := range users {
+        userResponse, err := newUserResponse(&user)
+        if err != nil {
+            handleError(ctx, err)
+            return
+        }
+        usersList = append(usersList, userResponse)
+    }
+
+    total := uint64(len(usersList))
+    meta := newMeta(total, limitUint, skipUint)
+    rsp := toMap(meta, usersList, "users")
+
+    handleSuccess(ctx, rsp)
 }
 
 // getUserRequest defines the URI parameters for retrieving a specific user.
@@ -152,7 +170,11 @@ func (uh *UserHandler) GetUser(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newUserResponse(user)
+	rsp, err := newUserResponse(user)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -196,10 +218,10 @@ func (uh *UserHandler) UpdateUser(ctx *gin.Context) {
 		ID:       req.UserID,
 		UserName: req.UserName,
 		Password: req.Password,
-		Email:    req.Email,
-		Role:     req.Role,
-		Rank:     req.Rank,
-		Status:   req.Status,
+		Email:    &req.Email,
+		Role:     &req.Role,
+		Rank:     &req.Rank,
+		Status:   &req.Status,
 	}
 
 	updatedUser, err := uh.svc.UpdateUser(ctx, &user)
@@ -208,7 +230,11 @@ func (uh *UserHandler) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newUserResponse(updatedUser)
+	rsp, err := newUserResponse(updatedUser)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -257,8 +283,8 @@ type userResponse struct {
 	Email     string    `json:"email" example:"john.doe@example.com"`
 	Role      string    `json:"role" example:"admin"`
 	Rank      string    `json:"rank" example:"Manager"`
-	HireDate  time.Time `json:"hire_date" example:"2024-07-01T15:04:05Z"`
-	LastLogin time.Time `json:"last_login" example:"2024-08-01T15:04:05Z"`
+	HireDate  *time.Time `json:"hire_date,omitempty" example:"2024-07-01T15:04:05Z"`
+	LastLogin *time.Time `json:"last_login,omitempty" example:"2024-08-01T15:04:05Z"`
 	Status    string    `json:"status" example:"active"`
 	CreatedAt time.Time `json:"created_at" example:"2024-07-01T15:04:05Z"`
 	UpdatedAt time.Time `json:"updated_at" example:"2024-08-01T15:04:05Z"`
@@ -266,17 +292,21 @@ type userResponse struct {
 
 // newUserResponse creates and returns a new userResponse from a domain.User object.
 // This function is used to convert internal user representations to API responses.
-func newUserResponse(user *domain.User) userResponse {
+func newUserResponse(user *domain.User) (userResponse, error) {
+	if user == nil {
+		return userResponse{}, errors.New("user is nil")
+	}
+
 	return userResponse{
 		ID:        user.ID,
 		UserName:  user.UserName,
-		Email:     user.Email,
-		Role:      user.Role,
-		Rank:      user.Rank,
-		HireDate:  *user.HireDate,
-		LastLogin: *user.LastLogin,
-		Status:    user.Status,
-		CreatedAt: *user.CreatedAt,
-		UpdatedAt: *user.UpdatedAt,
-	}
+		Email:     safeString(user.Email),
+		Role:      safeString(user.Role),
+		Rank:      safeString(user.Rank),
+		HireDate:  safeTime(user.HireDate),
+		LastLogin: safeTime(user.LastLogin),
+		Status:    safeString(user.Status),
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}, nil
 }

@@ -6,6 +6,9 @@ import (
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
+	"fmt"
+	"errors"
+	"strconv"
 )
 
 // BookingHandler represents the HTTP handler for booking-related requests
@@ -22,11 +25,12 @@ func NewBookingHandler(svc port.BookingService) *BookingHandler {
 
 // createBookingRequest represents the request body for creating a booking
 type createBookingRequest struct {
-	CustomerID   uint64    `json:"customer_id" binding:"required" example:"1"`
-	RatePriceId  uint64    `json:"rate_prices_id" binding:"required" example:"1"`
-	CheckInDate  time.Time `json:"check_in_date" binding:"required" example:"2024-08-01T15:04:05Z"`
-	CheckOutDate time.Time `json:"check_out_date" binding:"required" example:"2024-08-10T15:04:05Z"`
-	TotalAmount  float64   `json:"total_amount" binding:"required,gt=0" example:"1000.50"`
+	CustomerID   uint64                `json:"customer_id" binding:"required" example:"1"`
+	RatePriceId  uint64                `json:"rate_prices_id" binding:"required" example:"1"`
+	CheckInDate  time.Time             `json:"check_in_date" binding:"required" example:"2024-08-01T15:04:05Z"`
+	CheckOutDate time.Time             `json:"check_out_date" binding:"required" example:"2024-08-10T15:04:05Z"`
+	Status       domain.BookingStatus  `json:"status" example:"1"`
+	TotalAmount  float64               `json:"total_amount" binding:"required,gt=0" example:"1000.50"`
 }
 
 // CreateBooking godoc
@@ -54,6 +58,7 @@ func (bh *BookingHandler) CreateBooking(ctx *gin.Context) {
 		RatePriceId:  req.RatePriceId,
 		CheckInDate:  &req.CheckInDate,
 		CheckOutDate: &req.CheckOutDate,
+		Status:       domain.BookingStatus(req.Status),
 		TotalAmount:  req.TotalAmount,
 	}
 
@@ -63,8 +68,11 @@ func (bh *BookingHandler) CreateBooking(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newBookingResponse(createdBooking)
-
+	rsp, err := newBookingResponse(createdBooking)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 	handleSuccess(ctx, rsp)
 }
 
@@ -92,19 +100,128 @@ func (bh *BookingHandler) ListBookings(ctx *gin.Context) {
 	var req listBookingsRequest
 	var bookingsList []bookingResponse
 
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		validationError(ctx, err)
-		return
-	}
 
-	bookings, err := bh.svc.ListBookings(ctx, req.Skip, req.Limit)
+    skip := ctx.Query("skip")
+    limit := ctx.Query("limit")
+
+    skipUint, err := strconv.ParseUint(skip, 10, 64)
+    if err != nil {
+        validationError(ctx, err)
+        return
+    }
+
+    limitUint, err := strconv.ParseUint(limit, 10, 64)
+    if err != nil {
+        validationError(ctx, err)
+        return
+    }
+
+	bookings, err := bh.svc.ListBookings(ctx, skipUint, limitUint)
 	if err != nil {
 		handleError(ctx, err)
 		return
 	}
 
 	for _, booking := range bookings {
-		bookingsList = append(bookingsList, newBookingResponse(&booking))
+		rsp, err := newBookingResponse(&booking)
+		if err != nil {
+			handleError(ctx, err)
+			return
+		}
+		bookingsList = append(bookingsList, rsp)
+	}
+
+	total := uint64(len(bookingsList))
+	meta := newMeta(total, req.Limit, req.Skip)
+	rsp := toMap(meta, bookingsList, "bookings")
+
+	handleSuccess(ctx, rsp)
+}
+
+// listBookingsRequest represents the request body for listing bookings
+type ListBookingsWithFilterRequest struct {
+    Skip         uint64         `form:"skip" binding:"required,min=0" example:"0"`
+    Limit        uint64         `form:"limit" binding:"required,min=5" example:"5"`
+    ID           *uint64        `form:"id,omitempty" example:"1"`
+    CustomerID   *uint64        `form:"customer_id,omitempty" example:"2"`
+    RatePriceId  *uint64        `form:"rate_price_id,omitempty" example:"3"`
+    CheckInDate  *time.Time     `form:"check_in_date,omitempty" time_format:"2006-01-02" example:"2023-08-31"`
+    CheckOutDate *time.Time     `form:"check_out_date,omitempty" time_format:"2006-01-02" example:"2023-09-02"`
+    Status       *domain.BookingStatus `form:"status,omitempty" example:"1"`
+    TotalAmount  *float64       `form:"total_amount,omitempty" example:"99.99"`
+    BookingDate  *time.Time     `form:"booking_date,omitempty" time_format:"2006-01-02" example:"2023-08-01"`
+}
+
+// ListBookings godoc
+//
+//	@Summary		List bookings
+//	@Description	List bookings with pagination and filters
+//	@Tags			Bookings
+//	@Accept			json
+//	@Produce		json
+//	@Param			skip			query		uint64				true	"Skip"
+//	@Param			limit			query		uint64				true	"Limit"
+//	@Param			id				query		uint64				false	"ID"
+//	@Param			customer_id		query		uint64				false	"Customer ID"
+//	@Param			rate_price_id	query		uint64				false	"Rate Price ID"
+//	@Param			check_in_date	query		string				false	"Check In Date"		time_format:"2006-01-02"
+//	@Param			check_out_date	query		string				false	"Check Out Date"	time_format:"2006-01-02"
+//	@Param			status			query		uint64				false	"Status"
+//	@Param			total_amount	query		float64				false	"Total Amount"
+//	@Param			booking_date	query		string				false	"Booking Date"		time_format:"2006-01-02"
+//	@Success		200				{object}	meta				"Bookings displayed"
+//	@Failure		400				{object}	errorResponse		"Validation error"
+//	@Failure		500				{object}	errorResponse		"Internal server error"
+//	@Router			/bookings [get]
+//	@Security		BearerAuth
+func (bh *BookingHandler) ListBookingsWithFilter(ctx *gin.Context) {
+	var req ListBookingsWithFilterRequest
+	var bookingsList []bookingResponse
+
+    skip := ctx.Query("skip")
+    limit := ctx.Query("limit")
+
+	skipUint, err := strconv.ParseUint(skip, 10, 64)
+    if err != nil {
+        validationError(ctx, err)
+        return
+    }
+
+    limitUint, err := strconv.ParseUint(limit, 10, 64)
+    if err != nil {
+		validationError(ctx, err)
+		return
+	}
+
+
+	// Convert request data to domain.Booking struct
+	booking := &domain.Booking{
+		ID:           zeroValueOrDefault(req.ID, 0),
+		CustomerID:   zeroValueOrDefault(req.CustomerID, 0),
+		RatePriceId:  zeroValueOrDefault(req.RatePriceId, 0),
+		CheckInDate:  req.CheckInDate,
+		CheckOutDate: req.CheckOutDate,
+		Status:       zeroValueOrDefault(req.Status, domain.BookingStatus(0)),
+		TotalAmount:  zeroValueOrDefault(req.TotalAmount, 0),
+		BookingDate:  req.BookingDate,
+	}
+
+	// log the request
+	fmt.Printf("Request: %+v", req)
+
+	bookings, err := bh.svc.ListBookingsWithFilter(ctx, booking, skipUint, limitUint)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
+
+	for _, booking := range bookings {
+		rsp, err := newBookingResponse(&booking)
+		if err != nil {
+			handleError(ctx, err)
+			return
+		}
+		bookingsList = append(bookingsList, rsp)
 	}
 
 	total := uint64(len(bookingsList))
@@ -146,7 +263,11 @@ func (bh *BookingHandler) GetBooking(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newBookingResponse(booking)
+	rsp, err := newBookingResponse(booking)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -158,7 +279,7 @@ type updateBookingRequest struct {
 	RatePriceId  uint64    `json:"rate_prices_id" binding:"required" example:"1"`
 	CheckInDate  time.Time `json:"check_in_date" binding:"required" example:"2024-08-01T15:04:05Z"`
 	CheckOutDate time.Time `json:"check_out_date" binding:"required" example:"2024-08-10T15:04:05Z"`
-	Status       string    `json:"status" binding:"required" example:"confirmed"`
+	Status       domain.BookingStatus    `json:"status" binding:"required" example:"confirmed"`
 	TotalAmount  float64   `json:"total_amount" binding:"required,gt=0" example:"1000.50"`
 }
 
@@ -190,7 +311,7 @@ func (bh *BookingHandler) UpdateBooking(ctx *gin.Context) {
 		RatePriceId:  req.RatePriceId,
 		CheckInDate:  &req.CheckInDate,
 		CheckOutDate: &req.CheckOutDate,
-		Status:       req.Status,
+		Status:       domain.BookingStatus(req.Status),
 		TotalAmount:  req.TotalAmount,
 	}
 
@@ -200,7 +321,11 @@ func (bh *BookingHandler) UpdateBooking(ctx *gin.Context) {
 		return
 	}
 
-	rsp := newBookingResponse(updatedBooking)
+	rsp, err := newBookingResponse(updatedBooking)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
 
 	handleSuccess(ctx, rsp)
 }
@@ -247,21 +372,37 @@ type bookingResponse struct {
 	RatePriceId  uint64    `json:"rate_prices_id" example:"1"`
 	CheckInDate  time.Time `json:"check_in_date" example:"2024-08-01T15:04:05Z"`
 	CheckOutDate time.Time `json:"check_out_date" example:"2024-08-10T15:04:05Z"`
-	Status       string    `json:"status" example:"confirmed"`
+	Status       domain.BookingStatus    `json:"status" example:"confirmed"`
 	TotalAmount  float64   `json:"total_amount" example:"1000.50"`
 	BookingDate  time.Time `json:"booking_date" example:"2024-07-01T15:04:05Z"`
 }
 
 // newBookingResponse creates a new booking response
-func newBookingResponse(booking *domain.Booking) bookingResponse {
+func newBookingResponse(booking *domain.Booking) (bookingResponse, error) {
+	if booking == nil {
+		return bookingResponse{}, errors.New("booking is nil")
+	}
+
+	var checkInDate, checkOutDate, bookingDate time.Time
+
+	if booking.CheckInDate != nil {
+		checkInDate = *booking.CheckInDate
+	}
+	if booking.CheckOutDate != nil {
+		checkOutDate = *booking.CheckOutDate
+	}
+	if booking.BookingDate != nil {
+		bookingDate = *booking.BookingDate
+	}
+
 	return bookingResponse{
 		ID:           booking.ID,
 		CustomerID:   booking.CustomerID,
 		RatePriceId:  booking.RatePriceId,
-		CheckInDate:  *booking.CheckInDate,
-		CheckOutDate: *booking.CheckOutDate,
-		Status:       booking.Status,
+		CheckInDate:  checkInDate,
+		CheckOutDate: checkOutDate,
+		Status:       domain.BookingStatus(booking.Status),
 		TotalAmount:  booking.TotalAmount,
-		BookingDate:  *booking.BookingDate,
-	}
+		BookingDate:  bookingDate,
+	}, nil
 }

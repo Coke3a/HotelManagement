@@ -11,7 +11,7 @@ func CORSMiddleware(config *config.HTTP) gin.HandlerFunc {
         c.Header("Access-Control-Allow-Origin", config.AllowedOrigins)
         c.Header("Access-Control-Allow-Credentials", "true")
         c.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, Access-Control-Expose-Headers")
-        c.Header("Access-Control-Allow-Methods", "POST,HEAD,PATCH, OPTIONS, GET, PUT")
+        c.Header("Access-Control-Allow-Methods", "POST,HEAD,PATCH, OPTIONS, GET, PUT, DELETE")
 
         if c.Request.Method == "OPTIONS" {
             c.AbortWithStatus(204)

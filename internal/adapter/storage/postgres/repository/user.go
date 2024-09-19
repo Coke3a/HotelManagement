@@ -176,14 +176,16 @@ func (ur *UserRepository) ListUsers(ctx context.Context, skip, limit uint64) ([]
 	query := ur.db.QueryBuilder.Select("*").
 		From("users").
 		OrderBy("id").
-		Limit(limit).
-		Offset((skip - 1) * limit)
+		Limit(limit)
+
+	if skip > 0 {
+		query = query.Offset(skip)
+	}
 
 	sql, args, err := query.ToSql()
 	if err != nil {
 		return nil, err
 	}
-	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := ur.db.Query(ctx, sql, args...)
 	if err != nil {

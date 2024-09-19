@@ -98,8 +98,11 @@ func (rr *RoomRepository) ListRooms(ctx context.Context, skip, limit uint64) ([]
 	query := rr.db.QueryBuilder.Select("*").
 		From("rooms").
 		OrderBy("id").
-		Limit(limit).
-		Offset((skip - 1) * limit)
+		Limit(limit)
+
+	if skip > 0 {
+		query = query.Offset(skip)
+	}
 
 	sql, args, err := query.ToSql()
 	if err != nil {
