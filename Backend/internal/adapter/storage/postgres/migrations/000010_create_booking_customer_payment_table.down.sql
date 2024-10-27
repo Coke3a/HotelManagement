@@ -1,0 +1,1 @@
+DROP VIEW IF EXISTS booking_customer_payment;

@@ -1,0 +1,7 @@
+# Node modules
+Frontend/node_modules/
+
+Backend/.env
+docker-compose.yml
+
+todo.txt
