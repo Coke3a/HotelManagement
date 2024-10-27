@@ -11,15 +11,17 @@ import {
   Select,
   MenuItem,
   Grid,
+  Paper,
 } from '@mui/material';
 
 const RoomEdit = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const { id } = useParams();
   const [room, setRoom] = useState({
     id: '',
     room_number: '',
-    type_id: '',
+    room_type_id: '',
     description: '',
     status: '',
     floor: '',
@@ -34,9 +36,14 @@ const RoomEdit = () => {
         const response = await fetch(`http://localhost:8080/v1/rooms/${id}`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch room');
@@ -60,9 +67,14 @@ const RoomEdit = () => {
         const response = await fetch('http://localhost:8080/v1/room-types/', {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch room types');
@@ -91,14 +103,19 @@ const RoomEdit = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
+          body: JSON.stringify({
           ...room,
           status: parseInt(room.status),
           floor: parseInt(room.floor),
         }),
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to update room');
@@ -123,9 +140,14 @@ const RoomEdit = () => {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to delete room');
@@ -143,131 +165,110 @@ const RoomEdit = () => {
   };
 
   return (
-    <Box className="form-container">
-      <Typography variant="h4" gutterBottom className="form-title">
-        Edit Room
-      </Typography>
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="300px">
-          <CircularProgress />
-        </Box>
-      ) : (
-        <form onSubmit={handleSubmit} className="form">
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Room Number"
-                name="room_number"
-                value={room.room_number}
-                onChange={handleChange}
-                margin="normal"
-                required
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal" required className="form-input">
-                <InputLabel>Room Type</InputLabel>
-                <Select
-                  name="type_id"
-                  value={room.room_type_id}
+    <Box sx={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+      <Paper elevation={3} sx={{ padding: '24px', backgroundColor: '#f8f9fa' }}>
+        <Typography variant="h5" gutterBottom className="form-title">
+          Edit Room
+        </Typography>
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+            <CircularProgress />
+          </Box>
+        ) : (
+          <form onSubmit={handleSubmit} className="form">
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Room Number"
+                  name="room_number"
+                  value={room.room_number}
                   onChange={handleChange}
-                  label="Room Type"
-                >
-                  {roomTypes.map((type) => (
-                    <MenuItem key={type.id} value={type.id}>
-                      {type.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal" required className="form-input">
-                <InputLabel>Status</InputLabel>
-                <Select
-                  name="status"
-                  value={room.status}
+                  required
+                  className="form-input"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth required size="small">
+                  <InputLabel>Room Type</InputLabel>
+                  <Select
+                    name="room_type_id"
+                    value={room.room_type_id}
+                    onChange={handleChange}
+                    label="Room Type"
+                  >
+                    {roomTypes.map((type) => (
+                      <MenuItem key={type.id} value={type.id}>
+                        {type.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth required size="small">
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    name="status"
+                    value={room.status}
+                    onChange={handleChange}
+                  >
+                    <MenuItem value={1}>Available</MenuItem>
+                    <MenuItem value={2}>Maintenance</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Floor"
+                  name="floor"
+                  value={room.floor}
                   onChange={handleChange}
-                >
-                  <MenuItem value={1}>Available</MenuItem>
-                  <MenuItem value={2}>Occupied</MenuItem>
-                  <MenuItem value={3}>Maintenance</MenuItem>
-                </Select>
-              </FormControl>
+                  required
+                  className="form-input"
+                  size="small"
+                  type="number"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  name="description"
+                  value={room.description}
+                  onChange={handleChange}
+                  multiline
+                  rows={3}
+                  className="form-input"
+                  size="small"
+                />
+              </Grid>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Floor"
-                name="floor"
-                value={room.floor}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || /^-?\d+$/.test(value)) {
-                    handleChange(e);
-                  }
-                }}
-                margin="normal"
-                required
-                className="form-input"
-                inputProps={{ inputMode: 'numeric', pattern: '-?[0-9]*' }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                name="description"
-                value={room.description}
-                onChange={handleChange}
-                margin="normal"
-                multiline
-                rows={3}
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Created At"
-                name="created_at"
-                value={new Date(room.created_at).toLocaleString()}
-                margin="normal"
-                disabled
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Updated At"
-                name="updated_at"
-                value={new Date(room.updated_at).toLocaleString()}
-                margin="normal"
-                disabled
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="space-between" mt={2}>
-                <Button
-                  variant="contained"
-                  color="error"
-                  onClick={handleDelete}
-                  disabled={loading}
-                >
-                  Delete Room
-                </Button>
-                <Button type="submit" variant="contained" color="primary" disabled={loading}>
-                  {loading ? 'Updating...' : 'Update Room'}
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        </form>
-      )}
+            <Box display="flex" justifyContent="flex-end" mt={3} gap={2}>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={handleDelete}
+                disabled={loading}
+                size="medium"
+              >
+                Delete Room
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={loading}
+                size="medium"
+              >
+                {loading ? 'Updating...' : 'Update Room'}
+              </Button>
+            </Box>
+          </form>
+        )}
+      </Paper>
     </Box>
   );
 };

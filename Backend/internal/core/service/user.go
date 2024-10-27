@@ -8,6 +8,7 @@ import (
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/Coke3a/HotelManagement/internal/core/util"
 	"github.com/gin-gonic/gin"
+	// "fmt"
 )
 
 type UserService struct {
@@ -48,10 +49,11 @@ func (us *UserService) RegisterUser(ctx *gin.Context, user *domain.User) (*domai
 		return nil, domain.ErrInternal
 	}
 
-	// userID, exists := ctx.Get("user_id")
+	// userID, exists := ctx.Get("userID")
     // if !exists {
     //     return nil, domain.ErrUnauthorized
     // }
+	// fmt.Println("user_id", userID)
 
 	// // Create a log
 	// log := &domain.Log{

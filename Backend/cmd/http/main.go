@@ -106,6 +106,7 @@ func main() {
 			*authHandler,
 			*roomTypeHandler,
 			*customerTypeHandler,
+			token,
 		)
 		if err != nil {
 			slog.Error("Error initializing router", "error", err)

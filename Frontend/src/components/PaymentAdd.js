@@ -3,6 +3,7 @@ import { TextField, Button, Box, Typography, CircularProgress, Select, MenuItem,
 import { useNavigate } from 'react-router-dom';
 
 const PaymentAdd = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [payment, setPayment] = useState({
     booking_id: '',
@@ -25,11 +26,15 @@ const PaymentAdd = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Expose-Headers': 'X-My-Custom-Header, X-Another-Custom-Header'
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(payment),
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to create payment');

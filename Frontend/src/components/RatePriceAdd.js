@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Box, Typography, CircularProgress, Select, MenuItem, FormControl, InputLabel, Grid } from '@mui/material';
+import { TextField, Button, Box, Typography, CircularProgress, Select, MenuItem, FormControl, InputLabel, Grid, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 const RatePriceAdd = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [ratePrice, setRatePrice] = useState({
     name: '',
@@ -18,10 +19,15 @@ const RatePriceAdd = () => {
       try {
         const response = await fetch('http://localhost:8080/v1/room-types/?skip=0&limit=100', {
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch room types');
@@ -60,14 +66,19 @@ const RatePriceAdd = () => {
       const response = await fetch('http://localhost:8080/v1/rate_prices/', {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           ...ratePrice,
           price_per_night: parseFloat(ratePrice.price_per_night),
         }),
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to create rate price');
@@ -85,79 +96,88 @@ const RatePriceAdd = () => {
   };
 
   return (
-    <Box className="form-container">
-      <Typography variant="h4" gutterBottom className="form-title">
-        Add New Rate Price
-      </Typography>
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="300px">
-          <CircularProgress />
-        </Box>
-      ) : (
-        <form onSubmit={handleSubmit} className="form">
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Name"
-                name="name"
-                value={ratePrice.name}
-                onChange={handleChange}
-                margin="normal"
-                required
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal" required className="form-input">
-                <InputLabel>Room Type</InputLabel>
-                <Select
-                  name="room_type_id"
-                  value={ratePrice.room_type_id}
+    <Box sx={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+      <Paper elevation={3} sx={{ padding: '24px', backgroundColor: '#f8f9fa' }}>
+        <Typography variant="h5" gutterBottom className="form-title">
+          Add New Rate Price
+        </Typography>
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+            <CircularProgress />
+          </Box>
+        ) : (
+          <form onSubmit={handleSubmit} className="form">
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Name"
+                  name="name"
+                  value={ratePrice.name}
                   onChange={handleChange}
-                >
-                  {roomTypes.map((roomType) => (
-                    <MenuItem key={roomType.id} value={roomType.id}>
-                      {roomType.id} - {roomType.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  required
+                  className="form-input"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth required size="small">
+                  <InputLabel>Room Type</InputLabel>
+                  <Select
+                    name="room_type_id"
+                    value={ratePrice.room_type_id}
+                    onChange={handleChange}
+                    label="Room Type"
+                  >
+                    {roomTypes.map((roomType) => (
+                      <MenuItem key={roomType.id} value={roomType.id}>
+                        {roomType.name} - Default Price: {roomType.default_price}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Price Per Night"
+                  name="price_per_night"
+                  value={ratePrice.price_per_night}
+                  onChange={handleChange}
+                  type="number"
+                  required
+                  className="form-input"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  name="description"
+                  value={ratePrice.description}
+                  onChange={handleChange}
+                  multiline
+                  rows={3}
+                  className="form-input"
+                  size="small"
+                />
+              </Grid>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Price Per Night"
-                name="price_per_night"
-                value={ratePrice.price_per_night}
-                onChange={handleChange}
-                margin="normal"
-                type="number"
-                required
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                name="description"
-                value={ratePrice.description}
-                onChange={handleChange}
-                margin="normal"
-                multiline
-                rows={3}
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Button type="submit" variant="contained" color="primary" className="form-submit" disabled={loading}>
+            <Box display="flex" justifyContent="flex-end" mt={3} gap={2}>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={loading}
+                size="medium"
+              >
                 {loading ? 'Adding...' : 'Add Rate Price'}
               </Button>
-            </Grid>
-          </Grid>
-        </form>
-      )}
+            </Box>
+          </form>
+        )}
+      </Paper>
     </Box>
   );
 };

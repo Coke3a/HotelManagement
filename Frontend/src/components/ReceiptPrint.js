@@ -12,12 +12,18 @@ const ReceiptPrint = () => {
     useEffect(() => {
         const fetchBookingData = async () => {
             try {
+                const token = localStorage.getItem('token');
                 const response = await fetch(`http://localhost:8080/v1/booking/${id}/details`, {
                     headers: {
+                        'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json',
                     },
-                    credentials: 'include'
                 });
+
+                if (response.status === 401) {
+                    handleTokenExpiration(new Error("access token has expired"), navigate);
+                    return;
+                }
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch booking data');

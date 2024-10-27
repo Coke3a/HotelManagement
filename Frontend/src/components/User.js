@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { getUserRole } from '../utils/auth';
 import { UserRoleEnum, UserRoleName } from '../utils/userRoleEnum';
-
+import { handleTokenExpiration } from '../utils/api';
 const User = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
@@ -35,15 +35,19 @@ const User = () => {
           skip: '0',
           limit: '10',
         });
-
+        const token = localStorage.getItem('token');
         const response = await fetch(`http://localhost:8080/v1/users/?${queryParams.toString()}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Expose-Headers': 'X-My-Custom-Header, X-Another-Custom-Header'
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+        
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch users');
@@ -70,51 +74,47 @@ const User = () => {
   };
 
   return (
-    <div className="mt-5 p-5 rounded-lg bg-gray-100">
+    <div className="table-container">
       {userRole === UserRoleEnum.ADMIN && (
         <div className="flex justify-end mb-4">
           <Button
             variant="contained"
-            className="bg-green-500 text-white hover:bg-green-600"
+            className="bg-blue-600 text-white hover:bg-blue-700"
             onClick={handleAddUser}
           >
             Add User
           </Button>
         </div>
       )}
-      <TableContainer component={Paper} style={{ fontSize: '0.9rem' }}>
-        <Table size="small">
-          <TableHead className="bg-blue-600">
+      <TableContainer component={Paper}>
+        <Table size="small" className="compact-table">
+          <TableHead>
             <TableRow>
-              <TableCell className="text-white font-bold">ID</TableCell>
-              <TableCell className="text-white font-bold">Username</TableCell>
-              <TableCell className="text-white font-bold">Email</TableCell>
-              <TableCell className="text-white font-bold">Role</TableCell>
-              <TableCell className="text-white font-bold">Actions</TableCell>
+              <TableCell>ID</TableCell>
+              <TableCell>Username</TableCell>
+              <TableCell>Role</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} align="center">
-                  <Box display="flex" justifyContent="center" alignItems="center" height="50px">
-                    <CircularProgress />
-                  </Box>
+                <TableCell colSpan={4} align="center">
+                  <CircularProgress size={24} />
                 </TableCell>
               </TableRow>
-            ) : !users || users.length === 0 ? (
+            ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center">
-                  <Typography variant="body1">No users found</Typography>
+                <TableCell colSpan={4} align="center">
+                  <Typography variant="body2">No users found</Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              users.map((user, index) => (
-                <TableRow key={user.id} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+              users.map((user) => (
+                <TableRow key={user.id}>
                   <TableCell>{user.id}</TableCell>
                   <TableCell>{user.username}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{UserRoleName[user.role]}</TableCell> {/* Display role name */}
+                  <TableCell>{UserRoleName[user.role]}</TableCell>
                   <TableCell>
                     <Button
                       variant="outlined"

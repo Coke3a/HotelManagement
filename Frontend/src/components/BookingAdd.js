@@ -10,6 +10,7 @@ import DialogActions from '@mui/material/DialogActions';
 import GuestAdd from './GuestAdd';
 
 const BookingAdd = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [booking, setBooking] = useState({
     customer_id: '',
@@ -40,9 +41,14 @@ const BookingAdd = () => {
       const response = await fetch(`http://localhost:8080/v1/rooms/available?check_in_date=${checkInDate}&check_out_date=${checkOutDate}`, {
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (!response.ok) throw new Error('Failed to fetch available rooms');
 
@@ -67,9 +73,14 @@ const BookingAdd = () => {
       const response = await fetch(`http://localhost:8080/v1/rate_prices/by-room-type/${roomTypeId}`, {
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (!response.ok) throw new Error('Failed to fetch rate prices');
 
@@ -175,9 +186,9 @@ const BookingAdd = () => {
     try {
       const response = await fetch('http://localhost:8080/v1/booking/', {
         method: 'POST',
-        headers: {
+        headers: {  
           'Content-Type': 'application/json',
-          'Access-Control-Expose-Headers': 'X-My-Custom-Header, X-Another-Custom-Header'
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           customer_id: parseInt(booking.customer_id),
@@ -189,8 +200,12 @@ const BookingAdd = () => {
           status: parseInt(booking.status),
           total_amount: parseFloat(booking.total_amount),
         }),
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to create booking');
@@ -217,9 +232,14 @@ const BookingAdd = () => {
         const ratePricesResponse = await fetch('http://localhost:8080/v1/rate_prices/?skip=0&limit=100', {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (ratePricesResponse.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         const ratePricesData = await ratePricesResponse.json();
         setRatePrices(ratePricesData.data.ratePrices);
@@ -252,9 +272,15 @@ const BookingAdd = () => {
       const response = await fetch('http://localhost:8080/v1/customers/?skip=0&limit=100', {
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
+
       const data = await response.json();
       setGuests(data.data.customers || []);
     } catch (error) {

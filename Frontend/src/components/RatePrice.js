@@ -17,6 +17,7 @@ import {
 import { getUserRole } from '../utils/auth';
 
 const RatePrice = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [ratePrices, setRatePrices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,10 +28,15 @@ const RatePrice = () => {
     try {
       const response = await fetch(`http://localhost:8080/v1/room-types/${roomTypeId}`, {
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (!response) {
         throw new Error('No response received from the server');
@@ -59,10 +65,15 @@ const RatePrice = () => {
 
         const response = await fetch(`http://localhost:8080/v1/rate_prices/?${queryParams.toString()}`, {
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch rate prices');
@@ -104,26 +115,26 @@ const RatePrice = () => {
   };
 
   return (
-    <div className="mt-5 p-5 rounded-lg bg-gray-100">
+    <div className="table-container">
       <div className="flex justify-end mb-4">
         <Button
           variant="contained"
-          className="bg-green-500 text-white hover:bg-green-600"
+          className="bg-blue-600 text-white hover:bg-blue-700"
           onClick={handleAddRatePrice}
         >
           Add Rate Price
         </Button>
       </div>
-      <TableContainer component={Paper} style={{ fontSize: '0.9rem' }}>
-        <Table size="small">
-          <TableHead className="bg-blue-600">
+      <TableContainer component={Paper}>
+        <Table size="small" className="compact-table">
+          <TableHead>
             <TableRow>
-              <TableCell className="text-white font-bold">ID</TableCell>
-              <TableCell className="text-white font-bold">Name</TableCell>
-              <TableCell className="text-white font-bold">Description</TableCell>
-              <TableCell className="text-white font-bold">Price per Night</TableCell>
-              <TableCell className="text-white font-bold">Room Type</TableCell>
-              <TableCell className="text-white font-bold">Actions</TableCell>
+              <TableCell>ID</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Price per Night</TableCell>
+              <TableCell>Room Type</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

@@ -8,6 +8,7 @@ import { Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 const DashBoard = () => {
+  const token = localStorage.getItem('token');
   const [rooms, setRooms] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -32,17 +33,21 @@ const DashBoard = () => {
           })}`, {
             headers: {
               'Content-Type': 'application/json',
-              'Access-Control-Expose-Headers': 'X-My-Custom-Header, X-Another-Custom-Header'
+              'Authorization': `Bearer ${token}`,
             },
-            credentials: 'include'
           }),
           fetch('http://localhost:8080/v1/rooms/with-room-type?skip=0&limit=100', {
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
             },
-            credentials: 'include'
           })
         ]);
+
+        if (bookingsResponse.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!bookingsResponse.ok || !roomsResponse.ok) {
           throw new Error(`Failed to fetch data: ${bookingsResponse.status} ${bookingsResponse.statusText}, ${roomsResponse.status} ${roomsResponse.statusText}`);

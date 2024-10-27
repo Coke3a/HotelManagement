@@ -5,6 +5,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useNavigate } from 'react-router-dom';
 
 const GuestAdd = ({ onGuestAdded, isFromBooking = false }) => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [guest, setGuest] = useState({
     firstname: '',
@@ -28,9 +29,14 @@ const GuestAdd = ({ onGuestAdded, isFromBooking = false }) => {
         const response = await fetch('http://localhost:8080/v1/customer-types/', {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch guest types');
@@ -66,11 +72,15 @@ const GuestAdd = ({ onGuestAdded, isFromBooking = false }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Expose-Headers': 'X-My-Custom-Header, X-Another-Custom-Header'
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(guest),
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (response.status === 409) {
         throw new Error('A guest with this information already exists.');

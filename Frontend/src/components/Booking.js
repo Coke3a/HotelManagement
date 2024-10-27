@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { handleTokenExpiration } from '../utils/api';
 import {
   Table,
   TableBody,
@@ -23,6 +24,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { getPaymentStatusMessage } from '../utils/paymentEnums';
 
 const Booking = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,10 +67,14 @@ const Booking = () => {
         const response = await fetch(`http://localhost:8080/v1/booking/?${queryParams.toString()}`, {
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Expose-Headers': 'X-My-Custom-Header, X-Another-Custom-Header'
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error(`Failed to fetch bookings: ${response.status} ${response.statusText}`);
@@ -114,79 +120,29 @@ const Booking = () => {
   };
 
   return (
-    <div className="mt-5 p-5 rounded-lg bg-gray-100">
+    <div className="table-container">
       <div className="flex justify-end mb-4">
         <Button
           variant="contained"
-          className="bg-green-500 text-white hover:bg-green-600"
+          className="bg-blue-600 text-white hover:bg-blue-700"
           onClick={handleAddBooking}
         >
           Add Booking
         </Button>
       </div>
-      <div className="flex flex-wrap gap-4 mb-4">
-        <TextField
-          label="Booking ID"
-          value={filters.id}
-          onChange={(e) => setFilters({ ...filters, id: e.target.value })}
-          className="w-40"
-        />
-        <TextField
-          label="Customer ID"
-          value={filters.customer_id}
-          onChange={(e) => setFilters({ ...filters, customer_id: e.target.value })}
-          className="w-40"
-        />
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
-          <DatePicker
-            label="Check-in Date"
-            value={filters.check_in_date}
-            onChange={(date) => setFilters({ ...filters, check_in_date: date })}
-            renderInput={(params) => <TextField {...params} className="w-40" />}
-          />
-          <DatePicker
-            label="Check-out Date"
-            value={filters.check_out_date}
-            onChange={(date) => setFilters({ ...filters, check_out_date: date })}
-            renderInput={(params) => <TextField {...params} className="w-40" />}
-          />
-        </LocalizationProvider>
-        <TextField
-          label="Total Amount"
-          value={filters.total_amount}
-          onChange={(e) => setFilters({ ...filters, total_amount: e.target.value })}
-          className="w-40"
-        />
-        <FormControl variant="outlined" className="w-40">
-          <InputLabel>Filter by Status</InputLabel>
-          <Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            label="Filter by Status"
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="1">Pending</MenuItem>
-            <MenuItem value="2">Confirmed</MenuItem>
-            <MenuItem value="3">Checked In</MenuItem>
-            <MenuItem value="4">Checked Out</MenuItem>
-            <MenuItem value="5">Canceled</MenuItem>
-            <MenuItem value="6">Completed</MenuItem>
-          </Select>
-        </FormControl>
-      </div>
-      <TableContainer component={Paper} style={{ fontSize: '0.9rem' }}>
-        <Table size="small">
-          <TableHead className="bg-blue-600">
+      <TableContainer component={Paper}>
+        <Table size="small" className="compact-table">
+          <TableHead>
             <TableRow>
-              <TableCell className="text-white font-bold">ID</TableCell>
-              <TableCell className="text-white font-bold" style={{ paddingRight: '8px' }}>Guest</TableCell>
-              <TableCell className="text-white font-bold" align="center" style={{ paddingLeft: '8px' }}>Room</TableCell>
-              <TableCell className="text-white font-bold">Check-in</TableCell>
-              <TableCell className="text-white font-bold">Check-out</TableCell>
-              <TableCell className="text-white font-bold">Amount</TableCell>
-              <TableCell className="text-white font-bold">Payment</TableCell>
-              <TableCell className="text-white font-bold">Status</TableCell>
-              <TableCell className="text-white font-bold">Actions</TableCell>
+              <TableCell>ID</TableCell>
+              <TableCell>Guest</TableCell>
+              <TableCell>Room</TableCell>
+              <TableCell>Check-in</TableCell>
+              <TableCell>Check-out</TableCell>
+              <TableCell>Amount</TableCell>
+              <TableCell>Payment</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

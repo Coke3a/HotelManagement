@@ -5,6 +5,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const GuestEdit = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const { id } = useParams();
   const [guest, setGuest] = useState({
@@ -32,9 +33,14 @@ const GuestEdit = () => {
         const response = await fetch(`http://localhost:8080/v1/customers/${id}`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch guest');
@@ -68,9 +74,14 @@ const GuestEdit = () => {
         const response = await fetch('http://localhost:8080/v1/customer-types/', {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch guest types');
@@ -106,15 +117,19 @@ const GuestEdit = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Expose-Headers': 'X-My-Custom-Header, X-Another-Custom-Header'
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           ...guest,
           date_of_birth: guest.date_of_birth ? guest.date_of_birth.toISOString().split('T')[0] : null,
           last_visit_date: guest.last_visit_date ? guest.last_visit_date.toISOString().split('T')[0] : null,
         }),
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -138,8 +153,15 @@ const GuestEdit = () => {
       try {
         const response = await fetch(`http://localhost:8080/v1/customers/${id}`, {
           method: 'DELETE',
-          credentials: 'include'
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to delete guest');

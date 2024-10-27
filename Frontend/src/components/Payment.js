@@ -16,6 +16,7 @@ import {
 import { getPaymentStatusMessage, getPaymentMethodMessage } from '../utils/paymentEnums';
 
 const Payment = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,10 +28,14 @@ const Payment = () => {
         const response = await fetch('http://localhost:8080/v1/payments/?skip=0&limit=10', {
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Expose-Headers': 'X-My-Custom-Header, X-Another-Custom-Header',
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include',
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch payments');
@@ -57,18 +62,18 @@ const Payment = () => {
   };
 
   return (
-    <div>
-      <TableContainer component={Paper} style={{ fontSize: '0.9rem' }}>
-        <Table size="small">
-          <TableHead className="bg-blue-600">
+    <div className="table-container">
+      <TableContainer component={Paper}>
+        <Table size="small" className="compact-table">
+          <TableHead>
             <TableRow>
-              <TableCell className="text-white font-bold">Booking ID</TableCell>
-              <TableCell className="text-white font-bold">Payment ID</TableCell>
-              <TableCell className="text-white font-bold">Amount</TableCell>
-              <TableCell className="text-white font-bold">Method</TableCell>
-              <TableCell className="text-white font-bold">Date</TableCell>
-              <TableCell className="text-white font-bold">Status</TableCell>
-              <TableCell className="text-white font-bold">Actions</TableCell>
+              <TableCell>Booking ID</TableCell>
+              <TableCell>Payment ID</TableCell>
+              <TableCell>Amount</TableCell>
+              <TableCell>Method</TableCell>
+              <TableCell>Date</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

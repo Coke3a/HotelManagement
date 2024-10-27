@@ -17,6 +17,7 @@ import { getUserRole } from '../utils/auth';
 import { UserRoleEnum } from '../utils/userRoleEnum';
 
 const Room = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,10 +40,15 @@ const Room = () => {
 
         const response = await fetch(`http://localhost:8080/v1/rooms/?${queryParams.toString()}`, {
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch rooms');
@@ -65,10 +71,15 @@ const Room = () => {
       try {
         const response = await fetch('http://localhost:8080/v1/room-types/', {
           headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch room types');
@@ -115,48 +126,46 @@ const Room = () => {
   };
 
   return (
-    <div className="mt-5 p-5 rounded-lg bg-gray-100">
+    <div className="table-container">
       {userRole === UserRoleEnum.ADMIN && (
         <div className="flex justify-end mb-4">
           <Button
             variant="contained"
-            className="bg-green-500 text-white hover:bg-green-600"
+            className="bg-blue-600 text-white hover:bg-blue-700"
             onClick={handleAddRoom}
           >
             Add Room
           </Button>
         </div>
       )}
-      <TableContainer component={Paper} style={{ fontSize: '0.9rem' }}>
-        <Table size="small">
-          <TableHead className="bg-blue-600">
+      <TableContainer component={Paper}>
+        <Table size="small" className="compact-table">
+          <TableHead>
             <TableRow>
-              <TableCell className="text-white font-bold">ID</TableCell>
-              <TableCell className="text-white font-bold">Room Number</TableCell>
-              <TableCell className="text-white font-bold">Room Type</TableCell>
-              <TableCell className="text-white font-bold">Status</TableCell>
-              <TableCell className="text-white font-bold">Floor</TableCell>
-              <TableCell className="text-white font-bold">Actions</TableCell>
+              <TableCell>ID</TableCell>
+              <TableCell>Room Number</TableCell>
+              <TableCell>Room Type</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Floor</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
                 <TableCell colSpan={6} align="center">
-                  <Box display="flex" justifyContent="center" alignItems="center" height="50px">
-                    <CircularProgress />
-                  </Box>
+                  <CircularProgress size={24} />
                 </TableCell>
               </TableRow>
             ) : !rooms || rooms.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} align="center">
-                  <Typography variant="body1">No rooms found</Typography>
+                  <Typography variant="body2">No rooms found</Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              rooms.map((room, index) => (
-                <TableRow key={room.id} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+              rooms.map((room) => (
+                <TableRow key={room.id}>
                   <TableCell>{room.id}</TableCell>
                   <TableCell>{room.room_number}</TableCell>
                   <TableCell>{roomTypeMap[String(room.room_type_id)] || 'Unknown'}</TableCell>

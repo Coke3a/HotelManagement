@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 
 const GuestType = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [guestTypes, setGuestTypes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,9 +32,14 @@ const GuestType = () => {
         const response = await fetch(`http://localhost:8080/v1/customer-types/?${queryParams.toString()}`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch guest types');
@@ -60,24 +66,24 @@ const GuestType = () => {
   };
 
   return (
-    <div className="mt-5 p-5 rounded-lg bg-gray-100">
+    <div className="table-container">
       <div className="flex justify-end mb-4">
         <Button
           variant="contained"
-          className="bg-green-500 text-white hover:bg-green-600"
+          className="bg-blue-600 text-white hover:bg-blue-700"
           onClick={handleAddGuestType}
         >
           Add Guest Type
         </Button>
       </div>
-      <TableContainer component={Paper} style={{ fontSize: '0.9rem' }}>
-        <Table size="small">
-          <TableHead className="bg-blue-600">
+      <TableContainer component={Paper}>
+        <Table size="small" className="compact-table">
+          <TableHead>
             <TableRow>
-              <TableCell className="text-white font-bold">ID</TableCell>
-              <TableCell className="text-white font-bold">Name</TableCell>
-              <TableCell className="text-white font-bold">Description</TableCell>
-              <TableCell className="text-white font-bold">Actions</TableCell>
+              <TableCell>ID</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

@@ -182,7 +182,6 @@ func (uh *UserHandler) GetUser(ctx *gin.Context) {
 type updateUserRequest struct {
 	UserID   uint64 `json:"id" binding:"required" example:"1"`
 	UserName string `json:"username" example:"johndoe"`
-	Password string `json:"password" example:"NewP@ssw0rd"`
 	Role     domain.UserRole `json:"role" example:"1"`
 	Rank     string `json:"rank" example:"Manager"`
 	Status   string `json:"status" example:"active"`
@@ -214,7 +213,6 @@ func (uh *UserHandler) UpdateUser(ctx *gin.Context) {
 	user := domain.User{
 		ID:       req.UserID,
 		UserName: req.UserName,
-		Password: req.Password,
 		Role:     int(req.Role),
 		Rank:     &req.Rank,
 		Status:   &req.Status,

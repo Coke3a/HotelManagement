@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 
 const Guest = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [guests, setGuests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,10 +48,14 @@ const Guest = () => {
         const response = await fetch(`http://localhost:8080/v1/customers/?${queryParams.toString()}`, {
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Expose-Headers': 'X-My-Custom-Header, X-Another-Custom-Header'
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch guests');
@@ -75,9 +80,14 @@ const Guest = () => {
         const response = await fetch('http://localhost:8080/v1/customer-types/', {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch guest types');
@@ -103,65 +113,27 @@ const Guest = () => {
   };
 
   return (
-    <div className="mt-5 p-5 rounded-lg bg-gray-100">
+    <div className="table-container">
       <div className="flex justify-end mb-4">
         <Button
           variant="contained"
-          className="bg-primary text-white hover:bg-primary-dark"
+          className="bg-blue-600 text-white hover:bg-blue-700"
           onClick={handleAddGuest}
         >
           Add Guest
         </Button>
       </div>
-      <div className="flex flex-wrap gap-4 mb-4">
-        <TextField
-          label="Guest ID"
-          value={filters.id}
-          onChange={(e) => setFilters({ ...filters, id: e.target.value })}
-          className="w-40"
-        />
-        <TextField
-          label="Firstname"
-          value={filters.firstname}
-          onChange={(e) => setFilters({ ...filters, firstname: e.target.value })}
-          className="w-40"
-        />
-        <TextField
-          label="Surname"
-          value={filters.surname}
-          onChange={(e) => setFilters({ ...filters, surname: e.target.value })}
-          className="w-40"
-        />
-        <TextField
-          label="Email"
-          value={filters.email}
-          onChange={(e) => setFilters({ ...filters, email: e.target.value })}
-          className="w-40"
-        />
-        <FormControl className="w-40">
-          <InputLabel>Guest Type</InputLabel>
-          <Select
-            value={filters.customer_type_id || ''}
-            onChange={(e) => setFilters({ ...filters, customer_type_id: e.target.value })}
-          >
-            <MenuItem value="">All</MenuItem>
-            {guestTypes.map((type) => (
-              <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </div>
-      <TableContainer component={Paper} style={{ fontSize: '0.9rem' }}>
-        <Table size="small">
-          <TableHead className="bg-blue-600">
+      <TableContainer component={Paper}>
+        <Table size="small" className="compact-table">
+          <TableHead>
             <TableRow>
-              <TableCell className="text-white font-bold">ID</TableCell>
-              <TableCell className="text-white font-bold">Name</TableCell>
-              <TableCell className="text-white font-bold">Email</TableCell>
-              <TableCell className="text-white font-bold">Phone</TableCell>
-              <TableCell className="text-white font-bold">Type</TableCell>
-              <TableCell className="text-white font-bold">Last Visit</TableCell>
-              <TableCell className="text-white font-bold">Actions</TableCell>
+              <TableCell>ID</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Phone</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell>Last Visit</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>

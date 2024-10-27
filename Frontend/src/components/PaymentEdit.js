@@ -6,6 +6,7 @@ import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import { PaymentStatus, PaymentMethod } from '../utils/paymentEnums';
 
 const PaymentEdit = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const { id } = useParams();
   const [payment, setPayment] = useState({
@@ -26,9 +27,14 @@ const PaymentEdit = () => {
         const response = await fetch(`http://localhost:8080/v1/payments/${id}`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch payment');
@@ -69,6 +75,7 @@ const PaymentEdit = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           ...payment,
@@ -77,8 +84,12 @@ const PaymentEdit = () => {
           status: parseInt(payment.status),
           payment_method: parseInt(payment.payment_method), // Ensure this is sent as an integer
         }),
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to update payment');

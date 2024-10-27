@@ -6,6 +6,7 @@ import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import GuestAdd from './GuestAdd';
 
 const BookingEdit = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const { id } = useParams();
   const [booking, setBooking] = useState({
@@ -33,9 +34,14 @@ const BookingEdit = () => {
         const response = await fetch(`http://localhost:8080/v1/booking/${id}/details`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch booking data');
@@ -82,9 +88,15 @@ const BookingEdit = () => {
       const response = await fetch('http://localhost:8080/v1/customers/?skip=0&limit=100', {
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
+
       const data = await response.json();
       setGuests(data.data.customers || []);
     } catch (error) {
@@ -97,9 +109,14 @@ const BookingEdit = () => {
       const response = await fetch('http://localhost:8080/v1/rooms', {
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (!response.ok) throw new Error('Failed to fetch rooms');
 
@@ -116,9 +133,14 @@ const BookingEdit = () => {
       const response = await fetch(`http://localhost:8080/v1/rate_prices/by-room-type/${roomTypeId}`, {
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (!response.ok) throw new Error('Failed to fetch rate prices');
 
@@ -143,6 +165,7 @@ const BookingEdit = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
           id: booking.booking_id,
@@ -155,8 +178,12 @@ const BookingEdit = () => {
           status: parseInt(booking.status),
           total_amount: booking.total_amount,
         }),
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Failed to update booking');

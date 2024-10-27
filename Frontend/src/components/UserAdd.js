@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Box, Typography, CircularProgress, Select, MenuItem, FormControl, InputLabel, Grid } from '@mui/material';
+import { TextField, Button, Box, Typography, CircularProgress, Select, MenuItem, FormControl, InputLabel, Grid, Paper } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 const UserAdd = () => {
@@ -22,18 +22,23 @@ const UserAdd = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:8080/v1/users/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Expose-Headers': 'X-My-Custom-Header, X-Another-Custom-Header'
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(user),
-        credentials: 'include'
       });
 
       if (response.status === 409) {
         throw new Error('User already exists. Please use a different username or email.');
+      }
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
       }
 
       if (!response.ok) {
@@ -53,77 +58,87 @@ const UserAdd = () => {
   };
 
   return (
-    <Box className="form-container">
-      <Typography variant="h4" gutterBottom className="form-title">
-        Add User
-      </Typography>
-      <form onSubmit={handleSubmit} className="form">
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Username"
-              name="username"
-              value={user.username}
-              onChange={handleChange}
-              margin="normal"
-              required
-              className="form-input"
-              size="small"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Password"
-              name="password"
-              value={user.password}
-              onChange={handleChange}
-              margin="normal"
-              required
-              type="password"
-              className="form-input"
-              size="small"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth margin="normal" required className="form-input">
-              <InputLabel>Role</InputLabel>
-              <Select
-                name="role"
-                value={user.role}
+    <Box sx={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+      <Paper elevation={3} sx={{ padding: '24px', backgroundColor: '#f8f9fa' }}>
+        <Typography variant="h5" gutterBottom className="form-title">
+          Add New User
+        </Typography>
+        <form onSubmit={handleSubmit} className="form">
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Username"
+                name="username"
+                value={user.username}
                 onChange={handleChange}
-                label="Role"
+                required
+                className="form-input"
                 size="small"
-              >
-                <MenuItem value={0}>Staff</MenuItem>
-                <MenuItem value={1}>Admin</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <FormControl fullWidth margin="normal" required className="form-input">
-              <InputLabel>Rank</InputLabel>
-              <Select
-                name="rank"
-                value={user.rank}
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Password"
+                name="password"
+                type="password"
+                value={user.password}
                 onChange={handleChange}
-                label="Rank"
+                required
+                className="form-input"
                 size="small"
-              >
-                <MenuItem value="1">1</MenuItem>
-                <MenuItem value="2">2</MenuItem>
-                <MenuItem value="3">3</MenuItem>
-              </Select>
-            </FormControl>
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth required size="small">
+                <InputLabel>Role</InputLabel>
+                <Select
+                  name="role"
+                  value={user.role}
+                  onChange={handleChange}
+                  label="Role"
+                >
+                  <MenuItem value={0}>Staff</MenuItem>
+                  <MenuItem value={1}>Admin</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth required size="small">
+                <InputLabel>Rank</InputLabel>
+                <Select
+                  name="rank"
+                  value={user.rank}
+                  onChange={handleChange}
+                  label="Rank"
+                >
+                  <MenuItem value="1">1</MenuItem>
+                  <MenuItem value="2">2</MenuItem>
+                  <MenuItem value="3">3</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
           </Grid>
-        </Grid>
-        <Box display="flex" justifyContent="flex-end" mt={2}>
-          <Button type="submit" variant="contained" color="primary" className="form-button" size="small">
-            Add User
-          </Button>
-        </Box>
-      </form>
+          <Box display="flex" justifyContent="flex-end" mt={3}>
+            <Button
+              type="button"
+              variant="outlined"
+              onClick={() => navigate('/user')}
+              sx={{ mr: 2 }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={24} /> : 'Add User'}
+            </Button>
+          </Box>
+        </form>
+      </Paper>
     </Box>
   );
 };

@@ -183,7 +183,6 @@ func (ur *UserRepository) ListUsers(ctx context.Context, skip, limit uint64) ([]
 func (ur *UserRepository) UpdateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
 	query := ur.db.QueryBuilder.Update("users").
 		Set("username", sq.Expr("COALESCE(?, username)", user.UserName)).
-		Set("password", sq.Expr("COALESCE(?, password)", user.Password)).
 		Set("role", sq.Expr("COALESCE(?, role)", user.Role)).
 		Set("rank", sq.Expr("COALESCE(?, rank)", user.Rank)).
 		Set("hire_date", sq.Expr("COALESCE(?, hire_date)", user.HireDate)).

@@ -1,16 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box, Typography, CircularProgress, Paper, Alert } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { setToken, setUserRole, setUserId, setUsername } from '../../utils/auth';
+import { useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { setToken, setUserRole, setUserId, setUsername, isAuthenticated } from '../../utils/auth';
 
 const Login = () => {
+  // If already authenticated, redirect to dashboard
+  if (isAuthenticated()) {
+    return <Navigate to="/" replace />;
+  }
+
   const navigate = useNavigate();
+  const location = useLocation(); // Add this line to get location state
   const [credentials, setCredentials] = useState({
     username: '',
     password: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(''); // Add state for error message
+
+  // Add this useEffect to handle error message from location state
+  useEffect(() => {
+    if (location.state?.error) {
+      setError(location.state.error);
+      // Clear the location state after showing the message
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,10 +41,8 @@ const Login = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Expose-Headers': 'X-My-Custom-Header, X-Another-Custom-Header'
         },
         body: JSON.stringify(credentials),
-        credentials: 'include',
       });
 
       if (!response.ok) {

@@ -7,6 +7,7 @@ import {
   Button,
   CircularProgress,
   Grid,
+  Paper,
 } from '@mui/material';
 
 const RoomTypeAdd = () => {
@@ -31,14 +32,20 @@ const RoomTypeAdd = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:8080/v1/room-types/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(roomType),
-        credentials: 'include'
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (response.status === 409) {
         throw new Error('Room type already exists. Please use a different name.');
@@ -60,77 +67,85 @@ const RoomTypeAdd = () => {
   };
 
   return (
-    <Box className="form-container">
-      <Typography variant="h4" gutterBottom className="form-title">
-        Add New Room Type
-      </Typography>
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="300px">
-          <CircularProgress />
-        </Box>
-      ) : (
-        <form onSubmit={handleSubmit} className="form">
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Name"
-                name="name"
-                value={roomType.name}
-                onChange={handleChange}
-                margin="normal"
-                required
-                className="form-input"
-              />
+    <Box sx={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+      <Paper elevation={3} sx={{ padding: '24px', backgroundColor: '#f8f9fa' }}>
+        <Typography variant="h5" gutterBottom className="form-title">
+          Add New Room Type
+        </Typography>
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+            <CircularProgress />
+          </Box>
+        ) : (
+          <form onSubmit={handleSubmit} className="form">
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Name"
+                  name="name"
+                  value={roomType.name}
+                  onChange={handleChange}
+                  required
+                  className="form-input"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Capacity"
+                  name="capacity"
+                  value={roomType.capacity}
+                  onChange={handleChange}
+                  type="number"
+                  required
+                  className="form-input"
+                  size="small"
+                  inputProps={{ min: 1 }}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Default Price"
+                  name="default_price"
+                  value={roomType.default_price}
+                  onChange={handleChange}
+                  type="number"
+                  required
+                  className="form-input"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  name="description"
+                  value={roomType.description}
+                  onChange={handleChange}
+                  multiline
+                  rows={3}
+                  className="form-input"
+                  size="small"
+                />
+              </Grid>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Capacity"
-                name="capacity"
-                value={roomType.capacity}
-                onChange={handleChange}
-                margin="normal"
-                type="number"
-                inputProps={{ min: 1 }}
-                required
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Default Price"
-                name="default_price"
-                value={roomType.default_price}
-                onChange={handleChange}
-                margin="normal"
-                type="number"
-                required
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                name="description"
-                value={roomType.description}
-                onChange={handleChange}
-                margin="normal"
-                multiline
-                rows={3}
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Button type="submit" variant="contained" color="primary" className="form-submit" disabled={loading}>
+            <Box display="flex" justifyContent="flex-end" mt={3} gap={2}>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={loading}
+                size="medium"
+              >
                 {loading ? 'Adding...' : 'Add Room Type'}
               </Button>
-            </Grid>
-          </Grid>
-        </form>
-      )}
+            </Box>
+          </form>
+        )}
+      </Paper>
     </Box>
   );
 };

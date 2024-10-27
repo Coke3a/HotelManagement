@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { TextField, Button, Box, Typography, CircularProgress, Select, MenuItem, FormControl, InputLabel, Grid } from '@mui/material';
+import { TextField, Button, Box, Typography, CircularProgress, Select, MenuItem, FormControl, InputLabel, Grid, Paper } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const RatePriceEdit = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const { id } = useParams();
   const [ratePrice, setRatePrice] = useState({
@@ -22,17 +23,22 @@ const RatePriceEdit = () => {
         const [ratePriceResponse, roomTypesResponse] = await Promise.all([
           fetch(`http://localhost:8080/v1/rate_prices/${id}`, {
             headers: {
+              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json',
             },
-            credentials: 'include',
           }),
           fetch('http://localhost:8080/v1/room-types/?skip=0&limit=100', {
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
             },
-            credentials: 'include',
           })
         ]);
+
+        if (ratePriceResponse.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!ratePriceResponse.ok) {
           throw new Error('Failed to fetch rate price');
@@ -69,6 +75,7 @@ const RatePriceEdit = () => {
       const response = await fetch(`http://localhost:8080/v1/rate_prices/`, {
         method: 'PUT',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -78,8 +85,12 @@ const RatePriceEdit = () => {
           price_per_night: parseFloat(ratePrice.price_per_night),
           room_type_id: parseInt(ratePrice.room_type_id),
         }),
-        credentials: 'include',
       });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -103,8 +114,15 @@ const RatePriceEdit = () => {
       try {
         const response = await fetch(`http://localhost:8080/v1/rate_prices/${id}`, {
           method: 'DELETE',
-          credentials: 'include',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to delete rate price');
@@ -122,104 +140,97 @@ const RatePriceEdit = () => {
   };
 
   return (
-    <Box className="form-container">
-      <Typography variant="h4" gutterBottom className="form-title">
-        Edit Rate Price
-      </Typography>
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="300px">
-          <CircularProgress />
-        </Box>
-      ) : (
-        <form onSubmit={handleSubmit} className="form">
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Rate Price ID"
-                name="id"
-                value={ratePrice.id}
-                onChange={handleChange}
-                margin="normal"
-                required
-                type="number"
-                className="form-input"
-                disabled
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Name"
-                name="name"
-                value={ratePrice.name}
-                onChange={handleChange}
-                margin="normal"
-                required
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal" required className="form-input">
-                <InputLabel>Room Type</InputLabel>
-                <Select
-                  name="room_type_id"
-                  value={ratePrice.room_type_id}
+    <Box sx={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+      <Paper elevation={3} sx={{ padding: '24px', backgroundColor: '#f8f9fa' }}>
+        <Typography variant="h5" gutterBottom className="form-title">
+          Edit Rate Price
+        </Typography>
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+            <CircularProgress />
+          </Box>
+        ) : (
+          <form onSubmit={handleSubmit} className="form">
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Name"
+                  name="name"
+                  value={ratePrice.name}
                   onChange={handleChange}
-                >
-                  {roomTypes.map((roomType) => (
-                    <MenuItem key={roomType.id} value={roomType.id}>
-                      {roomType.id} - {roomType.name} - Capacity: {roomType.capacity} - Default Price: {roomType.default_price}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  required
+                  className="form-input"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth required size="small">
+                  <InputLabel>Room Type</InputLabel>
+                  <Select
+                    name="room_type_id"
+                    value={ratePrice.room_type_id}
+                    onChange={handleChange}
+                    label="Room Type"
+                  >
+                    {roomTypes.map((roomType) => (
+                      <MenuItem key={roomType.id} value={roomType.id}>
+                        {roomType.name} - Default Price: {roomType.default_price}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Price Per Night"
+                  name="price_per_night"
+                  value={ratePrice.price_per_night}
+                  onChange={handleChange}
+                  type="number"
+                  required
+                  className="form-input"
+                  size="small"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Description"
+                  name="description"
+                  value={ratePrice.description}
+                  onChange={handleChange}
+                  multiline
+                  rows={3}
+                  className="form-input"
+                  size="small"
+                />
+              </Grid>
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Price Per Night"
-                name="price_per_night"
-                value={ratePrice.price_per_night}
-                onChange={handleChange}
-                margin="normal"
-                type="number"
-                step="0.01"
-                required
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Description"
-                name="description"
-                value={ratePrice.description}
-                onChange={handleChange}
-                margin="normal"
-                multiline
-                rows={3}
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <Box display="flex" justifyContent="space-between" mt={2}>
-                <Button
-                  variant="contained"
-                  color="error"
-                  onClick={handleDelete}
-                  disabled={loading}
-                >
-                  Delete Rate Price
-                </Button>
-                <Button type="submit" variant="contained" color="primary" disabled={loading}>
-                  {loading ? 'Updating...' : 'Update Rate Price'}
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        </form>
-      )}
+            <Box display="flex" justifyContent="flex-end" mt={3} gap={2}>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={handleDelete}
+                disabled={loading}
+                size="medium"
+              >
+                Delete Rate Price
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={loading}
+                size="medium"
+              >
+                {loading ? 'Updating...' : 'Update Rate Price'}
+              </Button>
+            </Box>
+          </form>
+        )}
+      </Paper>
     </Box>
   );
 };

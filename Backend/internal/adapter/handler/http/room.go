@@ -181,7 +181,7 @@ func (rh *RoomHandler) GetRoom(ctx *gin.Context) {
 type updateRoomRequest struct {
 	ID           uint64  `json:"id" binding:"required" example:"1"`
 	RoomNumber   string  `json:"room_number" binding:"required" example:"101"`
-	TypeID       int     `json:"type_id" binding:"required" example:"1"`
+	TypeID       int     `json:"room_type_id" binding:"required" example:"1"`
 	Description  string  `json:"description" example:"A spacious room with ocean view"`
 	Status       int     `json:"status" binding:"required" example:"1"`
 	Floor        int     `json:"floor" binding:"required" example:"1"`

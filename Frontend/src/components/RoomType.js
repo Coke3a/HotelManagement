@@ -17,6 +17,7 @@ import { getUserRole } from '../utils/auth';
 import { UserRoleEnum } from '../utils/userRoleEnum';
 
 const RoomType = () => {
+  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [roomTypes, setRoomTypes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,9 +39,14 @@ const RoomType = () => {
         const response = await fetch(`http://localhost:8080/v1/room-types/?${queryParams.toString()}`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
-          credentials: 'include'
         });
+
+        if (response.status === 401) {
+          handleTokenExpiration(new Error("access token has expired"), navigate);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to fetch room types');
@@ -73,48 +79,46 @@ const RoomType = () => {
   };
 
   return (
-    <div className="mt-5 p-5 rounded-lg bg-gray-100">
+    <div className="table-container">
       {userRole === UserRoleEnum.ADMIN && (
         <div className="flex justify-end mb-4">
           <Button
             variant="contained"
-            className="bg-green-500 text-white hover:bg-green-600"
+            className="bg-blue-600 text-white hover:bg-blue-700"
             onClick={handleAddRoomType}
           >
             Add Room Type
           </Button>
         </div>
       )}
-      <TableContainer component={Paper} style={{ fontSize: '0.9rem' }}>
-        <Table size="small">
-          <TableHead className="bg-blue-600">
+      <TableContainer component={Paper}>
+        <Table size="small" className="compact-table">
+          <TableHead>
             <TableRow>
-              <TableCell className="text-white font-bold">ID</TableCell>
-              <TableCell className="text-white font-bold">Name</TableCell>
-              <TableCell className="text-white font-bold">Description</TableCell>
-              <TableCell className="text-white font-bold">Capacity</TableCell>
-              <TableCell className="text-white font-bold">Default Price</TableCell>
-              <TableCell className="text-white font-bold">Actions</TableCell>
+              <TableCell>ID</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Capacity</TableCell>
+              <TableCell>Default Price</TableCell>
+              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading ? (
               <TableRow>
                 <TableCell colSpan={6} align="center">
-                  <Box display="flex" justifyContent="center" alignItems="center" height="50px">
-                    <CircularProgress />
-                  </Box>
+                  <CircularProgress size={24} />
                 </TableCell>
               </TableRow>
             ) : !roomTypes || roomTypes.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} align="center">
-                  <Typography variant="body1">No room types found</Typography>
+                  <Typography variant="body2">No room types found</Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              roomTypes.map((roomType, index) => (
-                <TableRow key={roomType.id} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+              roomTypes.map((roomType) => (
+                <TableRow key={roomType.id}>
                   <TableCell>{roomType.id}</TableCell>
                   <TableCell>{roomType.name}</TableCell>
                   <TableCell>{roomType.description}</TableCell>
