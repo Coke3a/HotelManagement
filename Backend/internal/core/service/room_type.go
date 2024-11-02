@@ -1,7 +1,9 @@
 package service
 
 import (
-	"context"
+	"log/slog"
+
+	"github.com/gin-gonic/gin"
 
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
@@ -19,7 +21,7 @@ func NewRoomTypeService(repo port.RoomTypeRepository, logRepo port.LogRepository
 	}
 }
 
-func (rts *RoomTypeService) CreateRoomType(ctx context.Context, roomType *domain.RoomType) (*domain.RoomType, error) {
+func (rts *RoomTypeService) CreateRoomType(ctx *gin.Context, roomType *domain.RoomType) (*domain.RoomType, error) {
 	if roomType.Name == "" {
 		return nil, domain.ErrInvalidData
 	}
@@ -31,10 +33,27 @@ func (rts *RoomTypeService) CreateRoomType(ctx context.Context, roomType *domain
 		}
 		return nil, domain.ErrInternal
 	}
+
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return nil, domain.ErrUnauthorized
+	}
+	// Create a log
+	log := &domain.Log{
+		RecordID:  roomType.ID,
+		Action:    "CREATE",
+		UserID:    userID.(uint64),
+		TableName: "room_types",
+	}
+	_, err = rts.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
+	}
+
 	return roomType, nil
 }
 
-func (rts *RoomTypeService) GetRoomType(ctx context.Context, id uint64) (*domain.RoomType, error) {
+func (rts *RoomTypeService) GetRoomType(ctx *gin.Context, id uint64) (*domain.RoomType, error) {
 	roomType, err := rts.repo.GetRoomTypeByID(ctx, id)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -46,7 +65,7 @@ func (rts *RoomTypeService) GetRoomType(ctx context.Context, id uint64) (*domain
 	return roomType, nil
 }
 
-func (rts *RoomTypeService) ListRoomTypes(ctx context.Context, skip, limit uint64) ([]domain.RoomType, error) {
+func (rts *RoomTypeService) ListRoomTypes(ctx *gin.Context, skip, limit uint64) ([]domain.RoomType, error) {
 	roomTypes, err := rts.repo.ListRoomTypes(ctx, skip, limit)
 	if err != nil {
 		return nil, domain.ErrInternal
@@ -55,7 +74,7 @@ func (rts *RoomTypeService) ListRoomTypes(ctx context.Context, skip, limit uint6
 	return roomTypes, nil
 }
 
-func (rts *RoomTypeService) UpdateRoomType(ctx context.Context, roomType *domain.RoomType) (*domain.RoomType, error) {
+func (rts *RoomTypeService) UpdateRoomType(ctx *gin.Context, roomType *domain.RoomType) (*domain.RoomType, error) {
 	existingRoomType, err := rts.repo.GetRoomTypeByID(ctx, roomType.ID)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -90,16 +109,48 @@ func (rts *RoomTypeService) UpdateRoomType(ctx context.Context, roomType *domain
 		return nil, domain.ErrInternal
 	}
 
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return nil, domain.ErrUnauthorized
+	}
+	// Create a log
+	log := &domain.Log{
+		RecordID:  roomType.ID,
+		Action:    "UPDATE",
+		UserID:    userID.(uint64),
+		TableName: "room_types",
+	}
+	_, err = rts.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
+	}
+
 	return updatedRoomType, nil
 }
 
-func (rts *RoomTypeService) DeleteRoomType(ctx context.Context, id uint64) error {
+func (rts *RoomTypeService) DeleteRoomType(ctx *gin.Context, id uint64) error {
 	_, err := rts.repo.GetRoomTypeByID(ctx, id)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
 			return err
 		}
 		return domain.ErrInternal
+	}
+
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return domain.ErrUnauthorized
+	}
+	// Create a log
+	log := &domain.Log{
+		RecordID:  id,
+		Action:    "DELETE",
+		UserID:    userID.(uint64),
+		TableName: "room_types",
+	}
+	_, err = rts.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
 	}
 
 	return rts.repo.DeleteRoomType(ctx, id)

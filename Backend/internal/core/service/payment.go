@@ -1,9 +1,9 @@
 package service
 
 import (
-	"context"
+	"github.com/gin-gonic/gin"
 	"time"
-
+	"log/slog"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 )
@@ -20,7 +20,7 @@ func NewPaymentService(repo port.PaymentRepository, logRepo port.LogRepository) 
 	}
 }
 
-func (ps *PaymentService) ProcessPayment(ctx context.Context, payment *domain.Payment) (*domain.Payment, error) {
+func (ps *PaymentService) ProcessPayment(ctx *gin.Context, payment *domain.Payment) (*domain.Payment, error) {
 	if payment.Amount <= 0 {
 		return nil, domain.ErrInvalidData
 	}
@@ -45,10 +45,26 @@ func (ps *PaymentService) ProcessPayment(ctx context.Context, payment *domain.Pa
 		return nil, domain.ErrInternal
 	}
 
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return nil, domain.ErrUnauthorized
+	}
+	// Create a log
+	log := &domain.Log{
+		RecordID:  createdPayment.ID,
+		Action:    "CREATE",
+		UserID:    userID.(uint64),
+		TableName: "payments",
+	}
+	_, err = ps.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
+	}
+
 	return createdPayment, nil
 }
 
-func (ps *PaymentService) GetPayment(ctx context.Context, id uint64) (*domain.Payment, error) {
+func (ps *PaymentService) GetPayment(ctx *gin.Context, id uint64) (*domain.Payment, error) {
 	payment, err := ps.repo.GetPaymentByID(ctx, id)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -60,7 +76,7 @@ func (ps *PaymentService) GetPayment(ctx context.Context, id uint64) (*domain.Pa
 	return payment, nil
 }
 
-func (ps *PaymentService) ListPayments(ctx context.Context, skip, limit uint64) ([]domain.Payment, error) {
+func (ps *PaymentService) ListPayments(ctx *gin.Context, skip, limit uint64) ([]domain.Payment, error) {
 	payments, err := ps.repo.ListPayments(ctx, skip, limit)
 	if err != nil {
 		return nil, domain.ErrInternal
@@ -69,7 +85,7 @@ func (ps *PaymentService) ListPayments(ctx context.Context, skip, limit uint64) 
 	return payments, nil
 }
 
-func (ps *PaymentService) UpdatePayment(ctx context.Context, payment *domain.Payment) (*domain.Payment, error) {
+func (ps *PaymentService) UpdatePayment(ctx *gin.Context, payment *domain.Payment) (*domain.Payment, error) {
 	existingPayment, err := ps.repo.GetPaymentByID(ctx, payment.ID)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -98,16 +114,48 @@ func (ps *PaymentService) UpdatePayment(ctx context.Context, payment *domain.Pay
 		return nil, domain.ErrInternal
 	}
 
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return nil, domain.ErrUnauthorized
+	}
+	// Create a log
+	log := &domain.Log{
+		RecordID:  payment.ID,
+		Action:    "UPDATE",
+		UserID:    userID.(uint64),
+		TableName: "payments",
+	}
+	_, err = ps.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
+	}
+
 	return updatedPayment, nil
 }
 
-func (ps *PaymentService) DeletePayment(ctx context.Context, id uint64) error {
+func (ps *PaymentService) DeletePayment(ctx *gin.Context, id uint64) error {
 	_, err := ps.repo.GetPaymentByID(ctx, id)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
 			return err
 		}
 		return domain.ErrInternal
+	}
+
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return domain.ErrUnauthorized
+	}
+	// Create a log
+	log := &domain.Log{
+		RecordID:  id,
+		Action:    "DELETE",
+		UserID:    userID.(uint64),
+		TableName: "payments",
+	}
+	_, err = ps.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
 	}
 
 	return ps.repo.DeletePayment(ctx, id)

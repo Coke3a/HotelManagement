@@ -1,14 +1,13 @@
 package service
 
 import (
-	"context"
+	"log/slog"
 	"time"
 
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/Coke3a/HotelManagement/internal/core/util"
 	"github.com/gin-gonic/gin"
-	// "fmt"
 )
 
 type UserService struct {
@@ -49,29 +48,29 @@ func (us *UserService) RegisterUser(ctx *gin.Context, user *domain.User) (*domai
 		return nil, domain.ErrInternal
 	}
 
-	// userID, exists := ctx.Get("userID")
-    // if !exists {
-    //     return nil, domain.ErrUnauthorized
-    // }
-	// fmt.Println("user_id", userID)
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return nil, domain.ErrUnauthorized
+	}
 
-	// // Create a log
-	// log := &domain.Log{
-	// 	RecordID: createdUser.ID,
-	// 	Action:   "ADD",
-	// 	UserID:   userID.(uint64),
-	// 	TableName: "users",
-	// }
+	// Create a log
+	log := &domain.Log{
+		RecordID:  createdUser.ID,
+		Action:    "ADD",
+		UserID:    userID.(uint64),
+		TableName: "users",
+	}
 
-	// _, err = us.logRepo.CreateLog(ctx, log)
-	// if err != nil {
-	// 	return nil, domain.ErrInternal
-	// }
+	_, err = us.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		// Just log the error but don't return it since the user was already created
+		slog.Error("Error creating log", "error", err)
+	}
 
 	return createdUser, nil
 }
 
-func (us *UserService) GetUser(ctx context.Context, id uint64) (*domain.User, error) {
+func (us *UserService) GetUser(ctx *gin.Context, id uint64) (*domain.User, error) {
 	user, err := us.repo.GetUserByID(ctx, id)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -83,7 +82,7 @@ func (us *UserService) GetUser(ctx context.Context, id uint64) (*domain.User, er
 	return user, nil
 }
 
-func (us *UserService) ListUsers(ctx context.Context, skip, limit uint64) ([]domain.User, error) {
+func (us *UserService) ListUsers(ctx *gin.Context, skip, limit uint64) ([]domain.User, error) {
 	users, err := us.repo.ListUsers(ctx, skip, limit)
 	if err != nil {
 		return nil, domain.ErrInternal
@@ -92,7 +91,7 @@ func (us *UserService) ListUsers(ctx context.Context, skip, limit uint64) ([]dom
 	return users, nil
 }
 
-func (us *UserService) UpdateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
+func (us *UserService) UpdateUser(ctx *gin.Context, user *domain.User) (*domain.User, error) {
 	existingUser, err := us.repo.GetUserByID(ctx, user.ID)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -125,16 +124,50 @@ func (us *UserService) UpdateUser(ctx context.Context, user *domain.User) (*doma
 		return nil, domain.ErrInternal
 	}
 
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return nil, domain.ErrUnauthorized
+	}
+
+	// Create a log
+	log := &domain.Log{
+		RecordID:  updatedUser.ID,
+		Action:    "UPDATE",
+		UserID:    userID.(uint64),
+		TableName: "users",
+	}
+	_, err = us.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
+	}
+
 	return updatedUser, nil
 }
 
-func (us *UserService) DeleteUser(ctx context.Context, id uint64) error {
+func (us *UserService) DeleteUser(ctx *gin.Context, id uint64) error {
 	_, err := us.repo.GetUserByID(ctx, id)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
 			return err
 		}
 		return domain.ErrInternal
+	}
+
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return domain.ErrUnauthorized
+	}
+
+	// Create a log
+	log := &domain.Log{
+		RecordID:  id,
+		Action:    "DELETE",
+		UserID:    userID.(uint64),
+		TableName: "users",
+	}
+	_, err = us.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
 	}
 
 	return us.repo.DeleteUser(ctx, id)

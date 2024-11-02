@@ -1,10 +1,10 @@
 package port
 
 import (
-	"context"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
+	"github.com/gin-gonic/gin"
 )
 
 type SummaryService interface {
-	GetDashboardSummary(ctx context.Context) (*domain.Booking, *domain.Customer, *domain.Room, error)
+	GetDashboardSummary(ctx *gin.Context) (*domain.Booking, *domain.Customer, *domain.Room, error)
 }

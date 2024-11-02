@@ -1,11 +1,10 @@
 package service
 
 import (
-	"context"
-
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/Coke3a/HotelManagement/internal/core/util"
+	"github.com/gin-gonic/gin"
 )
 
 /**
@@ -27,7 +26,7 @@ func NewAuthService(repo port.UserRepository, ts port.TokenService) *AuthService
 }
 
 // Login gives a registered user an access token and role if the credentials are valid
-func (as *AuthService) Login(ctx context.Context, userName, password string) (string, domain.UserRole, error) {
+func (as *AuthService) Login(ctx *gin.Context, userName, password string) (string, domain.UserRole, error) {
 	user, err := as.repo.GetUserByUserName(ctx, userName)
 	if err != nil {
 		if err == domain.ErrDataNotFound {

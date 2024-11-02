@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"context"
+	"github.com/gin-gonic/gin"
 	"log/slog"
 
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
@@ -20,7 +20,7 @@ func NewRankRepository(db *postgres.DB) *RankRepository {
 	}
 }
 
-func (rr *RankRepository) CreateRank(ctx context.Context, rank *domain.Rank) (*domain.Rank, error) {
+func (rr *RankRepository) CreateRank(ctx *gin.Context, rank *domain.Rank) (*domain.Rank, error) {
 	query := rr.db.QueryBuilder.Insert("ranks").
 		Columns("rank_name", "description").
 		Values(rank.RankName, rank.Description).
@@ -48,7 +48,7 @@ func (rr *RankRepository) CreateRank(ctx context.Context, rank *domain.Rank) (*d
 	return rank, nil
 }
 
-func (rr *RankRepository) GetRankByID(ctx context.Context, id uint64) (*domain.Rank, error) {
+func (rr *RankRepository) GetRankByID(ctx *gin.Context, id uint64) (*domain.Rank, error) {
 	var rank domain.Rank
 
 	query := rr.db.QueryBuilder.Select("*").
@@ -78,7 +78,7 @@ func (rr *RankRepository) GetRankByID(ctx context.Context, id uint64) (*domain.R
 	return &rank, nil
 }
 
-func (rr *RankRepository) ListRanks(ctx context.Context, skip, limit uint64) ([]domain.Rank, error) {
+func (rr *RankRepository) ListRanks(ctx *gin.Context, skip, limit uint64) ([]domain.Rank, error) {
 	var ranks []domain.Rank
 
 	query := rr.db.QueryBuilder.Select("*").
@@ -120,7 +120,7 @@ func (rr *RankRepository) ListRanks(ctx context.Context, skip, limit uint64) ([]
 	return ranks, nil
 }
 
-func (rr *RankRepository) UpdateRank(ctx context.Context, rank *domain.Rank) (*domain.Rank, error) {
+func (rr *RankRepository) UpdateRank(ctx *gin.Context, rank *domain.Rank) (*domain.Rank, error) {
 	query := rr.db.QueryBuilder.Update("ranks").
 		Set("rank_name", sq.Expr("COALESCE(?, rank_name)", rank.RankName)).
 		Set("description", sq.Expr("COALESCE(?, description)", rank.Description)).
@@ -149,7 +149,7 @@ func (rr *RankRepository) UpdateRank(ctx context.Context, rank *domain.Rank) (*d
 	return rank, nil
 }
 
-func (rr *RankRepository) DeleteRank(ctx context.Context, id uint64) error {
+func (rr *RankRepository) DeleteRank(ctx *gin.Context, id uint64) error {
 	query := rr.db.QueryBuilder.Delete("ranks").
 		Where(sq.Eq{"id": id})
 

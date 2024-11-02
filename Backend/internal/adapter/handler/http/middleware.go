@@ -37,8 +37,7 @@ func ExtractUserID() gin.HandlerFunc {
 			c.AbortWithStatusJSON(401, gin.H{"error": "Invalid token payload"})
 			return
 		}
-
-		c.Set("user_id", payload.UserID)
+		c.Set("userID", payload.UserID)
 		c.Next()
 	}
 }

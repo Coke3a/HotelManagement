@@ -1,13 +1,13 @@
 package repository
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -21,7 +21,7 @@ func NewCustomerRepository(db *postgres.DB) *CustomerRepository {
 	}
 }
 
-func (cr *CustomerRepository) CreateCustomer(ctx context.Context, customer *domain.Customer) (*domain.Customer, error) {
+func (cr *CustomerRepository) CreateCustomer(ctx *gin.Context, customer *domain.Customer) (*domain.Customer, error) {
 	query := cr.db.QueryBuilder.Insert("customers").
 		Columns("firstname", "surname", "identity_number", "email", "phone", "address", "date_of_birth", "gender", "customer_type_id", "join_date", "preferences", "last_visit_date").
 		Values(customer.FirstName, customer.Surname, customer.IdentityNumber, customer.Email, customer.Phone, customer.Address, customer.DateOfBirth, customer.Gender, customer.CustomerTypeID, customer.JoinDate, customer.Preferences, customer.LastVisitDate).
@@ -61,7 +61,7 @@ func (cr *CustomerRepository) CreateCustomer(ctx context.Context, customer *doma
 	return customer, nil
 }
 
-func (cr *CustomerRepository) GetCustomerByID(ctx context.Context, id uint64) (*domain.Customer, error) {
+func (cr *CustomerRepository) GetCustomerByID(ctx *gin.Context, id uint64) (*domain.Customer, error) {
 	var customer domain.Customer
 
 	query := cr.db.QueryBuilder.Select("*").
@@ -103,7 +103,7 @@ func (cr *CustomerRepository) GetCustomerByID(ctx context.Context, id uint64) (*
 	return &customer, nil
 }
 
-func (cr *CustomerRepository) ListCustomers(ctx context.Context, skip, limit uint64) ([]domain.Customer, error) {
+func (cr *CustomerRepository) ListCustomers(ctx *gin.Context, skip, limit uint64) ([]domain.Customer, error) {
 	var customers []domain.Customer
 
 	query := cr.db.QueryBuilder.Select("*").
@@ -160,7 +160,7 @@ func (cr *CustomerRepository) ListCustomers(ctx context.Context, skip, limit uin
 	return customers, nil
 }
 
-func (cr *CustomerRepository) UpdateCustomer(ctx context.Context, customer *domain.Customer) (*domain.Customer, error) {
+func (cr *CustomerRepository) UpdateCustomer(ctx *gin.Context, customer *domain.Customer) (*domain.Customer, error) {
 	query := cr.db.QueryBuilder.Update("customers").
 		Set("firstname", sq.Expr("COALESCE(?, firstname)", customer.FirstName)).
 		Set("surname", sq.Expr("COALESCE(?, surname)", customer.Surname)).
@@ -211,7 +211,7 @@ func (cr *CustomerRepository) UpdateCustomer(ctx context.Context, customer *doma
 	return customer, nil
 }
 
-func (cr *CustomerRepository) DeleteCustomer(ctx context.Context, id uint64) error {
+func (cr *CustomerRepository) DeleteCustomer(ctx *gin.Context, id uint64) error {
 	query := cr.db.QueryBuilder.Delete("customers").
 		Where(sq.Eq{"id": id})
 

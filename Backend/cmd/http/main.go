@@ -53,6 +53,8 @@ func main() {
 		}
 
 		logRepository := repository.NewLogRepository(db)
+		logService := service.NewLogService(logRepository)
+		logHandler := http.NewLogHandler(logService)
 
 		userRepository := repository.NewUserRepository(db)
 		userService := service.NewUserService(userRepository, logRepository)
@@ -91,6 +93,8 @@ func main() {
 		customerTypeService := service.NewCustomerTypeService(customerTypeRepository, logRepository)
 		customerTypeHandler := http.NewCustomerTypeHandler(customerTypeService)
 
+
+
 		authService := service.NewAuthService(userRepository, token)
 		authHandler := http.NewAuthHandler(authService)
 		// Init router
@@ -106,6 +110,7 @@ func main() {
 			*authHandler,
 			*roomTypeHandler,
 			*customerTypeHandler,
+			*logHandler,
 			token,
 		)
 		if err != nil {

@@ -1,12 +1,12 @@
 package repository
 
 import (
-	"context"
 	"log/slog"
 
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -20,7 +20,7 @@ func NewCustomerTypeRepository(db *postgres.DB) *CustomerTypeRepository {
 	}
 }
 
-func (ctr *CustomerTypeRepository) CreateCustomerType(ctx context.Context, customerType *domain.CustomerType) (*domain.CustomerType, error) {
+func (ctr *CustomerTypeRepository) CreateCustomerType(ctx *gin.Context, customerType *domain.CustomerType) (*domain.CustomerType, error) {
 	query := ctr.db.QueryBuilder.Insert("customer_types").
 		Columns("name", "description").
 		Values(customerType.Name, customerType.Description).
@@ -50,7 +50,7 @@ func (ctr *CustomerTypeRepository) CreateCustomerType(ctx context.Context, custo
 	return customerType, nil
 }
 
-func (ctr *CustomerTypeRepository) GetCustomerTypeByID(ctx context.Context, id uint64) (*domain.CustomerType, error) {
+func (ctr *CustomerTypeRepository) GetCustomerTypeByID(ctx *gin.Context, id uint64) (*domain.CustomerType, error) {
 	var customerType domain.CustomerType
 
 	query := ctr.db.QueryBuilder.Select("*").
@@ -82,7 +82,7 @@ func (ctr *CustomerTypeRepository) GetCustomerTypeByID(ctx context.Context, id u
 	return &customerType, nil
 }
 
-func (ctr *CustomerTypeRepository) ListCustomerTypes(ctx context.Context, skip, limit uint64) ([]domain.CustomerType, error) {
+func (ctr *CustomerTypeRepository) ListCustomerTypes(ctx *gin.Context, skip, limit uint64) ([]domain.CustomerType, error) {
 	var customerTypes []domain.CustomerType
 
 	query := ctr.db.QueryBuilder.Select("*").
@@ -129,7 +129,7 @@ func (ctr *CustomerTypeRepository) ListCustomerTypes(ctx context.Context, skip, 
 	return customerTypes, nil
 }
 
-func (ctr *CustomerTypeRepository) UpdateCustomerType(ctx context.Context, customerType *domain.CustomerType) (*domain.CustomerType, error) {
+func (ctr *CustomerTypeRepository) UpdateCustomerType(ctx *gin.Context, customerType *domain.CustomerType) (*domain.CustomerType, error) {
 	query := ctr.db.QueryBuilder.Update("customer_types").
 		Set("name", sq.Expr("COALESCE(?, name)", customerType.Name)).
 		Set("description", sq.Expr("COALESCE(?, description)", customerType.Description)).
@@ -160,7 +160,7 @@ func (ctr *CustomerTypeRepository) UpdateCustomerType(ctx context.Context, custo
 	return customerType, nil
 }
 
-func (ctr *CustomerTypeRepository) DeleteCustomerType(ctx context.Context, id uint64) error {
+func (ctr *CustomerTypeRepository) DeleteCustomerType(ctx *gin.Context, id uint64) error {
 	query := ctr.db.QueryBuilder.Delete("customer_types").
 		Where(sq.Eq{"id": id})
 

@@ -1,12 +1,12 @@
 package repository
 
 import (
-	"context"
 	"log/slog"
 
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	sq "github.com/Masterminds/squirrel"
+	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -20,7 +20,7 @@ func NewUserRepository(db *postgres.DB) *UserRepository {
 	}
 }
 
-func (ur *UserRepository) CreateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
+func (ur *UserRepository) CreateUser(ctx *gin.Context, user *domain.User) (*domain.User, error) {
 	query := ur.db.QueryBuilder.Insert("users").
 		Columns("username", "password", "role", "rank", "hire_date", "last_login", "status").
 		Values(user.UserName, user.Password, user.Role, user.Rank, user.HireDate, user.LastLogin, user.Status).
@@ -55,7 +55,7 @@ func (ur *UserRepository) CreateUser(ctx context.Context, user *domain.User) (*d
 	return user, nil
 }
 
-func (ur *UserRepository) GetUserByID(ctx context.Context, id uint64) (*domain.User, error) {
+func (ur *UserRepository) GetUserByID(ctx *gin.Context, id uint64) (*domain.User, error) {
 	var user domain.User
 
 	query := ur.db.QueryBuilder.Select("*").
@@ -92,7 +92,7 @@ func (ur *UserRepository) GetUserByID(ctx context.Context, id uint64) (*domain.U
 	return &user, nil
 }
 
-func (ur *UserRepository) GetUserByUserName(ctx context.Context, userName string) (*domain.User, error) {
+func (ur *UserRepository) GetUserByUserName(ctx *gin.Context, userName string) (*domain.User, error) {
 	var user domain.User
 
 	query := ur.db.QueryBuilder.Select("*").
@@ -129,7 +129,7 @@ func (ur *UserRepository) GetUserByUserName(ctx context.Context, userName string
 	return &user, nil
 }
 
-func (ur *UserRepository) ListUsers(ctx context.Context, skip, limit uint64) ([]domain.User, error) {
+func (ur *UserRepository) ListUsers(ctx *gin.Context, skip, limit uint64) ([]domain.User, error) {
 	var users []domain.User
 
 	query := ur.db.QueryBuilder.Select("*").
@@ -180,7 +180,7 @@ func (ur *UserRepository) ListUsers(ctx context.Context, skip, limit uint64) ([]
 	return users, nil
 }
 
-func (ur *UserRepository) UpdateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
+func (ur *UserRepository) UpdateUser(ctx *gin.Context, user *domain.User) (*domain.User, error) {
 	query := ur.db.QueryBuilder.Update("users").
 		Set("username", sq.Expr("COALESCE(?, username)", user.UserName)).
 		Set("role", sq.Expr("COALESCE(?, role)", user.Role)).
@@ -220,7 +220,7 @@ func (ur *UserRepository) UpdateUser(ctx context.Context, user *domain.User) (*d
 	return user, nil
 }
 
-func (ur *UserRepository) DeleteUser(ctx context.Context, id uint64) error {
+func (ur *UserRepository) DeleteUser(ctx *gin.Context, id uint64) error {
 	query := ur.db.QueryBuilder.Delete("users").
 		Where(sq.Eq{"id": id})
 

@@ -30,6 +30,7 @@ func NewRouter(
 	authHandler AuthHandler,
 	roomTypeHandler RoomTypeHandler,
 	customerTypeHandler CustomerTypeHandler,
+	logHandler LogHandler,
 	tokenService port.TokenService,
 ) (*Router, error) {
 	router := SetupRouter(config, tokenService)
@@ -39,7 +40,6 @@ func NewRouter(
 		// Public routes (no authentication required)
 		user := v1.Group("/users")
 		{
-			user.POST("/", userHandler.CreateUser)    // Register
 			user.POST("/login", authHandler.Login)    // Login
 		}
 
@@ -51,6 +51,7 @@ func NewRouter(
 			// User routes
 			userProtected := protected.Group("/users")
 			{
+				userProtected.POST("/", userHandler.CreateUser)
 				userProtected.GET("/:id", userHandler.GetUser)
 				userProtected.GET("/", userHandler.ListUsers)
 				userProtected.PUT("/", userHandler.UpdateUser)
@@ -125,6 +126,10 @@ func NewRouter(
 				customerTypeRoutes.GET("/", customerTypeHandler.ListCustomerTypes)
 				customerTypeRoutes.PUT("/", customerTypeHandler.UpdateCustomerType)
 				customerTypeRoutes.DELETE("/:id", customerTypeHandler.DeleteCustomerType)
+			}
+			log := protected.Group("/logs")
+			{
+				log.GET("/", logHandler.GetLogs)
 			}
 		}
 	}

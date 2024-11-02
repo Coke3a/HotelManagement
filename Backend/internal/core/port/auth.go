@@ -1,7 +1,7 @@
 package port
 
 import (
-	"context"
+	"github.com/gin-gonic/gin"
 
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 )
@@ -19,5 +19,5 @@ type TokenService interface {
 // AuthService is an interface for interacting with user authentication-related business logic
 type AuthService interface {
 	// Login authenticates a user by email and password and returns a token and role
-	Login(ctx context.Context, username, password string) (token string, role domain.UserRole, err error)
+	Login(ctx *gin.Context, username, password string) (token string, role domain.UserRole, err error)
 }

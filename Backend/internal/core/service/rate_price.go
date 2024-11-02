@@ -1,7 +1,9 @@
 package service
 
 import (
-	"context"
+	"log/slog"
+
+	"github.com/gin-gonic/gin"
 	"time"
 
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
@@ -20,7 +22,7 @@ func NewRatePriceService(repo port.RatePriceRepository, logRepo port.LogReposito
 	}
 }
 
-func (rps *RatePriceService) CreateRatePrice(ctx context.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
+func (rps *RatePriceService) CreateRatePrice(ctx *gin.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
 	if ratePrice.Name == "" || ratePrice.PricePerNight < 0 || ratePrice.RoomTypeID == 0 {
 		return nil, domain.ErrInvalidData
 	}
@@ -33,10 +35,26 @@ func (rps *RatePriceService) CreateRatePrice(ctx context.Context, ratePrice *dom
 		return nil, domain.ErrInternal
 	}
 
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return nil, domain.ErrUnauthorized
+	}
+	// Create a log
+	log := &domain.Log{
+		RecordID:  createdRatePrice.ID,
+		Action:    "CREATE",
+		UserID:    userID.(uint64),
+		TableName: "rate_prices",
+	}
+	_, err = rps.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
+	}
+
 	return createdRatePrice, nil
 }
 
-func (rps *RatePriceService) GetRatePrice(ctx context.Context, id uint64) (*domain.RatePrice, error) {
+func (rps *RatePriceService) GetRatePrice(ctx *gin.Context, id uint64) (*domain.RatePrice, error) {
 	ratePrice, err := rps.repo.GetRatePriceByID(ctx, id)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -48,7 +66,7 @@ func (rps *RatePriceService) GetRatePrice(ctx context.Context, id uint64) (*doma
 	return ratePrice, nil
 }
 
-func (rps *RatePriceService) ListRatePrices(ctx context.Context, skip, limit uint64) ([]domain.RatePrice, error) {
+func (rps *RatePriceService) ListRatePrices(ctx *gin.Context, skip, limit uint64) ([]domain.RatePrice, error) {
 	ratePrices, err := rps.repo.ListRatePrices(ctx, skip, limit)
 	if err != nil {
 		return nil, domain.ErrInternal
@@ -57,7 +75,7 @@ func (rps *RatePriceService) ListRatePrices(ctx context.Context, skip, limit uin
 	return ratePrices, nil
 }
 
-func (rps *RatePriceService) UpdateRatePrice(ctx context.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
+func (rps *RatePriceService) UpdateRatePrice(ctx *gin.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
 	existingRatePrice, err := rps.repo.GetRatePriceByID(ctx, ratePrice.ID)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -93,10 +111,26 @@ func (rps *RatePriceService) UpdateRatePrice(ctx context.Context, ratePrice *dom
 		return nil, domain.ErrInternal
 	}
 
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return nil, domain.ErrUnauthorized
+	}
+	// Create a log
+	log := &domain.Log{
+		RecordID:  ratePrice.ID,
+		Action:    "UPDATE",
+		UserID:    userID.(uint64),
+		TableName: "rate_prices",
+	}
+	_, err = rps.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
+	}
+
 	return updatedRatePrice, nil
 }
 
-func (rps *RatePriceService) DeleteRatePrice(ctx context.Context, id uint64) error {
+func (rps *RatePriceService) DeleteRatePrice(ctx *gin.Context, id uint64) error {
 	_, err := rps.repo.GetRatePriceByID(ctx, id)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -105,10 +139,26 @@ func (rps *RatePriceService) DeleteRatePrice(ctx context.Context, id uint64) err
 		return domain.ErrInternal
 	}
 
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return domain.ErrUnauthorized
+	}
+	// Create a log
+	log := &domain.Log{
+		RecordID:  id,
+		Action:    "DELETE",
+		UserID:    userID.(uint64),
+		TableName: "rate_prices",
+	}
+	_, err = rps.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
+	}
+
 	return rps.repo.DeleteRatePrice(ctx, id)
 }
 
-func (rps *RatePriceService) GetRatePricesByRoomTypeId(ctx context.Context, roomTypeID uint64) ([]domain.RatePrice, error) {
+func (rps *RatePriceService) GetRatePricesByRoomTypeId(ctx *gin.Context, roomTypeID uint64) ([]domain.RatePrice, error) {
 	ratePrices, err := rps.repo.GetRatePricesByRoomTypeId(ctx, roomTypeID)
 	if err != nil {
 		return nil, domain.ErrInternal
@@ -121,9 +171,9 @@ func (rps *RatePriceService) GetRatePricesByRoomTypeId(ctx context.Context, room
 	return ratePrices, nil
 }
 
-func (rps *RatePriceService) GetRatePricesByRoomId(ctx context.Context, roomID uint64) ([]domain.RatePrice, error) {
-    ratePrices, err := rps.repo.GetRatePricesByRoomId(ctx, roomID)
-    if err != nil {
+func (rps *RatePriceService) GetRatePricesByRoomId(ctx *gin.Context, roomID uint64) ([]domain.RatePrice, error) {
+	ratePrices, err := rps.repo.GetRatePricesByRoomId(ctx, roomID)
+	if err != nil {
         return nil, domain.ErrInternal
     }
 
@@ -131,5 +181,5 @@ func (rps *RatePriceService) GetRatePricesByRoomId(ctx context.Context, roomID u
         return nil, domain.ErrDataNotFound
     }
 
-    return ratePrices, nil
+	return ratePrices, nil
 }

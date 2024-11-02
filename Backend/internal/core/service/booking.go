@@ -1,11 +1,11 @@
 package service
 
 import (
-	"context"
 	"time"
-
+	"log/slog"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
+	"github.com/gin-gonic/gin"
 )
 
 type BookingService struct {
@@ -22,7 +22,7 @@ func NewBookingService(repo port.BookingRepository, paymentRepo port.PaymentRepo
 	}
 }
 
-func (bs *BookingService) CreateBooking(ctx context.Context, booking *domain.Booking) (*domain.Booking, error) {
+func (bs *BookingService) CreateBooking(ctx *gin.Context, booking *domain.Booking) (*domain.Booking, error) {
 	if booking.CustomerID == 0 || booking.RatePriceId == 0 || booking.CheckInDate == nil || booking.CheckOutDate == nil || booking.TotalAmount <= 0 {
 		return nil, domain.ErrInvalidData
 	}
@@ -45,10 +45,26 @@ func (bs *BookingService) CreateBooking(ctx context.Context, booking *domain.Boo
 		return nil, domain.ErrInternal
 	}
 
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return nil, domain.ErrUnauthorized
+	}
+	// Create a log
+	log := &domain.Log{
+		RecordID:  createdBooking.ID,
+		Action:    "CREATE",
+		UserID:    userID.(uint64),
+		TableName: "bookings",
+	}
+	_, err = bs.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
+	}
+
 	return createdBooking, nil
 }
 
-func (bs *BookingService) CreateBookingAndPayment(ctx context.Context, booking *domain.Booking) (*domain.Booking, error) {
+func (bs *BookingService) CreateBookingAndPayment(ctx *gin.Context, booking *domain.Booking) (*domain.Booking, error) {
 	if booking.CustomerID == 0 || booking.RatePriceId == 0 || booking.CheckInDate == nil || booking.CheckOutDate == nil || booking.TotalAmount <= 0 {
 		return nil, domain.ErrInvalidData
 	}
@@ -89,10 +105,26 @@ func (bs *BookingService) CreateBookingAndPayment(ctx context.Context, booking *
 		return nil, domain.ErrInternal
 	}
 
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return nil, domain.ErrUnauthorized
+	}
+	// Create a log
+	log := &domain.Log{
+		RecordID:  createdBooking.ID,
+		Action:    "CREATE",
+		UserID:    userID.(uint64),
+		TableName: "bookings",
+	}
+	_, err = bs.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
+	}
+
 	return createdBooking, nil
 }
 
-func (bs *BookingService) GetBooking(ctx context.Context, id uint64) (*domain.Booking, error) {
+func (bs *BookingService) GetBooking(ctx *gin.Context, id uint64) (*domain.Booking, error) {
 	booking, err := bs.repo.GetBookingByID(ctx, id)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -104,7 +136,7 @@ func (bs *BookingService) GetBooking(ctx context.Context, id uint64) (*domain.Bo
 	return booking, nil
 }
 
-func (bs *BookingService) ListBookings(ctx context.Context, skip, limit uint64) ([]domain.Booking, error) {
+func (bs *BookingService) ListBookings(ctx *gin.Context, skip, limit uint64) ([]domain.Booking, error) {
 	bookings, err := bs.repo.ListBookings(ctx, skip, limit)
 	if err != nil {
 		return nil, domain.ErrInternal
@@ -113,7 +145,7 @@ func (bs *BookingService) ListBookings(ctx context.Context, skip, limit uint64) 
 	return bookings, nil
 }
 
-func (bs *BookingService) ListBookingsWithFilter(ctx context.Context, booking *domain.Booking, skip, limit uint64) ([]domain.Booking, error) {
+func (bs *BookingService) ListBookingsWithFilter(ctx *gin.Context, booking *domain.Booking, skip, limit uint64) ([]domain.Booking, error) {
 	// Call the repository's ListBookings method, passing the booking struct, skip, and limit
 	bookings, err := bs.repo.ListBookingsWithFilter(ctx, booking, skip, limit)
 	if err != nil {
@@ -123,7 +155,7 @@ func (bs *BookingService) ListBookingsWithFilter(ctx context.Context, booking *d
 	return bookings, nil
 }
 
-func (bs *BookingService) UpdateBooking(ctx context.Context, booking *domain.Booking) (*domain.Booking, error) {
+func (bs *BookingService) UpdateBooking(ctx *gin.Context, booking *domain.Booking) (*domain.Booking, error) {
 	existingBooking, err := bs.repo.GetBookingByID(ctx, booking.ID)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -152,10 +184,26 @@ func (bs *BookingService) UpdateBooking(ctx context.Context, booking *domain.Boo
 		return nil, domain.ErrInternal
 	}
 
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return nil, domain.ErrUnauthorized
+	}
+	// Create a log
+	log := &domain.Log{
+		RecordID:  booking.ID,
+		Action:    "UPDATE",
+		UserID:    userID.(uint64),
+		TableName: "bookings",
+	}
+	_, err = bs.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
+	}
+
 	return updatedBooking, nil
 }
 
-func (bs *BookingService) DeleteBooking(ctx context.Context, id uint64) error {
+func (bs *BookingService) DeleteBooking(ctx *gin.Context, id uint64) error {
 	_, err := bs.repo.GetBookingByID(ctx, id)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -164,10 +212,26 @@ func (bs *BookingService) DeleteBooking(ctx context.Context, id uint64) error {
 		return domain.ErrInternal
 	}
 
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return domain.ErrUnauthorized
+	}
+	// Create a log
+	log := &domain.Log{
+		RecordID:  id,
+		Action:    "DELETE",
+		UserID:    userID.(uint64),
+		TableName: "bookings",
+	}
+	_, err = bs.logRepo.CreateLog(ctx, log)
+	if err != nil {
+		slog.Error("Error creating log", "error", err)
+	}
+
 	return bs.repo.DeleteBooking(ctx, id)
 }
 
-func (bs *BookingService) GetBookingCustomerPayment(ctx context.Context, id uint64) (*domain.BookingCustomerPayment, error) {
+func (bs *BookingService) GetBookingCustomerPayment(ctx *gin.Context, id uint64) (*domain.BookingCustomerPayment, error) {
 	bookingCustomerPayment, err := bs.repo.GetBookingCustomerPayment(ctx, id)
 	if err != nil {
 		if err == domain.ErrDataNotFound {
@@ -179,7 +243,7 @@ func (bs *BookingService) GetBookingCustomerPayment(ctx context.Context, id uint
 	return bookingCustomerPayment, nil
 }
 
-func (bs *BookingService) ListBookingCustomerPayments(ctx context.Context, skip, limit uint64) ([]domain.BookingCustomerPayment, error) {
+func (bs *BookingService) ListBookingCustomerPayments(ctx *gin.Context, skip, limit uint64) ([]domain.BookingCustomerPayment, error) {
 	bookingCustomerPayments, err := bs.repo.ListBookingCustomerPayments(ctx, skip, limit)
 	if err != nil {
 		return nil, domain.ErrInternal

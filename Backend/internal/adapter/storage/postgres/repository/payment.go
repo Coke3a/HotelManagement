@@ -1,13 +1,13 @@
 package repository
 
 import (
-	"context"
 	"log/slog"
 
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
+	"github.com/gin-gonic/gin"
 )
 
 type PaymentRepository struct {
@@ -20,7 +20,7 @@ func NewPaymentRepository(db *postgres.DB) *PaymentRepository {
 	}
 }
 
-func (pr *PaymentRepository) CreatePayment(ctx context.Context, payment *domain.Payment) (*domain.Payment, error) {
+func (pr *PaymentRepository) CreatePayment(ctx *gin.Context, payment *domain.Payment) (*domain.Payment, error) {
 	query := pr.db.QueryBuilder.Insert("payments").
 		Columns("booking_id", "amount", "payment_method", "payment_date", "status").
 		Values(payment.BookingID, payment.Amount, payment.PaymentMethod, payment.PaymentDate, int(payment.Status)).
@@ -52,7 +52,7 @@ func (pr *PaymentRepository) CreatePayment(ctx context.Context, payment *domain.
 	return payment, nil
 }
 
-func (pr *PaymentRepository) GetPaymentByID(ctx context.Context, id uint64) (*domain.Payment, error) {
+func (pr *PaymentRepository) GetPaymentByID(ctx *gin.Context, id uint64) (*domain.Payment, error) {
 	var payment domain.Payment
 
 	query := pr.db.QueryBuilder.Select("*").
@@ -87,7 +87,7 @@ func (pr *PaymentRepository) GetPaymentByID(ctx context.Context, id uint64) (*do
 	return &payment, nil
 }
 
-func (pr *PaymentRepository) ListPayments(ctx context.Context, skip, limit uint64) ([]domain.Payment, error) {
+func (pr *PaymentRepository) ListPayments(ctx *gin.Context, skip, limit uint64) ([]domain.Payment, error) {
 	var payments []domain.Payment
 
 	query := pr.db.QueryBuilder.Select("*").
@@ -137,7 +137,7 @@ func (pr *PaymentRepository) ListPayments(ctx context.Context, skip, limit uint6
 	return payments, nil
 }
 
-func (pr *PaymentRepository) UpdatePayment(ctx context.Context, payment *domain.Payment) (*domain.Payment, error) {
+func (pr *PaymentRepository) UpdatePayment(ctx *gin.Context, payment *domain.Payment) (*domain.Payment, error) {
 	query := pr.db.QueryBuilder.Update("payments").
 		Set("amount", sq.Expr("COALESCE(?, amount)", payment.Amount)).
 		Set("payment_method", sq.Expr("COALESCE(?, payment_method)", payment.PaymentMethod)).
@@ -173,7 +173,7 @@ func (pr *PaymentRepository) UpdatePayment(ctx context.Context, payment *domain.
 	return payment, nil
 }
 
-func (pr *PaymentRepository) DeletePayment(ctx context.Context, id uint64) error {
+func (pr *PaymentRepository) DeletePayment(ctx *gin.Context, id uint64) error {
 	query := pr.db.QueryBuilder.Delete("payments").
 		Where(sq.Eq{"id": id})
 

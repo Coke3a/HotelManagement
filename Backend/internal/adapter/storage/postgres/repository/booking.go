@@ -1,13 +1,13 @@
 package repository
 
 import (
-	"context"
 	"log/slog"
 
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgx/v5"
+	"github.com/gin-gonic/gin"
 	"fmt"
 )
 
@@ -21,7 +21,7 @@ func NewBookingRepository(db *postgres.DB) *BookingRepository {
 	}
 }
 
-func (br *BookingRepository) CreateBooking(ctx context.Context, booking *domain.Booking) (*domain.Booking, error) {
+func (br *BookingRepository) CreateBooking(ctx *gin.Context, booking *domain.Booking) (*domain.Booking, error) {
 	query := br.db.QueryBuilder.Insert("bookings").
 		Columns("customer_id", "rate_prices_id", "room_id", "room_type_id", "check_in_date", "check_out_date", "status", "total_amount", "booking_date").
 		Values(booking.CustomerID, booking.RatePriceId, booking.RoomID, booking.RoomTypeID, booking.CheckInDate, booking.CheckOutDate, booking.Status, booking.TotalAmount, booking.BookingDate).
@@ -58,7 +58,7 @@ func (br *BookingRepository) CreateBooking(ctx context.Context, booking *domain.
 	return booking, nil
 }
 
-func (br *BookingRepository) GetBookingByID(ctx context.Context, id uint64) (*domain.Booking, error) {
+func (br *BookingRepository) GetBookingByID(ctx *gin.Context, id uint64) (*domain.Booking, error) {
 	var booking domain.Booking
 
 	query := br.db.QueryBuilder.Select("*").
@@ -97,7 +97,7 @@ func (br *BookingRepository) GetBookingByID(ctx context.Context, id uint64) (*do
 	return &booking, nil
 }
 
-func (br *BookingRepository) ListBookings(ctx context.Context, skip, limit uint64) ([]domain.Booking, error) {
+func (br *BookingRepository) ListBookings(ctx *gin.Context, skip, limit uint64) ([]domain.Booking, error) {
 	var bookings []domain.Booking
 
 	query := br.db.QueryBuilder.Select("*").
@@ -151,7 +151,7 @@ func (br *BookingRepository) ListBookings(ctx context.Context, skip, limit uint6
 	return bookings, nil
 }
 
-func (rr *BookingRepository) ListBookingsWithFilter(ctx context.Context, booking *domain.Booking, skip, limit uint64) ([]domain.Booking, error) {
+func (rr *BookingRepository) ListBookingsWithFilter(ctx *gin.Context, booking *domain.Booking, skip, limit uint64) ([]domain.Booking, error) {
 	var bookings []domain.Booking
 
 	query := rr.db.QueryBuilder.Select("*").
@@ -244,7 +244,7 @@ func (rr *BookingRepository) ListBookingsWithFilter(ctx context.Context, booking
 }
 
 // GetBookingCustomerPayment retrieves a single booking customer payment by ID
-func (br *BookingRepository) GetBookingCustomerPayment(ctx context.Context, id uint64) (*domain.BookingCustomerPayment, error) {
+func (br *BookingRepository) GetBookingCustomerPayment(ctx *gin.Context, id uint64) (*domain.BookingCustomerPayment, error) {
 	var bcp domain.BookingCustomerPayment
 
 	query := br.db.QueryBuilder.Select("*").
@@ -291,7 +291,7 @@ func (br *BookingRepository) GetBookingCustomerPayment(ctx context.Context, id u
 }
 
 // ListBookingCustomerPayments retrieves a list of booking customer payments with pagination
-func (br *BookingRepository) ListBookingCustomerPayments(ctx context.Context, skip, limit uint64) ([]domain.BookingCustomerPayment, error) {
+func (br *BookingRepository) ListBookingCustomerPayments(ctx *gin.Context, skip, limit uint64) ([]domain.BookingCustomerPayment, error) {
 	var bcps []domain.BookingCustomerPayment
 	query := br.db.QueryBuilder.Select("*").
 		From("booking_customer_payment").
@@ -351,7 +351,7 @@ func (br *BookingRepository) ListBookingCustomerPayments(ctx context.Context, sk
 	return bcps, nil
 }
 
-func (br *BookingRepository) UpdateBooking(ctx context.Context, booking *domain.Booking) (*domain.Booking, error) {
+func (br *BookingRepository) UpdateBooking(ctx *gin.Context, booking *domain.Booking) (*domain.Booking, error) {
 	query := br.db.QueryBuilder.Update("bookings").
 		Set("customer_id", sq.Expr("COALESCE(?, customer_id)", booking.CustomerID)).
 		Set("rate_prices_id", sq.Expr("COALESCE(?, rate_prices_id)", booking.RatePriceId)).
@@ -396,7 +396,7 @@ func (br *BookingRepository) UpdateBooking(ctx context.Context, booking *domain.
 	return booking, nil
 }
 
-func (br *BookingRepository) DeleteBooking(ctx context.Context, id uint64) error {
+func (br *BookingRepository) DeleteBooking(ctx *gin.Context, id uint64) error {
 	query := br.db.QueryBuilder.Delete("bookings").
 		Where(sq.Eq{"id": id})
 

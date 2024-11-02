@@ -1,7 +1,7 @@
 package service
 
 import (
-	"context"
+	"github.com/gin-gonic/gin"
 
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
@@ -23,7 +23,7 @@ func NewSummaryService(bookingRepo port.BookingRepository, customerRepo port.Cus
 	}
 }
 
-func (ss *SummaryService) GetDashboardSummary(ctx context.Context) ([]domain.Booking, []domain.Customer, []domain.Room, error) {
+func (ss *SummaryService) GetDashboardSummary(ctx *gin.Context) ([]domain.Booking, []domain.Customer, []domain.Room, error) {
 
 	bookings, err := ss.bookingRepo.ListBookings(ctx, 0, 10)
 	if err != nil {

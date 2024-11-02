@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"context"
+	"github.com/gin-gonic/gin"
 	"log/slog"
 
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
@@ -20,7 +20,7 @@ func NewRoomTypeRepository(db *postgres.DB) *RoomTypeRepository {
 	}
 }
 
-func (rtr *RoomTypeRepository) CreateRoomType(ctx context.Context, roomType *domain.RoomType) (*domain.RoomType, error) {
+func (rtr *RoomTypeRepository) CreateRoomType(ctx *gin.Context, roomType *domain.RoomType) (*domain.RoomType, error) {
 	query := rtr.db.QueryBuilder.Insert("room_types").
 		Columns("name", "description", "capacity", "default_price").
 		Values(roomType.Name, roomType.Description, roomType.Capacity, roomType.DefaultPrice).
@@ -52,7 +52,7 @@ func (rtr *RoomTypeRepository) CreateRoomType(ctx context.Context, roomType *dom
 	return roomType, nil
 }
 
-func (rtr *RoomTypeRepository) GetRoomTypeByID(ctx context.Context, id uint64) (*domain.RoomType, error) {
+func (rtr *RoomTypeRepository) GetRoomTypeByID(ctx *gin.Context, id uint64) (*domain.RoomType, error) {
 	var roomType domain.RoomType
 
 	query := rtr.db.QueryBuilder.Select("*").
@@ -86,7 +86,7 @@ func (rtr *RoomTypeRepository) GetRoomTypeByID(ctx context.Context, id uint64) (
 	return &roomType, nil
 }
 
-func (rtr *RoomTypeRepository) ListRoomTypes(ctx context.Context, skip, limit uint64) ([]domain.RoomType, error) {
+func (rtr *RoomTypeRepository) ListRoomTypes(ctx *gin.Context, skip, limit uint64) ([]domain.RoomType, error) {
 	var roomTypes []domain.RoomType
 
 	query := rtr.db.QueryBuilder.Select("*").
@@ -135,7 +135,7 @@ func (rtr *RoomTypeRepository) ListRoomTypes(ctx context.Context, skip, limit ui
 	return roomTypes, nil
 }
 
-func (rtr *RoomTypeRepository) UpdateRoomType(ctx context.Context, roomType *domain.RoomType) (*domain.RoomType, error) {
+func (rtr *RoomTypeRepository) UpdateRoomType(ctx *gin.Context, roomType *domain.RoomType) (*domain.RoomType, error) {
 	query := rtr.db.QueryBuilder.Update("room_types").
 		Set("name", sq.Expr("COALESCE(?, name)", roomType.Name)).
 		Set("description", sq.Expr("COALESCE(?, description)", roomType.Description)).
@@ -170,7 +170,7 @@ func (rtr *RoomTypeRepository) UpdateRoomType(ctx context.Context, roomType *dom
 	return roomType, nil
 }
 
-func (rtr *RoomTypeRepository) DeleteRoomType(ctx context.Context, id uint64) error {
+func (rtr *RoomTypeRepository) DeleteRoomType(ctx *gin.Context, id uint64) error {
 	query := rtr.db.QueryBuilder.Delete("room_types").
 		Where(sq.Eq{"id": id})
 

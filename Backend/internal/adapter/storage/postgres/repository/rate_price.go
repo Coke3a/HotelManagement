@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"context"
+	"github.com/gin-gonic/gin"
 	"log/slog"
 	"github.com/Coke3a/HotelManagement/internal/adapter/storage/postgres"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
@@ -19,7 +19,7 @@ func NewRatePriceRepository(db *postgres.DB) *RatePriceRepository {
 	}
 }
 
-func (rpr *RatePriceRepository) CreateRatePrice(ctx context.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
+func (rpr *RatePriceRepository) CreateRatePrice(ctx *gin.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
 	query := rpr.db.QueryBuilder.Insert("rate_prices").
 		Columns("name", "description", "price_per_night", "room_type_id").
 		Values(ratePrice.Name, ratePrice.Description, ratePrice.PricePerNight, ratePrice.RoomTypeID).
@@ -51,7 +51,7 @@ func (rpr *RatePriceRepository) CreateRatePrice(ctx context.Context, ratePrice *
 	return ratePrice, nil
 }
 
-func (rpr *RatePriceRepository) GetRatePriceByID(ctx context.Context, id uint64) (*domain.RatePrice, error) {
+func (rpr *RatePriceRepository) GetRatePriceByID(ctx *gin.Context, id uint64) (*domain.RatePrice, error) {
 	var ratePrice domain.RatePrice
 
 	query := rpr.db.QueryBuilder.Select("*").
@@ -85,7 +85,7 @@ func (rpr *RatePriceRepository) GetRatePriceByID(ctx context.Context, id uint64)
 	return &ratePrice, nil
 }
 
-func (rpr *RatePriceRepository) ListRatePrices(ctx context.Context, skip, limit uint64) ([]domain.RatePrice, error) {
+func (rpr *RatePriceRepository) ListRatePrices(ctx *gin.Context, skip, limit uint64) ([]domain.RatePrice, error) {
 	var ratePrices []domain.RatePrice
 
 	query := rpr.db.QueryBuilder.Select("*").
@@ -134,7 +134,7 @@ func (rpr *RatePriceRepository) ListRatePrices(ctx context.Context, skip, limit 
 	return ratePrices, nil
 }
 
-func (rpr *RatePriceRepository) UpdateRatePrice(ctx context.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
+func (rpr *RatePriceRepository) UpdateRatePrice(ctx *gin.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
 	query := rpr.db.QueryBuilder.Update("rate_prices").
 		Set("name", sq.Expr("COALESCE(?, name)", ratePrice.Name)).
 		Set("description", sq.Expr("COALESCE(?, description)", ratePrice.Description)).
@@ -169,7 +169,7 @@ func (rpr *RatePriceRepository) UpdateRatePrice(ctx context.Context, ratePrice *
 	return ratePrice, nil
 }
 
-func (rpr *RatePriceRepository) DeleteRatePrice(ctx context.Context, id uint64) error {
+func (rpr *RatePriceRepository) DeleteRatePrice(ctx *gin.Context, id uint64) error {
 	query := rpr.db.QueryBuilder.Delete("rate_prices").
 		Where(sq.Eq{"id": id})
 
@@ -187,7 +187,7 @@ func (rpr *RatePriceRepository) DeleteRatePrice(ctx context.Context, id uint64) 
 	return nil
 }
 
-func (rpr *RatePriceRepository) GetRatePricesByRoomTypeId(ctx context.Context, roomTypeID uint64) ([]domain.RatePrice, error) {
+func (rpr *RatePriceRepository) GetRatePricesByRoomTypeId(ctx *gin.Context, roomTypeID uint64) ([]domain.RatePrice, error) {
 	var ratePrices []domain.RatePrice
 
 	query := rpr.db.QueryBuilder.Select("*").
@@ -232,7 +232,7 @@ func (rpr *RatePriceRepository) GetRatePricesByRoomTypeId(ctx context.Context, r
 	return ratePrices, nil
 }
 
-func (rpr *RatePriceRepository) GetRatePricesByRoomId(ctx context.Context, roomID uint64) ([]domain.RatePrice, error) {
+func (rpr *RatePriceRepository) GetRatePricesByRoomId(ctx *gin.Context, roomID uint64) ([]domain.RatePrice, error) {
     var ratePrices []domain.RatePrice
 
     query := `

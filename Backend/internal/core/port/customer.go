@@ -1,22 +1,22 @@
 package port
 
 import (
-	"context"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
+	"github.com/gin-gonic/gin"
 )
 
 type CustomerRepository interface {
-	CreateCustomer(ctx context.Context, customer *domain.Customer) (*domain.Customer, error)
-	GetCustomerByID(ctx context.Context, id uint64) (*domain.Customer, error)
-	ListCustomers(ctx context.Context, skip, limit uint64) ([]domain.Customer, error)
-	UpdateCustomer(ctx context.Context, customer *domain.Customer) (*domain.Customer, error)
-	DeleteCustomer(ctx context.Context, id uint64) error
+	CreateCustomer(ctx *gin.Context, customer *domain.Customer) (*domain.Customer, error)
+	GetCustomerByID(ctx *gin.Context, id uint64) (*domain.Customer, error)
+	ListCustomers(ctx *gin.Context, skip, limit uint64) ([]domain.Customer, error)
+	UpdateCustomer(ctx *gin.Context, customer *domain.Customer) (*domain.Customer, error)
+	DeleteCustomer(ctx *gin.Context, id uint64) error
 }
 
 type CustomerService interface {
-	RegisterCustomer(ctx context.Context, customer *domain.Customer) (*domain.Customer, error)
-	GetCustomer(ctx context.Context, id uint64) (*domain.Customer, error)
-	ListCustomers(ctx context.Context, skip, limit uint64) ([]domain.Customer, error)
-	UpdateCustomer(ctx context.Context, customer *domain.Customer) (*domain.Customer, error)
-	DeleteCustomer(ctx context.Context, id uint64) error
+	RegisterCustomer(ctx *gin.Context, customer *domain.Customer) (*domain.Customer, error)
+	GetCustomer(ctx *gin.Context, id uint64) (*domain.Customer, error)
+	ListCustomers(ctx *gin.Context, skip, limit uint64) ([]domain.Customer, error)
+	UpdateCustomer(ctx *gin.Context, customer *domain.Customer) (*domain.Customer, error)
+	DeleteCustomer(ctx *gin.Context, id uint64) error
 }

@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"context"
+	"github.com/gin-gonic/gin"
 	"log/slog"
 	"time"
 
@@ -22,7 +22,7 @@ func NewRoomRepository(db *postgres.DB) *RoomRepository {
 	}
 }
 
-func (rr *RoomRepository) CreateRoom(ctx context.Context, room *domain.Room) (*domain.Room, error) {
+func (rr *RoomRepository) CreateRoom(ctx *gin.Context, room *domain.Room) (*domain.Room, error) {
 	query := rr.db.QueryBuilder.Insert("rooms").
 		Columns("room_number", "type_id", "description", "status", "floor").
 		Values(room.RoomNumber, room.TypeID, room.Description, int(room.Status), room.Floor).
@@ -55,7 +55,7 @@ func (rr *RoomRepository) CreateRoom(ctx context.Context, room *domain.Room) (*d
 	return room, nil
 }
 
-func (rr *RoomRepository) GetRoomByID(ctx context.Context, id uint64) (*domain.Room, error) {
+func (rr *RoomRepository) GetRoomByID(ctx *gin.Context, id uint64) (*domain.Room, error) {
 	var room domain.Room
 
 	query := rr.db.QueryBuilder.Select("*").
@@ -90,7 +90,7 @@ func (rr *RoomRepository) GetRoomByID(ctx context.Context, id uint64) (*domain.R
 	return &room, nil
 }
 
-func (rr *RoomRepository) ListRooms(ctx context.Context, skip, limit uint64) ([]domain.Room, error) {
+func (rr *RoomRepository) ListRooms(ctx *gin.Context, skip, limit uint64) ([]domain.Room, error) {
 	var rooms []domain.Room
 
 	query := rr.db.QueryBuilder.Select("*").
@@ -140,7 +140,7 @@ func (rr *RoomRepository) ListRooms(ctx context.Context, skip, limit uint64) ([]
 	return rooms, nil
 }
 
-func (rr *RoomRepository) UpdateRoom(ctx context.Context, room *domain.Room) (*domain.Room, error) {
+func (rr *RoomRepository) UpdateRoom(ctx *gin.Context, room *domain.Room) (*domain.Room, error) {
 	query := rr.db.QueryBuilder.Update("rooms").
 		Set("room_number", sq.Expr("COALESCE(?, room_number)", room.RoomNumber)).
 		Set("type_id", sq.Expr("COALESCE(?, type_id)", room.TypeID)).
@@ -177,7 +177,7 @@ func (rr *RoomRepository) UpdateRoom(ctx context.Context, room *domain.Room) (*d
 	return room, nil
 }
 
-func (rr *RoomRepository) DeleteRoom(ctx context.Context, id uint64) error {
+func (rr *RoomRepository) DeleteRoom(ctx *gin.Context, id uint64) error {
 	query := rr.db.QueryBuilder.Delete("rooms").
 		Where(sq.Eq{"id": id})
 
@@ -195,7 +195,7 @@ func (rr *RoomRepository) DeleteRoom(ctx context.Context, id uint64) error {
 	return nil
 }
 
-func (rr *RoomRepository) GetAvailableRooms(ctx context.Context, checkInDate, checkOutDate time.Time) ([]domain.RoomWithRoomType, error) {
+func (rr *RoomRepository) GetAvailableRooms(ctx *gin.Context, checkInDate, checkOutDate time.Time) ([]domain.RoomWithRoomType, error) {
 	var rooms []domain.RoomWithRoomType
 
 	query := `
@@ -248,7 +248,7 @@ func (rr *RoomRepository) GetAvailableRooms(ctx context.Context, checkInDate, ch
 	return rooms, nil
 }
 
-func (rr *RoomRepository) ListRoomsWithRoomType(ctx context.Context, skip, limit uint64) ([]domain.RoomWithRoomType, error) {
+func (rr *RoomRepository) ListRoomsWithRoomType(ctx *gin.Context, skip, limit uint64) ([]domain.RoomWithRoomType, error) {
 	var rooms []domain.RoomWithRoomType
 
 	query := `
