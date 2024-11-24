@@ -165,7 +165,7 @@ func (bh *BookingHandler) ListBookings(ctx *gin.Context) {
 		return
 	}
 
-	bookings, err := bh.svc.ListBookings(ctx, skipUint, limitUint)
+	bookings, totalCount, err := bh.svc.ListBookings(ctx, skipUint, limitUint)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -180,8 +180,7 @@ func (bh *BookingHandler) ListBookings(ctx *gin.Context) {
 		bookingsList = append(bookingsList, rsp)
 	}
 
-	total := uint64(len(bookingsList))
-	meta := newMeta(total, req.Limit, req.Skip)
+	meta := newMeta(totalCount, req.Limit, req.Skip)
 	rsp := toMap(meta, bookingsList, "bookings")
 
 	handleSuccess(ctx, rsp)
@@ -260,7 +259,7 @@ func (bh *BookingHandler) ListBookingsWithFilter(ctx *gin.Context) {
 	// log the request
 	fmt.Printf("Request: %+v", req)
 
-	bookings, err := bh.svc.ListBookingsWithFilter(ctx, booking, skipUint, limitUint)
+	bookings, totalCount, err := bh.svc.ListBookingsWithFilter(ctx, booking, skipUint, limitUint)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -275,8 +274,7 @@ func (bh *BookingHandler) ListBookingsWithFilter(ctx *gin.Context) {
 		bookingsList = append(bookingsList, rsp)
 	}
 
-	total := uint64(len(bookingsList))
-	meta := newMeta(total, req.Limit, req.Skip)
+	meta := newMeta(totalCount, req.Limit, req.Skip)
 	rsp := toMap(meta, bookingsList, "bookings")
 
 	handleSuccess(ctx, rsp)
@@ -605,7 +603,7 @@ func (bh *BookingHandler) ListBookingCustomerPayments(ctx *gin.Context) {
 		return
 	}
 
-	bcps, err := bh.svc.ListBookingCustomerPayments(ctx, skipUint, limitUint)
+	bcps, totalCount, err := bh.svc.ListBookingCustomerPayments(ctx, skipUint, limitUint)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -620,8 +618,7 @@ func (bh *BookingHandler) ListBookingCustomerPayments(ctx *gin.Context) {
 		bcpList = append(bcpList, *rsp)
 	}
 
-	total := uint64(len(bcpList))
-	meta := newMeta(total, req.Limit, req.Skip)
+	meta := newMeta(totalCount, req.Limit, req.Skip)
 	rsp := toMap(meta, bcpList, "booking_customer_payments")
 
 	handleSuccess(ctx, rsp)

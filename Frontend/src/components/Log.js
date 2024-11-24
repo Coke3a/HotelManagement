@@ -12,82 +12,69 @@ import {
   CircularProgress,
   Typography,
   Button,
+  Stack,
+  Pagination,
 } from '@mui/material';
-import { handleTokenExpiration } from '../utils/auth';
+import { handleTokenExpiration } from '../utils/api';
 
 const Log = () => {
-  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
-  const [users, setUsers] = useState({});
   const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState({});
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [error, setError] = useState(null);
+
+  const fetchLogs = async (page, rowsPerPage) => {
+    setLoading(true);
+    try {
+      const skip = page * rowsPerPage;
+      const queryParams = new URLSearchParams({
+        skip: skip.toString(),
+        limit: rowsPerPage.toString(),
+      });
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:8080/v1/logs/?${queryParams.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
+
+      const data = await response.json();
+      if (data && data.data) {
+        setLogs(data.data.logs || []);
+        if (data.data.meta && typeof data.data.meta.total === 'number') {
+          setTotalCount(data.data.meta.total);
+        } else {
+          setTotalCount(data.data?.logs?.length || 0);
+        }
+      } else {
+        setLogs([]);
+        setTotalCount(0);
+      }
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch('http://localhost:8080/v1/users/?skip=0&limit=100', {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
+    fetchLogs(page, rowsPerPage);
+  }, [page, rowsPerPage, navigate]);
 
-        if (response.status === 401) {
-          handleTokenExpiration(new Error("access token has expired"), navigate);
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch users');
-        }
-
-        const data = await response.json();
-        const usersMap = {};
-        data.data.users.forEach(user => {
-          usersMap[user.id] = user.username;
-        });
-        setUsers(usersMap);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-      }
-    };
-
-    const fetchLogs = async () => {
-      try {
-        const queryParams = new URLSearchParams({
-          skip: '0',
-          limit: '100',
-        });
-
-        const response = await fetch(`http://localhost:8080/v1/logs/?${queryParams.toString()}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (response.status === 401) {
-          handleTokenExpiration(new Error("access token has expired"), navigate);
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch logs');
-        }
-
-        const data = await response.json();
-        setLogs(data.data.logs || []);
-      } catch (error) {
-        console.error('Error fetching logs:', error);
-        setLogs([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUsers();
-    fetchLogs();
-  }, []);
+  const handlePageChange = (event, newPage) => {
+    setPage(newPage - 1);
+  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString();
@@ -118,9 +105,58 @@ const Log = () => {
 
   return (
     <div className="table-container">
-      <Typography variant="h5" gutterBottom>
-        System Logs
-      </Typography>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        mb: 2,
+        mt: 0,
+        pt: 0
+      }}>
+        {/* Right side - Pagination controls */}
+        <Stack 
+          direction="row" 
+          spacing={2} 
+          alignItems="center"
+          sx={{ marginLeft: 'auto' }}
+        >
+          <Box sx={{ mr: 2 }}>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setPage(0);
+              }}
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: '1px solid #ccc'
+              }}
+            >
+              <option value={5}>5 per page</option>
+              <option value={10}>10 per page</option>
+              <option value={25}>25 per page</option>
+            </select>
+          </Box>
+          
+          <Pagination
+            count={Math.ceil(totalCount / rowsPerPage)}
+            page={page + 1}
+            onChange={handlePageChange}
+            color="primary"
+            showFirstButton
+            showLastButton
+            siblingCount={1}
+            boundaryCount={1}
+            sx={{
+              '& .MuiPagination-ul': {
+                flexWrap: 'nowrap'
+              }
+            }}
+          />
+        </Stack>
+      </Box>
+
       <TableContainer component={Paper}>
         <Table size="small" className="compact-table">
           <TableHead>
@@ -177,6 +213,12 @@ const Log = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {error && (
+        <Typography color="error" align="center" style={{ padding: '1rem' }}>
+          {error}
+        </Typography>
+      )}
     </div>
   );
 };

@@ -134,7 +134,7 @@ func (ch *CustomerHandler) ListCustomers(ctx *gin.Context) {
         return
     }
 
-	customers, err := ch.svc.ListCustomers(ctx, skipUint, limitUint)
+	customers, totalCount, err := ch.svc.ListCustomers(ctx, skipUint, limitUint)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -149,8 +149,7 @@ func (ch *CustomerHandler) ListCustomers(ctx *gin.Context) {
 		customersList = append(customersList, customerResponse)
 	}
 
-	total := uint64(len(customersList))
-	meta := newMeta(total, req.Limit, req.Skip)
+	meta := newMeta(totalCount, req.Limit, req.Skip)
 	rsp := toMap(meta, customersList, "customers")
 
 	handleSuccess(ctx, rsp)

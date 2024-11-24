@@ -65,13 +65,13 @@ func (rts *RoomTypeService) GetRoomType(ctx *gin.Context, id uint64) (*domain.Ro
 	return roomType, nil
 }
 
-func (rts *RoomTypeService) ListRoomTypes(ctx *gin.Context, skip, limit uint64) ([]domain.RoomType, error) {
-	roomTypes, err := rts.repo.ListRoomTypes(ctx, skip, limit)
+func (rts *RoomTypeService) ListRoomTypes(ctx *gin.Context, skip, limit uint64) ([]domain.RoomType, uint64, error) {
+	roomTypes, totalCount, err := rts.repo.ListRoomTypes(ctx, skip, limit)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
 
-	return roomTypes, nil
+	return roomTypes, totalCount, nil
 }
 
 func (rts *RoomTypeService) UpdateRoomType(ctx *gin.Context, roomType *domain.RoomType) (*domain.RoomType, error) {

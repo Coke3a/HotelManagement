@@ -142,19 +142,45 @@ const BookingEdit = () => {
         return;
       }
 
-      if (!response.ok) throw new Error('Failed to fetch rate prices');
-
       const data = await response.json();
-      setRatePrices(data.data || []);
+      if (!data.success) {
+        setRatePrices([]);
+        setBooking(prev => ({ ...prev, rate_price_id: '', total_amount: prev.total_amount }));
+        alert(data.messages?.[0] || 'No rate prices found for this room type');
+        return;
+      }
+
+      if (data && data.data && data.data.ratePrices && Array.isArray(data.data.ratePrices)) {
+        setRatePrices(data.data.ratePrices);
+      } else {
+        setRatePrices([]);
+        setBooking(prev => ({ ...prev, rate_price_id: '', total_amount: prev.total_amount }));
+        alert('No rate prices available for this room type');
+      }
     } catch (error) {
       console.error('Error fetching rate prices:', error);
-      alert(error.message);
+      setRatePrices([]);
+      setBooking(prev => ({ ...prev, rate_price_id: '', total_amount: prev.total_amount }));
+      alert('Error fetching rate prices. Please try again.');
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setBooking({ ...booking, [name]: value });
+    if (name === 'rate_price_id') {
+      const selectedRatePrice = ratePrices.find(rp => rp.id === parseInt(value));
+      if (selectedRatePrice) {
+        setBooking(prev => ({
+          ...prev,
+          [name]: value,
+          total_amount: parseFloat(selectedRatePrice.price_per_night).toFixed(2)
+        }));
+      } else {
+        setBooking(prev => ({ ...prev, [name]: value }));
+      }
+    } else {
+      setBooking(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -168,15 +194,15 @@ const BookingEdit = () => {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          id: booking.booking_id,
-          customer_id: booking.customer_id,
+          id: parseInt(booking.booking_id),
+          customer_id: parseInt(booking.customer_id),
           rate_prices_id: booking.rate_price_id ? parseInt(booking.rate_price_id) : null,
-          room_id: booking.room_id,
-          room_type_id: booking.room_type_id,
+          room_id: parseInt(booking.room_id),
+          room_type_id: parseInt(booking.room_type_id),
           check_in_date: booking.check_in_date.toISOString(),
           check_out_date: booking.check_out_date.toISOString(),
           status: parseInt(booking.status),
-          total_amount: booking.total_amount,
+          total_amount: parseFloat(booking.total_amount),
         }),
       });
 

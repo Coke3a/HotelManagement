@@ -24,16 +24,16 @@ export const getUsername = () => localStorage.getItem('username');
 
 export const setUsername = (username) => localStorage.setItem('username', username);
 
-export const handleTokenExpiration = (error, navigate) => {
-  if (error.message.includes("access token has expired")) {
-    // Clear all auth data
-    localStorage.removeItem('token');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('username');
+// export const handleTokenExpiration = (error, navigate) => {
+//   if (error.message.includes("access token has expired")) {
+//     // Clear all auth data
+//     localStorage.removeItem('token');
+//     localStorage.removeItem('userRole');
+//     localStorage.removeItem('username');
     
-    // Redirect to login with error message
-    navigate('/login', {
-      state: { error: 'Your session has expired. Please log in again.' }
-    });
-  }
-};
+//     // Redirect to login with error message
+//     navigate('/login', {
+//       state: { error: 'Your session has expired. Please log in again.' }
+//     });
+//   }
+// };

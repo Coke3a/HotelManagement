@@ -13,6 +13,7 @@ const RatePriceAdd = () => {
   });
   const [roomTypes, setRoomTypes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchRoomTypes = async () => {
@@ -34,9 +35,14 @@ const RatePriceAdd = () => {
         }
 
         const data = await response.json();
-        setRoomTypes(data.data || []);
+        if (data && data.data && data.data.roomTypes) {
+          setRoomTypes(data.data.roomTypes);
+        } else {
+          setRoomTypes([]);
+        }
       } catch (error) {
         console.error('Error fetching room types:', error);
+        setRoomTypes([]);
       } finally {
         setLoading(false);
       }

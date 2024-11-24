@@ -75,12 +75,6 @@ func (uh *UserHandler) CreateUser(ctx *gin.Context) {
 	handleSuccess(ctx, rsp)
 }
 
-// listUsersRequest defines the query parameters for listing users.
-type listUsersRequest struct {
-    Skip  uint64 `form:"skip" binding:"required,min=0" example:"0"`
-    Limit uint64 `form:"limit" binding:"required,min=5" example:"10"`
-}
-
 // ListUsers godoc
 //
 //	@Summary		Retrieve a list of users
@@ -113,23 +107,22 @@ func (uh *UserHandler) ListUsers(ctx *gin.Context) {
         return
     }
 
-    users, err := uh.svc.ListUsers(ctx, skipUint, limitUint)
+    users, totalCount, err := uh.svc.ListUsers(ctx, skipUint, limitUint)
     if err != nil {
         handleError(ctx, err)
         return
     }
 
     for _, user := range users {
-        userResponse, err := newUserResponse(&user)
+        rsp, err := newUserResponse(&user)
         if err != nil {
             handleError(ctx, err)
             return
         }
-        usersList = append(usersList, userResponse)
+        usersList = append(usersList, rsp)
     }
 
-    total := uint64(len(usersList))
-    meta := newMeta(total, limitUint, skipUint)
+    meta := newMeta(totalCount, limitUint, skipUint)
     rsp := toMap(meta, usersList, "users")
 
     handleSuccess(ctx, rsp)

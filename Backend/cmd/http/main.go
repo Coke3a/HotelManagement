@@ -93,6 +93,9 @@ func main() {
 		customerTypeService := service.NewCustomerTypeService(customerTypeRepository, logRepository)
 		customerTypeHandler := http.NewCustomerTypeHandler(customerTypeService)
 
+		dailyBookingSummaryRepository := repository.NewDailyBookingSummaryRepository(db)
+		dailyBookingSummaryService := service.NewDailyBookingSummaryService(dailyBookingSummaryRepository, bookingRepository, logRepository)
+		dailyBookingSummaryHandler := http.NewDailyBookingSummaryHandler(dailyBookingSummaryService)
 
 
 		authService := service.NewAuthService(userRepository, token)
@@ -111,6 +114,7 @@ func main() {
 			*roomTypeHandler,
 			*customerTypeHandler,
 			*logHandler,
+			*dailyBookingSummaryHandler,
 			token,
 		)
 		if err != nil {

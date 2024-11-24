@@ -66,13 +66,13 @@ func (rps *RatePriceService) GetRatePrice(ctx *gin.Context, id uint64) (*domain.
 	return ratePrice, nil
 }
 
-func (rps *RatePriceService) ListRatePrices(ctx *gin.Context, skip, limit uint64) ([]domain.RatePrice, error) {
-	ratePrices, err := rps.repo.ListRatePrices(ctx, skip, limit)
+func (rps *RatePriceService) ListRatePrices(ctx *gin.Context, skip, limit uint64) ([]domain.RatePrice, uint64, error) {
+	ratePrices, totalCount, err := rps.repo.ListRatePrices(ctx, skip, limit)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
 
-	return ratePrices, nil
+	return ratePrices, totalCount, nil
 }
 
 func (rps *RatePriceService) UpdateRatePrice(ctx *gin.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
@@ -158,17 +158,17 @@ func (rps *RatePriceService) DeleteRatePrice(ctx *gin.Context, id uint64) error 
 	return rps.repo.DeleteRatePrice(ctx, id)
 }
 
-func (rps *RatePriceService) GetRatePricesByRoomTypeId(ctx *gin.Context, roomTypeID uint64) ([]domain.RatePrice, error) {
-	ratePrices, err := rps.repo.GetRatePricesByRoomTypeId(ctx, roomTypeID)
+func (rps *RatePriceService) GetRatePricesByRoomTypeId(ctx *gin.Context, roomTypeID uint64) ([]domain.RatePrice, uint64, error) {
+	ratePrices, totalCount, err := rps.repo.GetRatePricesByRoomTypeId(ctx, roomTypeID)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
 
 	if len(ratePrices) == 0 {
-		return nil, domain.ErrDataNotFound
+		return nil, 0, domain.ErrDataNotFound
 	}
 
-	return ratePrices, nil
+	return ratePrices, totalCount, nil
 }
 
 func (rps *RatePriceService) GetRatePricesByRoomId(ctx *gin.Context, roomID uint64) ([]domain.RatePrice, error) {

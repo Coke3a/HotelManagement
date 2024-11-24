@@ -119,7 +119,7 @@ func (rth *RoomTypeHandler) ListRoomTypes(ctx *gin.Context) {
 	skip, _ := strconv.ParseUint(ctx.DefaultQuery("skip", "0"), 10, 64)
 	limit, _ := strconv.ParseUint(ctx.DefaultQuery("limit", "10"), 10, 64)
 
-	roomTypes, err := rth.svc.ListRoomTypes(ctx, skip, limit)
+	roomTypes, totalCount, err := rth.svc.ListRoomTypes(ctx, skip, limit)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -135,7 +135,10 @@ func (rth *RoomTypeHandler) ListRoomTypes(ctx *gin.Context) {
 		response = append(response, *rsp)
 	}
 
-	handleSuccess(ctx, response)
+	meta := newMeta(totalCount, limit, skip)
+	rsp := toMap(meta, response, "roomTypes")
+
+	handleSuccess(ctx, rsp)
 }
 
 func (rth *RoomTypeHandler) UpdateRoomType(ctx *gin.Context) {
@@ -168,14 +171,18 @@ func (rth *RoomTypeHandler) UpdateRoomType(ctx *gin.Context) {
 	handleSuccess(ctx, rsp)
 }
 
+type deleteRoomTypeRequest struct {
+	ID uint64 `uri:"id" binding:"required,min=1" example:"1"`
+}
+
 func (rth *RoomTypeHandler) DeleteRoomType(ctx *gin.Context) {
-	id, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
-	if err != nil {
-		handleError(ctx, domain.ErrInvalidData)
+	var req deleteRoomTypeRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		validationError(ctx, err)
 		return
 	}
-
-	err = rth.svc.DeleteRoomType(ctx, id)
+	
+	err := rth.svc.DeleteRoomType(ctx, req.ID)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -183,3 +190,4 @@ func (rth *RoomTypeHandler) DeleteRoomType(ctx *gin.Context) {
 
 	handleSuccess(ctx, gin.H{"message": "Room type deleted successfully"})
 }
+

@@ -90,8 +90,20 @@ func (rr *RoomRepository) GetRoomByID(ctx *gin.Context, id uint64) (*domain.Room
 	return &room, nil
 }
 
-func (rr *RoomRepository) ListRooms(ctx *gin.Context, skip, limit uint64) ([]domain.Room, error) {
+func (rr *RoomRepository) ListRooms(ctx *gin.Context, skip, limit uint64) ([]domain.Room, uint64, error) {
 	var rooms []domain.Room
+	var totalCount uint64
+
+	countQuery := rr.db.QueryBuilder.Select("COUNT(*)").From("rooms")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = rr.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	query := rr.db.QueryBuilder.Select("*").
 		From("rooms").
@@ -104,13 +116,13 @@ func (rr *RoomRepository) ListRooms(ctx *gin.Context, skip, limit uint64) ([]dom
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := rr.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -127,17 +139,17 @@ func (rr *RoomRepository) ListRooms(ctx *gin.Context, skip, limit uint64) ([]dom
 			&room.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		rooms = append(rooms, room)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return rooms, nil
+	return rooms, totalCount, nil
 }
 
 func (rr *RoomRepository) UpdateRoom(ctx *gin.Context, room *domain.Room) (*domain.Room, error) {
@@ -248,8 +260,20 @@ func (rr *RoomRepository) GetAvailableRooms(ctx *gin.Context, checkInDate, check
 	return rooms, nil
 }
 
-func (rr *RoomRepository) ListRoomsWithRoomType(ctx *gin.Context, skip, limit uint64) ([]domain.RoomWithRoomType, error) {
+func (rr *RoomRepository) ListRoomsWithRoomType(ctx *gin.Context, skip, limit uint64) ([]domain.RoomWithRoomType, uint64, error) {
 	var rooms []domain.RoomWithRoomType
+	var totalCount uint64
+
+	countQuery := rr.db.QueryBuilder.Select("COUNT(*)").From("rooms")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = rr.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	query := `
 		SELECT r.id, r.room_number, r.type_id, rt.name AS room_type_name, r.description, r.status, r.floor, r.created_at, r.updated_at
@@ -261,7 +285,7 @@ func (rr *RoomRepository) ListRoomsWithRoomType(ctx *gin.Context, skip, limit ui
 
 	rows, err := rr.db.Query(ctx, query, limit, skip)
 	if err != nil {
-		return nil, fmt.Errorf("error executing query: %w", err)
+		return nil, 0, fmt.Errorf("error executing query: %w", err)
 	}
 	defer rows.Close()
 
@@ -279,14 +303,14 @@ func (rr *RoomRepository) ListRoomsWithRoomType(ctx *gin.Context, skip, limit ui
 			&room.UpdatedAt,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error scanning row: %w", err)
+			return nil, 0, fmt.Errorf("error scanning row: %w", err)
 		}
 		rooms = append(rooms, room)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating rows: %w", err)
+		return nil, 0, fmt.Errorf("error iterating rows: %w", err)
 	}
 
-	return rooms, nil
+	return rooms, totalCount, nil
 }

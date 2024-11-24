@@ -66,13 +66,13 @@ func (rs *RoomService) GetRoom(ctx *gin.Context, id uint64) (*domain.Room, error
 	return room, nil
 }
 
-func (rs *RoomService) ListRooms(ctx *gin.Context, skip, limit uint64) ([]domain.Room, error) {
-	rooms, err := rs.repo.ListRooms(ctx, skip, limit)
+func (rs *RoomService) ListRooms(ctx *gin.Context, skip, limit uint64) ([]domain.Room, uint64, error) {
+	rooms, totalCount, err := rs.repo.ListRooms(ctx, skip, limit)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
 
-	return rooms, nil
+	return rooms, totalCount, nil
 }
 
 func (rs *RoomService) UpdateRoom(ctx *gin.Context, room *domain.Room) (*domain.Room, error) {
@@ -169,10 +169,10 @@ func (rs *RoomService) GetAvailableRooms(ctx *gin.Context, checkInDate, checkOut
 	return rooms, nil
 }
 
-func (rs *RoomService) ListRoomsWithRoomType(ctx *gin.Context, skip, limit uint64) ([]domain.RoomWithRoomType, error) {
-	rooms, err := rs.repo.ListRoomsWithRoomType(ctx, skip, limit)
+func (rs *RoomService) ListRoomsWithRoomType(ctx *gin.Context, skip, limit uint64) ([]domain.RoomWithRoomType, uint64, error) {
+	rooms, totalCount, err := rs.repo.ListRoomsWithRoomType(ctx, skip, limit)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
-	return rooms, nil
+	return rooms, totalCount, nil
 }

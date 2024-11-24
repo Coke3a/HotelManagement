@@ -77,13 +77,13 @@ func (cs *CustomerService) GetCustomer(ctx *gin.Context, id uint64) (*domain.Cus
 	return customer, nil
 }
 
-func (cs *CustomerService) ListCustomers(ctx *gin.Context, skip, limit uint64) ([]domain.Customer, error) {
-	customers, err := cs.repo.ListCustomers(ctx, skip, limit)
+func (cs *CustomerService) ListCustomers(ctx *gin.Context, skip, limit uint64) ([]domain.Customer, uint64, error) {
+	customers, totalCount, err := cs.repo.ListCustomers(ctx, skip, limit)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
 
-	return customers, nil
+	return customers, totalCount, nil
 }
 
 func (cs *CustomerService) UpdateCustomer(ctx *gin.Context, customer *domain.Customer) (*domain.Customer, error) {

@@ -63,13 +63,13 @@ func (cts *CustomerTypeService) GetCustomerType(ctx *gin.Context, id uint64) (*d
 	return customerType, nil
 }
 
-func (cts *CustomerTypeService) ListCustomerTypes(ctx *gin.Context, skip, limit uint64) ([]domain.CustomerType, error) {
-	customerTypes, err := cts.repo.ListCustomerTypes(ctx, skip, limit)
+func (cts *CustomerTypeService) ListCustomerTypes(ctx *gin.Context, skip, limit uint64) ([]domain.CustomerType, uint64, error) {
+	customerTypes, totalCount, err := cts.repo.ListCustomerTypes(ctx, skip, limit)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
 
-	return customerTypes, nil
+	return customerTypes, totalCount, nil
 }
 
 func (cts *CustomerTypeService) UpdateCustomerType(ctx *gin.Context, customerType *domain.CustomerType) (*domain.CustomerType, error) {

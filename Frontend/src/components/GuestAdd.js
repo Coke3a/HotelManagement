@@ -43,10 +43,14 @@ const GuestAdd = ({ onGuestAdded, isFromBooking = false }) => {
         }
 
         const data = await response.json();
-        setGuestTypes(data.data || []); // Ensure it's always an array
+        if (data && data.data && data.data.customerTypes) {
+          setGuestTypes(data.data.customerTypes);
+        } else {
+          setGuestTypes([]);
+        }
       } catch (error) {
         console.error('Error fetching guest types:', error);
-        setGuestTypes([]); // Set to empty array on error
+        setGuestTypes([]); // Ensure it's always an array on error
       } finally {
         setGuestTypesLoading(false);
       }

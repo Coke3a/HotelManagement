@@ -82,8 +82,19 @@ func (ctr *CustomerTypeRepository) GetCustomerTypeByID(ctx *gin.Context, id uint
 	return &customerType, nil
 }
 
-func (ctr *CustomerTypeRepository) ListCustomerTypes(ctx *gin.Context, skip, limit uint64) ([]domain.CustomerType, error) {
+func (ctr *CustomerTypeRepository) ListCustomerTypes(ctx *gin.Context, skip, limit uint64) ([]domain.CustomerType, uint64, error) {
 	var customerTypes []domain.CustomerType
+	var totalCount uint64
+
+	countQuery := ctr.db.QueryBuilder.Select("COUNT(*)").From("customer_types")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	err = ctr.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	query := ctr.db.QueryBuilder.Select("*").
 		From("customer_types").
@@ -96,13 +107,13 @@ func (ctr *CustomerTypeRepository) ListCustomerTypes(ctx *gin.Context, skip, lim
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := ctr.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -116,17 +127,17 @@ func (ctr *CustomerTypeRepository) ListCustomerTypes(ctx *gin.Context, skip, lim
 			&customerType.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		customerTypes = append(customerTypes, customerType)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return customerTypes, nil
+	return customerTypes, totalCount, nil
 }
 
 func (ctr *CustomerTypeRepository) UpdateCustomerType(ctx *gin.Context, customerType *domain.CustomerType) (*domain.CustomerType, error) {

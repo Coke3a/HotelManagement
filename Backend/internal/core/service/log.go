@@ -17,14 +17,12 @@ func NewLogService(repo port.LogRepository) *LogService {
 	}
 }
 
-func (ls *LogService) GetLogs(ctx *gin.Context, skip, limit uint64) ([]domain.Log, error) {
-	fmt.Println("skip", skip)
-	fmt.Println("limit", limit)
-	logs, err := ls.repo.GetLogs(ctx, skip, limit)
+func (ls *LogService) GetLogs(ctx *gin.Context, skip, limit uint64) ([]domain.Log, uint64, error) {
+	logs, totalCount, err := ls.repo.GetLogs(ctx, skip, limit)
 	if err != nil {
 		fmt.Println("error", err)
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
 
-	return logs, nil
+	return logs, totalCount, nil
 }

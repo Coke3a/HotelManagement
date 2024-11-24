@@ -19,6 +19,7 @@ import BedroomChildIcon from '@mui/icons-material/BedroomChild';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import HistoryIcon from '@mui/icons-material/History';
+import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 
 const SideBar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -58,6 +59,7 @@ const SideBar = () => {
     },
     { path: "/user", icon: <AccountBoxIcon />, text: "User", roles: [UserRoleEnum.ADMIN] },
     { path: "/logs", icon: <HistoryIcon />, text: "Logs", roles: [UserRoleEnum.ADMIN] },
+    { path: "/daily-summary", icon: <HistoryOutlinedIcon />, text: "Daily Booking Summary", roles: [UserRoleEnum.ADMIN] },
   ];
 
   const userRole = localStorage.getItem('userRole');

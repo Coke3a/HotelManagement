@@ -89,7 +89,7 @@ func (rh *RankHandler) ListRanks(ctx *gin.Context) {
 		return
 	}
 
-	ranks, err := rh.svc.ListRanks(ctx, req.Skip, req.Limit)
+	ranks, totalCount, err := rh.svc.ListRanks(ctx, req.Skip, req.Limit)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -99,8 +99,7 @@ func (rh *RankHandler) ListRanks(ctx *gin.Context) {
 		ranksList = append(ranksList, newRankResponse(&rank))
 	}
 
-	total := uint64(len(ranksList))
-	meta := newMeta(total, req.Limit, req.Skip)
+	meta := newMeta(totalCount, req.Limit, req.Skip)
 	rsp := toMap(meta, ranksList, "ranks")
 
 	handleSuccess(ctx, rsp)

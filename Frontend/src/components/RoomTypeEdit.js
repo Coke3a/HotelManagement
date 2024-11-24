@@ -126,6 +126,10 @@ const RoomTypeEdit = () => {
         }
 
         if (!response.ok) {
+          const errorData = await response.json();
+          if (errorData.messages && errorData.messages[0].includes('violates foreign key constraint')) {
+            throw new Error('Cannot delete this room type because it is being used by existing rooms. Please remove or reassign those rooms first.');
+          }
           throw new Error('Failed to delete room type');
         }
 

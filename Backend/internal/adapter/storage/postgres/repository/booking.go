@@ -97,11 +97,21 @@ func (br *BookingRepository) GetBookingByID(ctx *gin.Context, id uint64) (*domai
 	return &booking, nil
 }
 
-func (br *BookingRepository) ListBookings(ctx *gin.Context, skip, limit uint64) ([]domain.Booking, error) {
+func (br *BookingRepository) ListBookings(ctx *gin.Context, skip, limit uint64) ([]domain.Booking, uint64, error) {
 	var bookings []domain.Booking
+	var totalCount uint64
+
+	countQuery := br.db.QueryBuilder.Select("COUNT(*)").From("bookings")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	err = br.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	query := br.db.QueryBuilder.Select("*").
-		From("bookings").
 		OrderBy("id").
 		Limit(limit)
 
@@ -111,13 +121,13 @@ func (br *BookingRepository) ListBookings(ctx *gin.Context, skip, limit uint64) 
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := br.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -138,21 +148,32 @@ func (br *BookingRepository) ListBookings(ctx *gin.Context, skip, limit uint64) 
 			&booking.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		bookings = append(bookings, booking)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return bookings, nil
+	return bookings, totalCount, nil
 }
 
-func (rr *BookingRepository) ListBookingsWithFilter(ctx *gin.Context, booking *domain.Booking, skip, limit uint64) ([]domain.Booking, error) {
+func (rr *BookingRepository) ListBookingsWithFilter(ctx *gin.Context, booking *domain.Booking, skip, limit uint64) ([]domain.Booking, uint64, error) {
 	var bookings []domain.Booking
+	var totalCount uint64
+
+	countQuery := rr.db.QueryBuilder.Select("COUNT(*)").From("bookings")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	err = rr.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	query := rr.db.QueryBuilder.Select("*").
 		From("bookings").
@@ -203,13 +224,13 @@ func (rr *BookingRepository) ListBookingsWithFilter(ctx *gin.Context, booking *d
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := rr.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -230,17 +251,17 @@ func (rr *BookingRepository) ListBookingsWithFilter(ctx *gin.Context, booking *d
 			&booking.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		bookings = append(bookings, booking)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return bookings, nil
+	return bookings, totalCount, nil
 }
 
 // GetBookingCustomerPayment retrieves a single booking customer payment by ID
@@ -291,8 +312,21 @@ func (br *BookingRepository) GetBookingCustomerPayment(ctx *gin.Context, id uint
 }
 
 // ListBookingCustomerPayments retrieves a list of booking customer payments with pagination
-func (br *BookingRepository) ListBookingCustomerPayments(ctx *gin.Context, skip, limit uint64) ([]domain.BookingCustomerPayment, error) {
+func (br *BookingRepository) ListBookingCustomerPayments(ctx *gin.Context, skip, limit uint64) ([]domain.BookingCustomerPayment, uint64, error) {
 	var bcps []domain.BookingCustomerPayment
+	var totalCount uint64
+
+	countQuery := br.db.QueryBuilder.Select("COUNT(*)").
+		From("booking_customer_payment")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	err = br.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	query := br.db.QueryBuilder.Select("*").
 		From("booking_customer_payment").
 		OrderBy("booking_id").
@@ -304,13 +338,13 @@ func (br *BookingRepository) ListBookingCustomerPayments(ctx *gin.Context, skip,
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := br.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -338,17 +372,17 @@ func (br *BookingRepository) ListBookingCustomerPayments(ctx *gin.Context, skip,
 			&bcp.PaymentUpdateDate,
 		)
 		if err != nil {
-			return nil, fmt.Errorf("error scanning row: %w", err)
+			return nil, 0, fmt.Errorf("error scanning row: %w", err)
 		}
 
 		bcps = append(bcps, bcp)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating rows: %w", err)
+		return nil, 0, fmt.Errorf("error iterating rows: %w", err)
 	}
 
-	return bcps, nil
+	return bcps, totalCount, nil
 }
 
 func (br *BookingRepository) UpdateBooking(ctx *gin.Context, booking *domain.Booking) (*domain.Booking, error) {

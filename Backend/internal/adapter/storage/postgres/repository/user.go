@@ -129,26 +129,40 @@ func (ur *UserRepository) GetUserByUserName(ctx *gin.Context, userName string) (
 	return &user, nil
 }
 
-func (ur *UserRepository) ListUsers(ctx *gin.Context, skip, limit uint64) ([]domain.User, error) {
+func (ur *UserRepository) ListUsers(ctx *gin.Context, skip, limit uint64) ([]domain.User, uint64, error) {
 	var users []domain.User
+	var totalCount uint64
 
+	countQuery := ur.db.QueryBuilder.Select("COUNT(*)").From("users")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = ur.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// This is a separate query that gets the paginated results
+	// Only this query uses skip and limit
 	query := ur.db.QueryBuilder.Select("*").
 		From("users").
 		OrderBy("id").
 		Limit(limit)
 
 	if skip > 0 {
-		query = query.Offset(skip)
+			query = query.Offset(skip)
 	}
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	rows, err := ur.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -167,17 +181,16 @@ func (ur *UserRepository) ListUsers(ctx *gin.Context, skip, limit uint64) ([]dom
 			&user.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		users = append(users, user)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-
-	return users, nil
+	return users, totalCount, nil
 }
 
 func (ur *UserRepository) UpdateUser(ctx *gin.Context, user *domain.User) (*domain.User, error) {

@@ -9,7 +9,7 @@ import (
 type RoomTypeRepository interface {
 	CreateRoomType(ctx *gin.Context, roomType *domain.RoomType) (*domain.RoomType, error)
 	GetRoomTypeByID(ctx *gin.Context, id uint64) (*domain.RoomType, error)
-	ListRoomTypes(ctx *gin.Context, skip, limit uint64) ([]domain.RoomType, error)
+	ListRoomTypes(ctx *gin.Context, skip, limit uint64) ([]domain.RoomType, uint64, error)
 	UpdateRoomType(ctx *gin.Context, roomType *domain.RoomType) (*domain.RoomType, error)
 	DeleteRoomType(ctx *gin.Context, id uint64) error
 }
@@ -17,7 +17,7 @@ type RoomTypeRepository interface {
 type RoomTypeService interface {
 	CreateRoomType(ctx *gin.Context, roomType *domain.RoomType) (*domain.RoomType, error)
 	GetRoomType(ctx *gin.Context, id uint64) (*domain.RoomType, error)
-	ListRoomTypes(ctx *gin.Context, skip, limit uint64) ([]domain.RoomType, error)
+	ListRoomTypes(ctx *gin.Context, skip, limit uint64) ([]domain.RoomType, uint64, error)
 	UpdateRoomType(ctx *gin.Context, roomType *domain.RoomType) (*domain.RoomType, error)
 	DeleteRoomType(ctx *gin.Context, id uint64) error
 }

@@ -18,6 +18,7 @@ const RoomAdd = () => {
   useEffect(() => {
     const fetchRoomTypes = async () => {
       try {
+        const token = localStorage.getItem('token');
         const response = await fetch('http://localhost:8080/v1/room-types/', {
           headers: {
             'Content-Type': 'application/json',
@@ -35,9 +36,14 @@ const RoomAdd = () => {
         }
 
         const data = await response.json();
-        setRoomTypes(data.data || []);
+        if (data && data.data && data.data.roomTypes) {
+          setRoomTypes(data.data.roomTypes);
+        } else {
+          setRoomTypes([]);
+        }
       } catch (error) {
         console.error('Error fetching room types:', error);
+        setRoomTypes([]);
       }
     };
 

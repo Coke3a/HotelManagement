@@ -78,8 +78,19 @@ func (rr *RankRepository) GetRankByID(ctx *gin.Context, id uint64) (*domain.Rank
 	return &rank, nil
 }
 
-func (rr *RankRepository) ListRanks(ctx *gin.Context, skip, limit uint64) ([]domain.Rank, error) {
+func (rr *RankRepository) ListRanks(ctx *gin.Context, skip, limit uint64) ([]domain.Rank, uint64, error) {
 	var ranks []domain.Rank
+	var totalCount uint64
+
+	countQuery := rr.db.QueryBuilder.Select("COUNT(*)").From("ranks")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	err = rr.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	query := rr.db.QueryBuilder.Select("*").
 		From("ranks").
@@ -89,13 +100,13 @@ func (rr *RankRepository) ListRanks(ctx *gin.Context, skip, limit uint64) ([]dom
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := rr.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -107,17 +118,17 @@ func (rr *RankRepository) ListRanks(ctx *gin.Context, skip, limit uint64) ([]dom
 			&rank.Description,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		ranks = append(ranks, rank)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return ranks, nil
+	return ranks, totalCount, nil
 }
 
 func (rr *RankRepository) UpdateRank(ctx *gin.Context, rank *domain.Rank) (*domain.Rank, error) {

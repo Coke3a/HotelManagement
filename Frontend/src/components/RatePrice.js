@@ -13,6 +13,8 @@ import {
   CircularProgress,
   Typography,
   TextField,
+  Stack,
+  Pagination,
 } from '@mui/material';
 import { getUserRole } from '../utils/auth';
 
@@ -23,6 +25,10 @@ const RatePrice = () => {
   const [loading, setLoading] = useState(true);
   const [roomTypeData, setRoomTypeData] = useState({});
   const [userRole, setUserRole] = useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [error, setError] = useState(null);
 
   const fetchRoomTypeData = async (roomTypeId) => {
     try {
@@ -58,9 +64,10 @@ const RatePrice = () => {
     const fetchRatePrices = async () => {
       setLoading(true);
       try {
+        const skip = page * rowsPerPage;
         const queryParams = new URLSearchParams({
-          skip: '0',
-          limit: '10',
+          skip: skip.toString(),
+          limit: rowsPerPage.toString(),
         });
 
         const response = await fetch(`http://localhost:8080/v1/rate_prices/?${queryParams.toString()}`, {
@@ -88,19 +95,26 @@ const RatePrice = () => {
             })
           );
           setRatePrices(ratePricesWithRoomTypeData);
+          if (data.data.meta && typeof data.data.meta.total === 'number') {
+            setTotalCount(data.data.meta.total);
+          } else {
+            setTotalCount(data.data.ratePrices.length);
+          }
         } else {
           setRatePrices([]);
+          setTotalCount(0);
         }
       } catch (error) {
         console.error('Error fetching rate prices:', error);
         setRatePrices([]);
+        setTotalCount(0);
       } finally {
         setLoading(false);
       }
     };
 
     fetchRatePrices();
-  }, []);
+  }, [page, rowsPerPage, navigate]);
 
   useEffect(() => {
     setUserRole(getUserRole());
@@ -114,9 +128,20 @@ const RatePrice = () => {
     navigate('/rate_price/add');
   };
 
+  const handlePageChange = (event, newPage) => {
+    setPage(newPage - 1);
+  };
+
   return (
     <div className="table-container">
-      <div className="flex justify-end mb-4">
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        mb: 2,
+        mt: 0,
+        pt: 0
+      }}>
         <Button
           variant="contained"
           className="bg-blue-600 text-white hover:bg-blue-700"
@@ -124,7 +149,50 @@ const RatePrice = () => {
         >
           Add Rate Price
         </Button>
-      </div>
+        
+        <Stack 
+          direction="row" 
+          spacing={2} 
+          alignItems="center"
+          sx={{ marginLeft: 'auto' }}
+        >
+          <Box sx={{ mr: 2 }}>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setPage(0);
+              }}
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: '1px solid #ccc'
+              }}
+            >
+              <option value={5}>5 per page</option>
+              <option value={10}>10 per page</option>
+              <option value={25}>25 per page</option>
+            </select>
+          </Box>
+          
+          <Pagination
+            count={Math.ceil(totalCount / rowsPerPage)}
+            page={page + 1}
+            onChange={handlePageChange}
+            color="primary"
+            showFirstButton
+            showLastButton
+            siblingCount={1}
+            boundaryCount={1}
+            sx={{
+              '& .MuiPagination-ul': {
+                flexWrap: 'nowrap'
+              }
+            }}
+          />
+        </Stack>
+      </Box>
+
       <TableContainer component={Paper}>
         <Table size="small" className="compact-table">
           <TableHead>

@@ -2,7 +2,6 @@ package http
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -35,26 +34,20 @@ func (lh *LogHandler) GetLogs(ctx *gin.Context) {
 	skip := ctx.Query("skip")
 	limit := ctx.Query("limit")
 
-	fmt.Println("skip", skip)
-	fmt.Println("limit", limit)
-
 	skipUint, err := strconv.ParseUint(skip, 10, 64)
 	if err != nil {
-		fmt.Println("error1", err)
 		validationError(ctx, err)
 		return
 	}
 
 	limitUint, err := strconv.ParseUint(limit, 10, 64)
 	if err != nil {
-		fmt.Println("error2", err)
 		validationError(ctx, err)
 		return
 	}
 
-	logs, err := lh.svc.GetLogs(ctx, skipUint, limitUint)
+	logs, totalCount, err := lh.svc.GetLogs(ctx, skipUint, limitUint)
 	if err != nil {
-		fmt.Println("error3", err)
 		handleError(ctx, err)
 		return
 	}
@@ -67,10 +60,8 @@ func (lh *LogHandler) GetLogs(ctx *gin.Context) {
 		}
 		logsList = append(logsList, rsp)
 	}
-	fmt.Println("logsList", logsList)
 
-	total := uint64(len(logsList))
-	meta := newMeta(total, req.Limit, req.Skip)
+	meta := newMeta(totalCount, req.Limit, req.Skip)
 	rsp := toMap(meta, logsList, "logs")
 
 	handleSuccess(ctx, rsp)

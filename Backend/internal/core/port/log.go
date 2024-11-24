@@ -7,9 +7,9 @@ import (
 
 type LogRepository interface {
 	CreateLog(ctx *gin.Context, log *domain.Log) (*domain.Log, error)
-	GetLogs(ctx *gin.Context, skip, limit uint64) ([]domain.Log, error)
+	GetLogs(ctx *gin.Context, skip, limit uint64) ([]domain.Log, uint64, error)
 }
 
 type LogService interface {
-	GetLogs(ctx *gin.Context, skip, limit uint64) ([]domain.Log, error)
+	GetLogs(ctx *gin.Context, skip, limit uint64) ([]domain.Log, uint64, error)
 }

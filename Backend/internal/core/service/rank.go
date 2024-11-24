@@ -65,13 +65,13 @@ func (rs *RankService) GetRank(ctx *gin.Context, id uint64) (*domain.Rank, error
 	return rank, nil
 }
 
-func (rs *RankService) ListRanks(ctx *gin.Context, skip, limit uint64) ([]domain.Rank, error) {
-	ranks, err := rs.repo.ListRanks(ctx, skip, limit)
+func (rs *RankService) ListRanks(ctx *gin.Context, skip, limit uint64) ([]domain.Rank, uint64, error) {
+	ranks, totalCount, err := rs.repo.ListRanks(ctx, skip, limit)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
 
-	return ranks, nil
+	return ranks, totalCount, nil
 }
 
 func (rs *RankService) UpdateRank(ctx *gin.Context, rank *domain.Rank) (*domain.Rank, error) {

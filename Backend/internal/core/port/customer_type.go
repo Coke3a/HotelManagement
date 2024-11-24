@@ -8,7 +8,7 @@ import (
 type CustomerTypeRepository interface {
     CreateCustomerType(ctx *gin.Context, customerType *domain.CustomerType) (*domain.CustomerType, error)
     GetCustomerTypeByID(ctx *gin.Context, id uint64) (*domain.CustomerType, error)
-    ListCustomerTypes(ctx *gin.Context, skip, limit uint64) ([]domain.CustomerType, error)
+    ListCustomerTypes(ctx *gin.Context, skip, limit uint64) ([]domain.CustomerType, uint64, error)
     UpdateCustomerType(ctx *gin.Context, customerType *domain.CustomerType) (*domain.CustomerType, error)
     DeleteCustomerType(ctx *gin.Context, id uint64) error
 }
@@ -16,7 +16,7 @@ type CustomerTypeRepository interface {
 type CustomerTypeService interface {
     CreateCustomerType(ctx *gin.Context, customerType *domain.CustomerType) (*domain.CustomerType, error)
     GetCustomerType(ctx *gin.Context, id uint64) (*domain.CustomerType, error)
-    ListCustomerTypes(ctx *gin.Context, skip, limit uint64) ([]domain.CustomerType, error)
+    ListCustomerTypes(ctx *gin.Context, skip, limit uint64) ([]domain.CustomerType, uint64, error)
 	UpdateCustomerType(ctx *gin.Context, customerType *domain.CustomerType) (*domain.CustomerType, error)
 	DeleteCustomerType(ctx *gin.Context, id uint64) error
 }

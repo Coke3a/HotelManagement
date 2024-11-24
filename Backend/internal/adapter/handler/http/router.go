@@ -31,6 +31,7 @@ func NewRouter(
 	roomTypeHandler RoomTypeHandler,
 	customerTypeHandler CustomerTypeHandler,
 	logHandler LogHandler,
+	dailyBookingSummaryHandler DailyBookingSummaryHandler,
 	tokenService port.TokenService,
 ) (*Router, error) {
 	router := SetupRouter(config, tokenService)
@@ -62,7 +63,8 @@ func NewRouter(
 			booking := protected.Group("/booking")
 			{
 				booking.POST("/", bookingHandler.CreateBookingAndPayment)
-				booking.GET("/", bookingHandler.ListBookingCustomerPayments)
+				//booking.GET("/", bookingHandler.ListBookingCustomerPayments)
+				booking.GET("/", bookingHandler.ListBookingsWithFilter)
 				booking.GET("/:id", bookingHandler.GetBooking)
 				booking.PUT("/", bookingHandler.UpdateBooking)
 				booking.DELETE("/:id", bookingHandler.DeleteBooking)
@@ -126,6 +128,13 @@ func NewRouter(
 				customerTypeRoutes.GET("/", customerTypeHandler.ListCustomerTypes)
 				customerTypeRoutes.PUT("/", customerTypeHandler.UpdateCustomerType)
 				customerTypeRoutes.DELETE("/:id", customerTypeHandler.DeleteCustomerType)
+			}
+			dailySummary := protected.Group("/daily-summary")
+			{
+				dailySummary.POST("/generate", dailyBookingSummaryHandler.GenerateDailySummary)
+				dailySummary.PUT("/status", dailyBookingSummaryHandler.UpdateSummaryStatus)
+				dailySummary.GET("/", dailyBookingSummaryHandler.GetSummaryByDate)
+				dailySummary.GET("/list", dailyBookingSummaryHandler.ListSummaries)
 			}
 			log := protected.Group("/logs")
 			{

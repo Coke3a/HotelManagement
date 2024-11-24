@@ -19,76 +19,71 @@ const RoomEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [room, setRoom] = useState({
-    id: '',
     room_number: '',
     room_type_id: '',
-    description: '',
-    status: '',
     floor: '',
+    status: 1
   });
-  const [loading, setLoading] = useState(true);
   const [roomTypes, setRoomTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchRoom = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`http://localhost:8080/v1/rooms/${id}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
+  const fetchRoomTypes = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/v1/room-types/', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
-        if (response.status === 401) {
-          handleTokenExpiration(new Error("access token has expired"), navigate);
-          return;
-        }
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch room');
-        }
+      const data = await response.json();
+      // Ensure roomTypes is always an array
+      if (data && data.data && data.data.roomTypes) {
+        setRoomTypes(data.data.roomTypes);
+      } else {
+        setRoomTypes([]);
+      }
+    } catch (error) {
+      console.error('Error fetching room types:', error);
+      setRoomTypes([]);
+    }
+  };
 
-        const data = await response.json();
+  const fetchRoom = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/v1/rooms/${id}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
+
+      const data = await response.json();
+      if (data && data.data) {
         setRoom(data.data);
-      } catch (error) {
-        console.error('Error fetching room:', error);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchRoom();
-  }, [id]);
+    } catch (error) {
+      console.error('Error fetching room:', error);
+      setError('Failed to load room data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchRoomTypes = async () => {
-      try {
-        const response = await fetch('http://localhost:8080/v1/room-types/', {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (response.status === 401) {
-          handleTokenExpiration(new Error("access token has expired"), navigate);
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch room types');
-        }
-
-        const data = await response.json();
-        setRoomTypes(data.data || []);
-      } catch (error) {
-        console.error('Error fetching room types:', error);
-      }
-    };
-
-    fetchRoomTypes();
-  }, []);
+    Promise.all([fetchRoomTypes(), fetchRoom()]);
+  }, [id, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -174,6 +169,10 @@ const RoomEdit = () => {
           <Box display="flex" justifyContent="center" alignItems="center" height="300px">
             <CircularProgress />
           </Box>
+        ) : error ? (
+          <Typography color="error" align="center">
+            {error}
+          </Typography>
         ) : (
           <form onSubmit={handleSubmit} className="form">
             <Grid container spacing={3}>
@@ -194,11 +193,11 @@ const RoomEdit = () => {
                   <InputLabel>Room Type</InputLabel>
                   <Select
                     name="room_type_id"
-                    value={room.room_type_id}
+                    value={room.room_type_id || ''}
                     onChange={handleChange}
                     label="Room Type"
                   >
-                    {roomTypes.map((type) => (
+                    {Array.isArray(roomTypes) && roomTypes.map((type) => (
                       <MenuItem key={type.id} value={type.id}>
                         {type.name}
                       </MenuItem>

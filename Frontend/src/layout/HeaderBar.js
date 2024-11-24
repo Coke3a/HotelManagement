@@ -24,13 +24,32 @@ const HeaderBar = () => {
   return (
     <Box
       display="flex"
-      justifyContent="flex-end"
+      justifyContent="space-between"
       alignItems="center"
-      p={2}
+      p={1}
       bgcolor="var(--background-color)"
       boxShadow="0 2px 4px rgba(0, 0, 0, 0.1)"
       borderBottom="1px solid var(--secondary-color)"
     >
+      {/* Page Title Section */}
+      <Typography
+        variant="h5"
+        sx={{
+          fontWeight: 500,
+          color: '#1a1a1a'
+        }}
+      >
+        {/* Dynamic title based on current route */}
+        {window.location.pathname === '/user' && 'User Management'}
+        {window.location.pathname === '/room' && 'Room Management'}
+        {window.location.pathname === '/room-type' && 'Room Type'}
+        {window.location.pathname === '/rate_price' && 'Rate Price'}
+        {window.location.pathname === '/guest' && 'Guest'}
+        {window.location.pathname === '/guest-type' && 'Guest Type'}
+        {window.location.pathname === '/logs' && 'System Logs'}
+        {window.location.pathname === '/daily-summary' && 'Daily Booking Summary'}
+      </Typography>
+
       {/* Icons Section */}
       <Box display="flex" alignItems="center">
         <IconButton

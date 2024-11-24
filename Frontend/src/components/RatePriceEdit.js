@@ -15,6 +15,7 @@ const RatePriceEdit = () => {
   });
   const [roomTypes, setRoomTypes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,7 +36,7 @@ const RatePriceEdit = () => {
           })
         ]);
 
-        if (ratePriceResponse.status === 401) {
+        if (ratePriceResponse.status === 401 || roomTypesResponse.status === 401) {
           handleTokenExpiration(new Error("access token has expired"), navigate);
           return;
         }
@@ -51,10 +52,15 @@ const RatePriceEdit = () => {
         const roomTypesData = await roomTypesResponse.json();
 
         setRatePrice(ratePriceData.data);
-        setRoomTypes(roomTypesData.data || []);
+        if (roomTypesData && roomTypesData.data && roomTypesData.data.roomTypes) {
+          setRoomTypes(roomTypesData.data.roomTypes);
+        } else {
+          setRoomTypes([]);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
-        alert(error.message);
+        setError(error.message);
+        setRoomTypes([]);
       } finally {
         setLoading(false);
       }

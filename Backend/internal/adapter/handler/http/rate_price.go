@@ -109,7 +109,7 @@ func (rph *RatePriceHandler) ListRatePrices(ctx *gin.Context) {
         return
     }
 
-	ratePrices, err := rph.svc.ListRatePrices(ctx, skipUint, limitUint)
+	ratePrices, totalCount, err := rph.svc.ListRatePrices(ctx, skipUint, limitUint)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -124,8 +124,7 @@ func (rph *RatePriceHandler) ListRatePrices(ctx *gin.Context) {
 		ratePricesList = append(ratePricesList, rsp)
 	}
 
-	total := uint64(len(ratePricesList))
-	meta := newMeta(total, req.Limit, req.Skip)
+	meta := newMeta(totalCount, req.Limit, req.Skip)
 	rsp := toMap(meta, ratePricesList, "ratePrices")
 
 	handleSuccess(ctx, rsp)
@@ -310,7 +309,7 @@ func (rph *RatePriceHandler) GetRatePricesByRoomTypeId(ctx *gin.Context) {
         return
     }
 
-    ratePrices, err := rph.svc.GetRatePricesByRoomTypeId(ctx, roomTypeID)
+    ratePrices, totalCount, err := rph.svc.GetRatePricesByRoomTypeId(ctx, roomTypeID)
     if err != nil {
         handleError(ctx, err)
         return
@@ -326,7 +325,10 @@ func (rph *RatePriceHandler) GetRatePricesByRoomTypeId(ctx *gin.Context) {
         ratePricesList = append(ratePricesList, rsp)
     }
 
-    handleSuccess(ctx, ratePricesList)
+	meta := newMeta(totalCount, 10, 0)
+	rsp := toMap(meta, ratePricesList, "ratePrices")
+
+    handleSuccess(ctx, rsp)
 }
 
 // GetRatePricesByRoomId godoc

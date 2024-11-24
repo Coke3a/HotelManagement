@@ -87,8 +87,19 @@ func (pr *PaymentRepository) GetPaymentByID(ctx *gin.Context, id uint64) (*domai
 	return &payment, nil
 }
 
-func (pr *PaymentRepository) ListPayments(ctx *gin.Context, skip, limit uint64) ([]domain.Payment, error) {
+func (pr *PaymentRepository) ListPayments(ctx *gin.Context, skip, limit uint64) ([]domain.Payment, uint64, error) {
 	var payments []domain.Payment
+	var totalCount uint64
+
+	countQuery := pr.db.QueryBuilder.Select("COUNT(*)").From("payments")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	err = pr.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	query := pr.db.QueryBuilder.Select("*").
 		From("payments").
@@ -101,13 +112,13 @@ func (pr *PaymentRepository) ListPayments(ctx *gin.Context, skip, limit uint64) 
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := pr.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -124,17 +135,17 @@ func (pr *PaymentRepository) ListPayments(ctx *gin.Context, skip, limit uint64) 
 			&payment.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		payments = append(payments, payment)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return payments, nil
+	return payments, totalCount, nil
 }
 
 func (pr *PaymentRepository) UpdatePayment(ctx *gin.Context, payment *domain.Payment) (*domain.Payment, error) {

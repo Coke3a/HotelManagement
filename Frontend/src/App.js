@@ -35,6 +35,7 @@ import GuestTypeAdd from "./components/GuestTypeAdd";
 import GuestTypeEdit from "./components/GuestTypeEdit";
 import ReceiptPrint from './components/ReceiptPrint';
 import Log from "./components/Log";
+import DailyBookingSummary from './components/DailyBookingSummary';
 
 import { logout } from './utils/auth';
 import { UserRoleEnum } from './utils/userRoleEnum';
@@ -98,6 +99,7 @@ const App = () => {
                   <Route path="/guest-type/edit/:id" element={<GuestTypeEdit />} />
                   <Route path="/receipt/:id" element={<ReceiptPrint />} />
                   <Route path="/logs" element={<Log />} />
+                  <Route path="/daily-summary" element={<DailyBookingSummary />} />
                 </Route>
               </Routes>
             </Box>

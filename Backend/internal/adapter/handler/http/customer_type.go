@@ -83,7 +83,7 @@ func (cth *CustomerTypeHandler) ListCustomerTypes(ctx *gin.Context) {
 	skip, _ := strconv.ParseUint(ctx.DefaultQuery("skip", "0"), 10, 64)
 	limit, _ := strconv.ParseUint(ctx.DefaultQuery("limit", "10"), 10, 64)
 
-	customerTypes, err := cth.svc.ListCustomerTypes(ctx, skip, limit)
+	customerTypes, totalCount, err := cth.svc.ListCustomerTypes(ctx, skip, limit)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -98,7 +98,10 @@ func (cth *CustomerTypeHandler) ListCustomerTypes(ctx *gin.Context) {
 		})
 	}
 
-	handleSuccess(ctx, response)
+	meta := newMeta(totalCount, limit, skip)
+	rsp := toMap(meta, response, "customerTypes")
+
+	handleSuccess(ctx, rsp)
 }
 
 func (cth *CustomerTypeHandler) UpdateCustomerType(ctx *gin.Context) {

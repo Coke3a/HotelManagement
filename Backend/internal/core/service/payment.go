@@ -76,13 +76,13 @@ func (ps *PaymentService) GetPayment(ctx *gin.Context, id uint64) (*domain.Payme
 	return payment, nil
 }
 
-func (ps *PaymentService) ListPayments(ctx *gin.Context, skip, limit uint64) ([]domain.Payment, error) {
-	payments, err := ps.repo.ListPayments(ctx, skip, limit)
+func (ps *PaymentService) ListPayments(ctx *gin.Context, skip, limit uint64) ([]domain.Payment, uint64, error) {
+	payments, totalCount, err := ps.repo.ListPayments(ctx, skip, limit)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
 
-	return payments, nil
+	return payments, totalCount, nil
 }
 
 func (ps *PaymentService) UpdatePayment(ctx *gin.Context, payment *domain.Payment) (*domain.Payment, error) {

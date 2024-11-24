@@ -12,99 +12,74 @@ import {
   Box,
   CircularProgress,
   Typography,
+  Stack,
+  Pagination,
 } from '@mui/material';
 import { getUserRole } from '../utils/auth';
 import { UserRoleEnum } from '../utils/userRoleEnum';
 
 const Room = () => {
-  const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [roomTypes, setRoomTypes] = useState({});
   const [userRole, setUserRole] = useState('');
   const [roomTypeMap, setRoomTypeMap] = useState({});
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     setUserRole(getUserRole());
   }, []);
 
-  useEffect(() => {
-    const fetchRooms = async () => {
-      setLoading(true);
-      try {
-        const queryParams = new URLSearchParams({
-          skip: '0',
-          limit: '10',
-        });
+  const fetchRooms = async (page, rowsPerPage) => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const skip = page * rowsPerPage;
+      const queryParams = new URLSearchParams({
+        skip: skip.toString(),
+        limit: rowsPerPage.toString(),
+      });
+      const response = await fetch(`http://localhost:8080/v1/rooms/with-room-type?${queryParams.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-        const response = await fetch(`http://localhost:8080/v1/rooms/?${queryParams.toString()}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
 
-        if (response.status === 401) {
-          handleTokenExpiration(new Error("access token has expired"), navigate);
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch rooms');
-        }
-
-        const data = await response.json();
+      const data = await response.json();
+      if (data && data.data && data.data.rooms) {
         setRooms(data.data.rooms);
-      } catch (error) {
-        console.error('Error fetching rooms:', error);
-      } finally {
-        setLoading(false);
+      } else {
+        setRooms([]);
       }
-    };
-
-    fetchRooms();
-  }, []);
+      if (data && data.data && data.data.meta && typeof data.data.meta.total === 'number') {
+        setTotalCount(data.data.meta.total);
+      } else {
+        setTotalCount(data.data?.rooms?.length || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchRoomTypes = async () => {
-      try {
-        const response = await fetch('http://localhost:8080/v1/room-types/', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        });
+    fetchRooms(page, rowsPerPage);
+  }, [page, rowsPerPage, navigate]);
 
-        if (response.status === 401) {
-          handleTokenExpiration(new Error("access token has expired"), navigate);
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch room types');
-        }
-
-        const data = await response.json();
-        const roomTypesMap = {};
-        data.data.forEach(type => {
-          roomTypesMap[type.id] = type.name;
-        });
-        setRoomTypes(roomTypesMap);
-
-        // Create roomTypeMap here after fetching room types
-        const newRoomTypeMap = data.data.reduce((acc, roomType) => {
-          acc[roomType.id] = roomType.name;
-          return acc;
-        }, {});
-        setRoomTypeMap(newRoomTypeMap);
-      } catch (error) {
-        console.error('Error fetching room types:', error);
-      }
-    };
-
-    fetchRoomTypes();
-  }, []);
+  const handlePageChange = (event, newPage) => {
+    setPage(newPage - 1);
+  };
 
   const handleEditRoom = (id) => {
     navigate(`/room/edit/${id}`);
@@ -127,8 +102,15 @@ const Room = () => {
 
   return (
     <div className="table-container">
-      {userRole === UserRoleEnum.ADMIN && (
-        <div className="flex justify-end mb-4">
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        mb: 2,
+        mt: 0,
+        pt: 0
+      }}>
+        {userRole === UserRoleEnum.ADMIN && (
           <Button
             variant="contained"
             className="bg-blue-600 text-white hover:bg-blue-700"
@@ -136,8 +118,51 @@ const Room = () => {
           >
             Add Room
           </Button>
-        </div>
-      )}
+        )}
+        
+        <Stack 
+          direction="row" 
+          spacing={2} 
+          alignItems="center"
+          sx={{ marginLeft: 'auto' }}
+        >
+          <Box sx={{ mr: 2 }}>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setPage(0);
+              }}
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: '1px solid #ccc'
+              }}
+            >
+              <option value={5}>5 per page</option>
+              <option value={10}>10 per page</option>
+              <option value={25}>25 per page</option>
+            </select>
+          </Box>
+          
+          <Pagination
+            count={Math.ceil(totalCount / rowsPerPage)}
+            page={page + 1}
+            onChange={handlePageChange}
+            color="primary"
+            showFirstButton
+            showLastButton
+            siblingCount={1}
+            boundaryCount={1}
+            sx={{
+              '& .MuiPagination-ul': {
+                flexWrap: 'nowrap'
+              }
+            }}
+          />
+        </Stack>
+      </Box>
+
       <TableContainer component={Paper}>
         <Table size="small" className="compact-table">
           <TableHead>
@@ -168,7 +193,7 @@ const Room = () => {
                 <TableRow key={room.id}>
                   <TableCell>{room.id}</TableCell>
                   <TableCell>{room.room_number}</TableCell>
-                  <TableCell>{roomTypeMap[String(room.room_type_id)] || 'Unknown'}</TableCell>
+                  <TableCell>{room.room_type_name || 'Unknown'}</TableCell>
                   <TableCell>{getStatusMessage(room.status)}</TableCell>
                   <TableCell>{room.floor}</TableCell>
                   <TableCell>

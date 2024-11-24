@@ -103,8 +103,19 @@ func (cr *CustomerRepository) GetCustomerByID(ctx *gin.Context, id uint64) (*dom
 	return &customer, nil
 }
 
-func (cr *CustomerRepository) ListCustomers(ctx *gin.Context, skip, limit uint64) ([]domain.Customer, error) {
+func (cr *CustomerRepository) ListCustomers(ctx *gin.Context, skip, limit uint64) ([]domain.Customer, uint64, error) {
 	var customers []domain.Customer
+	var totalCount uint64
+
+	countQuery := cr.db.QueryBuilder.Select("COUNT(*)").From("customers")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	err = cr.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	query := cr.db.QueryBuilder.Select("*").
 		From("customers").
@@ -117,13 +128,13 @@ func (cr *CustomerRepository) ListCustomers(ctx *gin.Context, skip, limit uint64
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := cr.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -147,17 +158,17 @@ func (cr *CustomerRepository) ListCustomers(ctx *gin.Context, skip, limit uint64
 			&customer.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		customers = append(customers, customer)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return customers, nil
+	return customers, totalCount, nil
 }
 
 func (cr *CustomerRepository) UpdateCustomer(ctx *gin.Context, customer *domain.Customer) (*domain.Customer, error) {

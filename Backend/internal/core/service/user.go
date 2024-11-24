@@ -82,13 +82,12 @@ func (us *UserService) GetUser(ctx *gin.Context, id uint64) (*domain.User, error
 	return user, nil
 }
 
-func (us *UserService) ListUsers(ctx *gin.Context, skip, limit uint64) ([]domain.User, error) {
-	users, err := us.repo.ListUsers(ctx, skip, limit)
+func (us *UserService) ListUsers(ctx *gin.Context, skip, limit uint64) ([]domain.User, uint64, error) {
+	users, totalCount, err := us.repo.ListUsers(ctx, skip, limit)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
-
-	return users, nil
+	return users, totalCount, nil
 }
 
 func (us *UserService) UpdateUser(ctx *gin.Context, user *domain.User) (*domain.User, error) {

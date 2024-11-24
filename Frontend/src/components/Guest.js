@@ -17,62 +17,74 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Stack,
+  Pagination,
 } from '@mui/material';
+import { getUserRole } from '../utils/auth';
 
 const Guest = () => {
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const [guests, setGuests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    id: '',
-    name: '',
-    email: '',
-    membership_status: '',
-  });
   const [guestTypes, setGuestTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [totalCount, setTotalCount] = useState(0);
+  const [error, setError] = useState(null);
+
+  const fetchGuests = async (page, rowsPerPage) => {
+    setLoading(true);
+    try {
+      const skip = page * rowsPerPage;
+      const queryParams = new URLSearchParams({
+        skip: skip.toString(),
+        limit: rowsPerPage.toString(),
+      });
+
+      const response = await fetch(`http://localhost:8080/v1/customers/?${queryParams.toString()}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch guests');
+      }
+
+      const data = await response.json();
+      if (data && data.data && data.data.customers) {
+        setGuests(data.data.customers);
+        if (data.data.meta && typeof data.data.meta.total === 'number') {
+          setTotalCount(data.data.meta.total);
+        } else {
+          setTotalCount(data.data.customers.length);
+        }
+      } else {
+        setGuests([]);
+        setTotalCount(0);
+      }
+    } catch (error) {
+      console.error('Error fetching guests:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchGuests = async () => {
-      setLoading(true);
-      try {
-        const queryParams = new URLSearchParams({
-          skip: '0',
-          limit: '10',
-          ...(filters.id && { id: filters.id }),
-          ...(filters.name && { name: filters.name }),
-          ...(filters.email && { email: filters.email }),
-          ...(filters.membership_status && { membership_status: filters.membership_status }),
-        });
+    fetchGuests(page, rowsPerPage);
+  }, [page, rowsPerPage, navigate]);
 
-        const response = await fetch(`http://localhost:8080/v1/customers/?${queryParams.toString()}`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (response.status === 401) {
-          handleTokenExpiration(new Error("access token has expired"), navigate);
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch guests');
-        }
-
-        const data = await response.json();
-        setGuests(data.data.customers || []); // Update this line
-      } catch (error) {
-        console.error('Error fetching guests:', error);
-        setGuests([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGuests();
-  }, [filters]);
+  const handlePageChange = (event, newPage) => {
+    setPage(newPage - 1);
+  };
 
   useEffect(() => {
     const fetchGuestTypes = async () => {
@@ -94,10 +106,14 @@ const Guest = () => {
         }
 
         const data = await response.json();
-        setGuestTypes(data.data || []); // Ensure it's always an array
+        if (data && data.data && data.data.customerTypes) {
+          setGuestTypes(data.data.customerTypes);
+        } else {
+          setGuestTypes([]);
+        }
       } catch (error) {
         console.error('Error fetching guest types:', error);
-        setGuestTypes([]); // Set to empty array on error
+        setGuestTypes([]);
       }
     };
 
@@ -114,7 +130,14 @@ const Guest = () => {
 
   return (
     <div className="table-container">
-      <div className="flex justify-end mb-4">
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        mb: 2,
+        mt: 0,
+        pt: 0
+      }}>
         <Button
           variant="contained"
           className="bg-blue-600 text-white hover:bg-blue-700"
@@ -122,7 +145,50 @@ const Guest = () => {
         >
           Add Guest
         </Button>
-      </div>
+        
+        <Stack 
+          direction="row" 
+          spacing={2} 
+          alignItems="center"
+          sx={{ marginLeft: 'auto' }}
+        >
+          <Box sx={{ mr: 2 }}>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setPage(0);
+              }}
+              style={{
+                padding: '5px',
+                borderRadius: '4px',
+                border: '1px solid #ccc'
+              }}
+            >
+              <option value={5}>5 per page</option>
+              <option value={10}>10 per page</option>
+              <option value={25}>25 per page</option>
+            </select>
+          </Box>
+          
+          <Pagination
+            count={Math.ceil(totalCount / rowsPerPage)}
+            page={page + 1}
+            onChange={handlePageChange}
+            color="primary"
+            showFirstButton
+            showLastButton
+            siblingCount={1}
+            boundaryCount={1}
+            sx={{
+              '& .MuiPagination-ul': {
+                flexWrap: 'nowrap'
+              }
+            }}
+          />
+        </Stack>
+      </Box>
+
       <TableContainer component={Paper}>
         <Table size="small" className="compact-table">
           <TableHead>

@@ -49,10 +49,6 @@ const DashBoard = () => {
           return;
         }
 
-        if (!bookingsResponse.ok || !roomsResponse.ok) {
-          throw new Error(`Failed to fetch data: ${bookingsResponse.status} ${bookingsResponse.statusText}, ${roomsResponse.status} ${roomsResponse.statusText}`);
-        }
-
         const [bookingsData, roomsData] = await Promise.all([
           bookingsResponse.json(),
           roomsResponse.json()
@@ -61,7 +57,7 @@ const DashBoard = () => {
         const bookingPayments = bookingsData.data.booking_customer_payments || [];
         setBookings(bookingPayments);
 
-        const roomsWithRoomType = roomsData.data || [];
+        const roomsWithRoomType = roomsData.data?.rooms || [];
         setRooms(roomsWithRoomType);
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -98,11 +94,41 @@ const DashBoard = () => {
       const getStatusColor = (booking) => {
         const currentDate = new Date().toISOString().slice(0, 10);
         if (booking.check_out_date <= currentDate) {
-          return '#c8e6c9'; // checked-out
+          return '#b2dfdb'; // seafoam
         } else if (booking.check_in_date <= currentDate) {
-          return '#ffecb3'; // in-progress
+          return '#fff9c4'; // light sunshine
         } else {
-          return '#e3f2fd'; // upcoming
+          return '#c5cae9'; // lavender
+        }
+      };
+
+      const getBookingStatusColor = (status) => {
+        switch (status) {
+          case BookingStatus.CONFIRMED:
+            return '#388e3c'; // forest green
+          case BookingStatus.CHECKED_IN:
+            return '#1976d2'; // ocean blue
+          case BookingStatus.CHECKED_OUT:
+            return '#795548'; // brown
+          case BookingStatus.CANCELLED:
+            return '#d32f2f'; // cherry red
+          default:
+            return '#795548';
+        }
+      };
+
+      const getPaymentStatusColor = (status) => {
+        switch (status) {
+          case PaymentStatus.PAID:
+            return '#2e7d32'; // emerald
+          case PaymentStatus.PARTIALLY_PAID:
+            return '#f57c00'; // sunset orange
+          case PaymentStatus.UNPAID:
+            return '#c62828'; // ruby red
+          case PaymentStatus.REFUNDED:
+            return '#512da8'; // royal purple
+          default:
+            return '#795548';
         }
       };
 
@@ -127,21 +153,67 @@ const DashBoard = () => {
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: '4px',
-            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+            padding: '6px',
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.15)',
+            border: '1px solid rgba(0, 0, 0, 0.1)',
           }}
           onClick={() => window.location.href = `/booking/edit/${booking.booking_id}`}
           title={`${booking.customer_firstname} ${booking.customer_surname} (${booking.check_in_date} - ${booking.check_out_date})`}
         >
           {isMiddleDay && (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '2px' }}>
+              <div style={{ 
+                fontSize: '14px', 
+                fontWeight: 'bold', 
+                color: '#1565c0', 
+                marginBottom: '6px',
+                textShadow: '0.5px 0.5px 0px rgba(255, 255, 255, 0.5)'
+              }}>
                 {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
               </div>
-              <div style={{ fontSize: '12px', color: '#555' }}>
+              <div style={{ 
+                fontSize: '12px', 
+                color: '#000', 
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                marginBottom: '4px',
+                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                padding: '2px 6px',
+                borderRadius: '3px'
+              }}>
+                <span style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: getBookingStatusColor(booking.booking_status),
+                  display: 'inline-block',
+                  boxShadow: '0 0 2px rgba(0,0,0,0.2)'
+                }}></span>
                 {getStatusText(booking)}
               </div>
-              <div style={{ fontSize: '12px', color: '#777' }}>
+              <div style={{ 
+                fontSize: '12px', 
+                color: '#000', 
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                padding: '2px 6px',
+                borderRadius: '3px'
+              }}>
+                <span style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: getPaymentStatusColor(booking.payment_status),
+                  display: 'inline-block',
+                  boxShadow: '0 0 2px rgba(0,0,0,0.2)'
+                }}></span>
                 {getPaymentStatusText(booking.payment_status)}
               </div>
             </div>
@@ -177,7 +249,7 @@ const DashBoard = () => {
   return (
     <Grid container spacing={2} style={{ padding: '10px' }}>
       <Grid item xs={12} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h5" style={{ color: '#1a237e' }} gutterBottom>
           Dashboard
         </Typography>
         <Button
@@ -193,10 +265,41 @@ const DashBoard = () => {
           <Table size="small" stickyHeader>
             <TableHead>
               <TableRow>
-                <TableCell style={{ padding: '4px', fontSize: '0.8rem' }}>ROOM</TableCell>
+                <TableCell 
+                  style={{ 
+                    padding: '4px', 
+                    fontSize: '0.875rem',
+                    backgroundColor: '#1a237e',
+                    borderBottom: '2px solid #ddd',
+                    color: '#ffffff',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  ROOM
+                </TableCell>
                 {dates.map((dateObj) => (
-                  <TableCell key={dateObj.date} align="center" style={{ padding: '4px', fontSize: '0.8rem' }}>
-                    {dateObj.date}<br/>({dateObj.dayOfWeek})
+                  <TableCell 
+                    key={dateObj.date} 
+                    align="center" 
+                    style={{ 
+                      padding: '8px 4px',
+                      fontSize: '0.875rem',
+                      backgroundColor: '#1a237e',
+                      borderBottom: '2px solid #ddd',
+                      minWidth: '120px',
+                      color: '#ffffff'
+                    }}
+                  >
+                    <div style={{ fontWeight: 'bold' }}>
+                      {dateObj.dayOfWeek}
+                    </div>
+                    <div style={{ 
+                      color: '#e3f2fd',
+                      marginTop: '4px',
+                      fontSize: '0.8rem'
+                    }}>
+                      {dateObj.date}
+                    </div>
                   </TableCell>
                 ))}
               </TableRow>
@@ -222,11 +325,28 @@ const DashBoard = () => {
                 </TableRow>
               ) : (
                 rooms.map((room) => (
-                  <TableRow key={room.id}>
-                    <TableCell style={{ padding: '4px', fontSize: '0.8rem' }}>
-                      {room.room_number}
-                      <br />
-                      <Typography variant="caption" color="textSecondary">
+                  <TableRow key={room.id} hover>
+                    <TableCell 
+                      style={{ 
+                        padding: '8px 4px',
+                        fontSize: '0.875rem',
+                        backgroundColor: '#f5f5f5',
+                        borderRight: '1px solid #ddd',
+                        color: '#1a237e'
+                      }}
+                    >
+                      <div style={{ fontWeight: 'bold', color: '#1a237e' }}>
+                        {room.room_number}
+                      </div>
+                      <Typography 
+                        variant="caption" 
+                        style={{ 
+                          color: '#424242',
+                          display: 'block',
+                          marginTop: '2px',
+                          fontSize: '0.8rem'
+                        }}
+                      >
                         {room.room_type_name}
                       </Typography>
                     </TableCell>
@@ -235,10 +355,11 @@ const DashBoard = () => {
                         key={`${room.id}-${dateObj.date}`} 
                         align="center" 
                         style={{ 
-                          padding: '2px', 
-                          height: '50px',
+                          padding: '0px', 
+                          height: '60px',
                           position: 'relative',
-                          fontSize: '0.8rem'
+                          fontSize: '0.8rem',
+                          borderRight: '1px solid #eee'
                         }}
                       >
                         {renderGuestName(room.id, dateObj.date)}

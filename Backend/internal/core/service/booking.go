@@ -136,23 +136,22 @@ func (bs *BookingService) GetBooking(ctx *gin.Context, id uint64) (*domain.Booki
 	return booking, nil
 }
 
-func (bs *BookingService) ListBookings(ctx *gin.Context, skip, limit uint64) ([]domain.Booking, error) {
-	bookings, err := bs.repo.ListBookings(ctx, skip, limit)
+func (bs *BookingService) ListBookings(ctx *gin.Context, skip, limit uint64) ([]domain.Booking, uint64, error) {
+	bookings, totalCount, err := bs.repo.ListBookings(ctx, skip, limit)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
 
-	return bookings, nil
+	return bookings, totalCount, nil
 }
 
-func (bs *BookingService) ListBookingsWithFilter(ctx *gin.Context, booking *domain.Booking, skip, limit uint64) ([]domain.Booking, error) {
-	// Call the repository's ListBookings method, passing the booking struct, skip, and limit
-	bookings, err := bs.repo.ListBookingsWithFilter(ctx, booking, skip, limit)
+func (bs *BookingService) ListBookingsWithFilter(ctx *gin.Context, booking *domain.Booking, skip, limit uint64) ([]domain.Booking, uint64, error) {
+	bookings, totalCount, err := bs.repo.ListBookingsWithFilter(ctx, booking, skip, limit)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
 
-	return bookings, nil
+	return bookings, totalCount, nil
 }
 
 func (bs *BookingService) UpdateBooking(ctx *gin.Context, booking *domain.Booking) (*domain.Booking, error) {
@@ -243,11 +242,11 @@ func (bs *BookingService) GetBookingCustomerPayment(ctx *gin.Context, id uint64)
 	return bookingCustomerPayment, nil
 }
 
-func (bs *BookingService) ListBookingCustomerPayments(ctx *gin.Context, skip, limit uint64) ([]domain.BookingCustomerPayment, error) {
-	bookingCustomerPayments, err := bs.repo.ListBookingCustomerPayments(ctx, skip, limit)
+func (bs *BookingService) ListBookingCustomerPayments(ctx *gin.Context, skip, limit uint64) ([]domain.BookingCustomerPayment, uint64, error) {
+	bookingCustomerPayments, totalCount, err := bs.repo.ListBookingCustomerPayments(ctx, skip, limit)
 	if err != nil {
-		return nil, domain.ErrInternal
+		return nil, 0, domain.ErrInternal
 	}
 
-	return bookingCustomerPayments, nil
+	return bookingCustomerPayments, totalCount, nil
 }

@@ -25,17 +25,17 @@ func NewSummaryService(bookingRepo port.BookingRepository, customerRepo port.Cus
 
 func (ss *SummaryService) GetDashboardSummary(ctx *gin.Context) ([]domain.Booking, []domain.Customer, []domain.Room, error) {
 
-	bookings, err := ss.bookingRepo.ListBookings(ctx, 0, 10)
+	bookings, _, err := ss.bookingRepo.ListBookings(ctx, 0, 10)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	customers, err := ss.customerRepo.ListCustomers(ctx, 0, 10)
+	customers, _, err := ss.customerRepo.ListCustomers(ctx, 0, 10)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	rooms, err := ss.roomRepo.ListRooms(ctx, 0, 10)
+	rooms, _, err := ss.roomRepo.ListRooms(ctx, 0, 10)
 	if err != nil {
 		return nil, nil, nil, err
 	}

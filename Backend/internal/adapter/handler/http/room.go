@@ -113,14 +113,13 @@ func (rh *RoomHandler) ListRooms(ctx *gin.Context) {
         return
     }
 
-	rooms, err := rh.svc.ListRooms(ctx, skipUint, limitUint)
+	rooms, totalCount, err := rh.svc.ListRooms(ctx, skipUint, limitUint)
 	if err != nil {
 		handleError(ctx, err)
 		return
 	}
 
 	for _, room := range rooms {
-		// roomsList = append(roomsList, newRoomResponse(&room))
 		roomResponse, err := newRoomResponse(&room)
 		if err != nil {
 			handleError(ctx, err)
@@ -129,8 +128,7 @@ func (rh *RoomHandler) ListRooms(ctx *gin.Context) {
 		roomsList = append(roomsList, roomResponse)
 	}
 
-	total := uint64(len(roomsList))
-	meta := newMeta(total, req.Limit, req.Skip)
+	meta := newMeta(totalCount, req.Limit, req.Skip)
 	rsp := toMap(meta, roomsList, "rooms")
 
 	handleSuccess(ctx, rsp)
@@ -418,7 +416,7 @@ func (rh *RoomHandler) ListRoomsWithRoomType(ctx *gin.Context) {
         validationError(ctx, err)
         return
     }
-    rooms, err := rh.svc.ListRoomsWithRoomType(ctx, skipUint, limitUint)
+    rooms, totalCount, err := rh.svc.ListRoomsWithRoomType(ctx, skipUint, limitUint)
     if err != nil {
         handleError(ctx, err)
         return
@@ -434,5 +432,8 @@ func (rh *RoomHandler) ListRoomsWithRoomType(ctx *gin.Context) {
         response = append(response, rsp)
     }
 
-    handleSuccess(ctx, response)
+	meta := newMeta(totalCount, limitUint, skipUint)
+	rsp := toMap(meta, response, "rooms")
+
+    handleSuccess(ctx, rsp)
 }

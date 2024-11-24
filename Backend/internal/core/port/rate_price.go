@@ -9,19 +9,19 @@ import (
 type RatePriceRepository interface {
 	CreateRatePrice(ctx *gin.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error)
 	GetRatePriceByID(ctx *gin.Context, id uint64) (*domain.RatePrice, error)
-	ListRatePrices(ctx *gin.Context, skip, limit uint64) ([]domain.RatePrice, error)
+	ListRatePrices(ctx *gin.Context, skip, limit uint64) ([]domain.RatePrice, uint64, error)
 	UpdateRatePrice(ctx *gin.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error)
 	DeleteRatePrice(ctx *gin.Context, id uint64) error
-	GetRatePricesByRoomTypeId(ctx *gin.Context, roomTypeID uint64) ([]domain.RatePrice, error)
+	GetRatePricesByRoomTypeId(ctx *gin.Context, roomTypeID uint64) ([]domain.RatePrice, uint64, error)
 	GetRatePricesByRoomId(ctx *gin.Context, roomID uint64) ([]domain.RatePrice, error)
 }
 
 type RatePriceService interface {
 	CreateRatePrice(ctx *gin.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error)
 	GetRatePrice(ctx *gin.Context, id uint64) (*domain.RatePrice, error)
-	ListRatePrices(ctx *gin.Context, skip, limit uint64) ([]domain.RatePrice, error)
+	ListRatePrices(ctx *gin.Context, skip, limit uint64) ([]domain.RatePrice, uint64, error)
 	UpdateRatePrice(ctx *gin.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error)
 	DeleteRatePrice(ctx *gin.Context, id uint64) error
-	GetRatePricesByRoomTypeId(ctx *gin.Context, roomTypeID uint64) ([]domain.RatePrice, error)
+	GetRatePricesByRoomTypeId(ctx *gin.Context, roomTypeID uint64) ([]domain.RatePrice, uint64, error)
 	GetRatePricesByRoomId(ctx *gin.Context, roomID uint64) ([]domain.RatePrice, error)
 }

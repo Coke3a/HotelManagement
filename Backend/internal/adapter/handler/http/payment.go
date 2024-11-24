@@ -111,7 +111,7 @@ func (ph *PaymentHandler) ListPayments(ctx *gin.Context) {
         return
     }
 
-	payments, err := ph.svc.ListPayments(ctx, skipUint, limitUint)
+	payments, totalCount, err := ph.svc.ListPayments(ctx, skipUint, limitUint)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -126,8 +126,7 @@ func (ph *PaymentHandler) ListPayments(ctx *gin.Context) {
 		paymentsList = append(paymentsList, rsp)
 	}
 
-	total := uint64(len(paymentsList))
-	meta := newMeta(total, req.Limit, req.Skip)
+	meta := newMeta(totalCount, req.Limit, req.Skip)
 	rsp := toMap(meta, paymentsList, "payments")
 
 	handleSuccess(ctx, rsp)

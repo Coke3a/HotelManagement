@@ -30,7 +30,7 @@ const BookingAdd = () => {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [roomError, setRoomError] = useState('');
   const [openGuestModal, setOpenGuestModal] = useState(false);
-
+  
   const fetchAvailableRooms = async () => {
     if (!booking.check_in_date || !booking.check_out_date) return;
     const savedBooking = localStorage.getItem('tempBooking');
@@ -82,14 +82,31 @@ const BookingAdd = () => {
         return;
       }
 
-      if (!response.ok) throw new Error('Failed to fetch rate prices');
-
       const data = await response.json();
-      setRatePrices(data.data || []);
+      if (!data.success) {
+        if (data.messages !== "data not found") {
+          alert('No rate prices found for this room type');
+        } else {
+          alert(data.messages?.[0] || 'No rate prices found for this room type');
+        }
+
+        setRatePrices([]);
+        setBooking(prev => ({ ...prev, rate_prices_id: '', total_amount: '' }));
+        return;
+      }
+
+      if (data && data.data && data.data.ratePrices && Array.isArray(data.data.ratePrices)) {
+        setRatePrices(data.data.ratePrices);
+      } else {
+        setRatePrices([]);
+        setBooking(prev => ({ ...prev, rate_prices_id: '', total_amount: '' }));
+        alert('No rate prices available for this room type');
+      }
     } catch (error) {
       console.error('Error fetching rate prices:', error);
-      alert(error.message);
       setRatePrices([]);
+      setBooking(prev => ({ ...prev, rate_prices_id: '', total_amount: '' }));
+      alert('Error fetching rate prices. Please try again.');
     }
   };
 
@@ -173,7 +190,7 @@ const BookingAdd = () => {
       if (name === 'rate_prices_id') {
         const selectedRatePrice = ratePrices.find(rp => rp.id === parseInt(value));
         if (selectedRatePrice) {
-          newBooking.total_amount = selectedRatePrice.price_per_night;
+          newBooking.total_amount = parseFloat(selectedRatePrice.price_per_night).toFixed(2);
         }
       }
       return newBooking;
@@ -194,7 +211,7 @@ const BookingAdd = () => {
           customer_id: parseInt(booking.customer_id),
           rate_prices_id: parseInt(booking.rate_prices_id),
           room_id: parseInt(selectedRoom.id),
-          room_type_id: parseInt(selectedRoom.room_type_id), // Add this line
+          room_type_id: parseInt(selectedRoom.room_type_id),
           check_in_date: booking.check_in_date.toISOString(),
           check_out_date: booking.check_out_date.toISOString(),
           status: parseInt(booking.status),
@@ -242,9 +259,14 @@ const BookingAdd = () => {
         }
 
         const ratePricesData = await ratePricesResponse.json();
-        setRatePrices(ratePricesData.data.ratePrices);
+        if (ratePricesData && ratePricesData.data && ratePricesData.data.ratePrices) {
+          setRatePrices(ratePricesData.data.ratePrices);
+        } else {
+          setRatePrices([]);
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
+        setRatePrices([]);
       }
     };
 

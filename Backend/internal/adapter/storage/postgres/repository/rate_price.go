@@ -85,8 +85,19 @@ func (rpr *RatePriceRepository) GetRatePriceByID(ctx *gin.Context, id uint64) (*
 	return &ratePrice, nil
 }
 
-func (rpr *RatePriceRepository) ListRatePrices(ctx *gin.Context, skip, limit uint64) ([]domain.RatePrice, error) {
+func (rpr *RatePriceRepository) ListRatePrices(ctx *gin.Context, skip, limit uint64) ([]domain.RatePrice, uint64, error) {
 	var ratePrices []domain.RatePrice
+	var totalCount uint64
+
+	countQuery := rpr.db.QueryBuilder.Select("COUNT(*)").From("rate_prices")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	err = rpr.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	query := rpr.db.QueryBuilder.Select("*").
 		From("rate_prices").
@@ -99,13 +110,13 @@ func (rpr *RatePriceRepository) ListRatePrices(ctx *gin.Context, skip, limit uin
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := rpr.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -121,17 +132,17 @@ func (rpr *RatePriceRepository) ListRatePrices(ctx *gin.Context, skip, limit uin
 			&ratePrice.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		ratePrices = append(ratePrices, ratePrice)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return ratePrices, nil
+	return ratePrices, totalCount, nil
 }
 
 func (rpr *RatePriceRepository) UpdateRatePrice(ctx *gin.Context, ratePrice *domain.RatePrice) (*domain.RatePrice, error) {
@@ -187,8 +198,19 @@ func (rpr *RatePriceRepository) DeleteRatePrice(ctx *gin.Context, id uint64) err
 	return nil
 }
 
-func (rpr *RatePriceRepository) GetRatePricesByRoomTypeId(ctx *gin.Context, roomTypeID uint64) ([]domain.RatePrice, error) {
+func (rpr *RatePriceRepository) GetRatePricesByRoomTypeId(ctx *gin.Context, roomTypeID uint64) ([]domain.RatePrice, uint64, error) {
 	var ratePrices []domain.RatePrice
+	var totalCount uint64
+
+	countQuery := rpr.db.QueryBuilder.Select("COUNT(*)").From("rate_prices").Where(sq.Eq{"room_type_id": roomTypeID})
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	err = rpr.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	query := rpr.db.QueryBuilder.Select("*").
 		From("rate_prices").
@@ -197,13 +219,13 @@ func (rpr *RatePriceRepository) GetRatePricesByRoomTypeId(ctx *gin.Context, room
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := rpr.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -219,17 +241,17 @@ func (rpr *RatePriceRepository) GetRatePricesByRoomTypeId(ctx *gin.Context, room
 			&ratePrice.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		ratePrices = append(ratePrices, ratePrice)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return ratePrices, nil
+	return ratePrices, totalCount, nil
 }
 
 func (rpr *RatePriceRepository) GetRatePricesByRoomId(ctx *gin.Context, roomID uint64) ([]domain.RatePrice, error) {

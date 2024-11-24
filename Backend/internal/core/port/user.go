@@ -9,7 +9,7 @@ type UserRepository interface {
 	CreateUser(ctx  *gin.Context, user *domain.User) (*domain.User, error)
 	GetUserByID(ctx *gin.Context, id uint64) (*domain.User, error)
 	GetUserByUserName(ctx *gin.Context, userName string) (*domain.User, error)
-	ListUsers(ctx *gin.Context, skip, limit uint64) ([]domain.User, error)
+	ListUsers(ctx *gin.Context, skip, limit uint64) ([]domain.User, uint64, error)
 	UpdateUser(ctx *gin.Context, user *domain.User) (*domain.User, error)
 	DeleteUser(ctx *gin.Context, id uint64) error
 }
@@ -17,7 +17,7 @@ type UserRepository interface {
 type UserService interface {
 	RegisterUser(ctx  *gin.Context, user *domain.User) (*domain.User, error)
 	GetUser(ctx *gin.Context, id uint64) (*domain.User, error)
-	ListUsers(ctx *gin.Context, skip, limit uint64) ([]domain.User, error)
+	ListUsers(ctx *gin.Context, skip, limit uint64) ([]domain.User, uint64, error)
 	UpdateUser(ctx *gin.Context, user *domain.User) (*domain.User, error)
 	DeleteUser(ctx *gin.Context, id uint64) error
 }

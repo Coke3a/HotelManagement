@@ -86,8 +86,20 @@ func (rtr *RoomTypeRepository) GetRoomTypeByID(ctx *gin.Context, id uint64) (*do
 	return &roomType, nil
 }
 
-func (rtr *RoomTypeRepository) ListRoomTypes(ctx *gin.Context, skip, limit uint64) ([]domain.RoomType, error) {
+func (rtr *RoomTypeRepository) ListRoomTypes(ctx *gin.Context, skip, limit uint64) ([]domain.RoomType, uint64, error) {
 	var roomTypes []domain.RoomType
+	var totalCount uint64
+
+	countQuery := rtr.db.QueryBuilder.Select("COUNT(*)").From("room_types")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+
+	err = rtr.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	query := rtr.db.QueryBuilder.Select("*").
 		From("room_types").
@@ -100,13 +112,13 @@ func (rtr *RoomTypeRepository) ListRoomTypes(ctx *gin.Context, skip, limit uint6
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := rtr.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -122,17 +134,17 @@ func (rtr *RoomTypeRepository) ListRoomTypes(ctx *gin.Context, skip, limit uint6
 			&roomType.UpdatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		roomTypes = append(roomTypes, roomType)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return roomTypes, nil
+	return roomTypes, totalCount, nil
 }
 
 func (rtr *RoomTypeRepository) UpdateRoomType(ctx *gin.Context, roomType *domain.RoomType) (*domain.RoomType, error) {

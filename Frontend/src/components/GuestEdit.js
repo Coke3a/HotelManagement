@@ -88,10 +88,14 @@ const GuestEdit = () => {
         }
 
         const data = await response.json();
-        setGuestTypes(data.data);
+        if (data && data.data && data.data.customerTypes) {
+          setGuestTypes(data.data.customerTypes);
+        } else {
+          setGuestTypes([]);
+        }
       } catch (error) {
         console.error('Error fetching guest types:', error);
-        alert('Failed to load guest types. Please try again later.');
+        setGuestTypes([]); // Ensure it's always an array on error
       } finally {
         setGuestTypesLoading(false);
       }

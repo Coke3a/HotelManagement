@@ -45,8 +45,19 @@ func (lr *LogRepository) CreateLog(ctx *gin.Context, log *domain.Log) (*domain.L
 	return log, nil
 }
 
-func (lr *LogRepository) GetLogs(ctx *gin.Context, skip, limit uint64) ([]domain.Log, error) {
+func (lr *LogRepository) GetLogs(ctx *gin.Context, skip, limit uint64) ([]domain.Log, uint64, error) {
 	var logs []domain.Log
+	var totalCount uint64
+
+	countQuery := lr.db.QueryBuilder.Select("COUNT(*)").From("logs")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	err = lr.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
 
 	query := lr.db.QueryBuilder.Select("*").
 		From("logs").
@@ -59,13 +70,13 @@ func (lr *LogRepository) GetLogs(ctx *gin.Context, skip, limit uint64) ([]domain
 
 	sql, args, err := query.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	slog.Debug("SQL QUERY", "query", query)
 
 	rows, err := lr.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -80,15 +91,15 @@ func (lr *LogRepository) GetLogs(ctx *gin.Context, skip, limit uint64) ([]domain
 			&log.CreatedAt,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		logs = append(logs, log)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return logs, nil
+	return logs, totalCount, nil
 }
