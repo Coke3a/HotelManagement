@@ -1,13 +1,29 @@
-FROM golang:alpine AS builder
+# build stage
+FROM golang:1.22-alpine AS build
 
-WORKDIR /go/src
-COPY go.mod go.sum ./
-RUN go mod download
+# set working directory
+WORKDIR /app
+
+# copy source code
 COPY . .
-COPY .env .
-RUN go build -o /go/bin/app ./cmd/http
 
-FROM alpine 
-COPY --from=builder /go/bin/app /app
-COPY --from=builder /go/src/.env /
-ENTRYPOINT ["/app"]
+# install dependencies
+RUN go mod download
+
+# build binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/hotel ./cmd/http/main.go
+
+# final stage
+FROM alpine:latest AS final
+LABEL maintainer="Coke"
+
+# set working directory
+WORKDIR /app
+
+# copy binary
+COPY --from=build /app/bin/hotel ./
+COPY --from=build /app/.env ./
+
+EXPOSE 8080
+
+ENTRYPOINT [ "./hotel" ]

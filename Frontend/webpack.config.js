@@ -14,7 +14,9 @@ module.exports = {
         static: {
             directory: path.join(__dirname, "public"),
         },
-        open: true,
+        host: '0.0.0.0',
+        allowedHosts: 'all',
+        open: false,
         hot: true,
         liveReload: true,
         historyApiFallback: true
@@ -30,7 +32,7 @@ module.exports = {
                 use: 'babel-loader'
             },
             {
-                test: /\.css$/, // Add this rule for CSS files
+                test: /\.css$/,
                 use: ['style-loader', 'css-loader', 'postcss-loader']
             }
         ]

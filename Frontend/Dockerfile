@@ -6,13 +6,19 @@ COPY package.json package-lock.json ./
 RUN npm install
 
 COPY . .
-RUN npm run build
 
 FROM node:20-alpine
 WORKDIR /app
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/node_modules ./node_modules
-EXPOSE 9500
 
+# Development stage
+FROM builder AS development
+ENV NODE_ENV=development
+EXPOSE 9500
+CMD ["npm", "start"]
+
+# Production stage
+FROM builder AS production
+ENV NODE_ENV=production
+RUN npm run build
+EXPOSE 9500
 CMD ["npm", "start"]
