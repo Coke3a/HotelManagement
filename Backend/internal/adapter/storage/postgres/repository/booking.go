@@ -24,7 +24,17 @@ func NewBookingRepository(db *postgres.DB) *BookingRepository {
 func (br *BookingRepository) CreateBooking(ctx *gin.Context, booking *domain.Booking) (*domain.Booking, error) {
 	query := br.db.QueryBuilder.Insert("bookings").
 		Columns("customer_id", "rate_prices_id", "room_id", "room_type_id", "check_in_date", "check_out_date", "status", "total_amount", "booking_date").
-		Values(booking.CustomerID, booking.RatePriceId, booking.RoomID, booking.RoomTypeID, booking.CheckInDate, booking.CheckOutDate, booking.Status, booking.TotalAmount, booking.BookingDate).
+		Values(
+			booking.CustomerID,
+			booking.RatePriceId,
+			booking.RoomID,
+			booking.RoomTypeID,
+			booking.CheckInDate.Format("2006-01-02"),
+			booking.CheckOutDate.Format("2006-01-02"),
+			booking.Status,
+			booking.TotalAmount,
+			booking.BookingDate,
+		).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()

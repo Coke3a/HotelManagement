@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"errors"
-	"fmt"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
@@ -225,12 +224,11 @@ type ListBookingsWithFilterRequest struct {
 //	@Router			/bookings [get]
 //	@Security		BearerAuth
 func (bh *BookingHandler) ListBookingsWithFilter(ctx *gin.Context) {
-	var req ListBookingsWithFilterRequest
 	var bookingsList []bookingResponse
 
 	skip := ctx.Query("skip")
 	limit := ctx.Query("limit")
-
+	
 	skipUint, err := strconv.ParseUint(skip, 10, 64)
 	if err != nil {
 		validationError(ctx, err)
@@ -243,21 +241,45 @@ func (bh *BookingHandler) ListBookingsWithFilter(ctx *gin.Context) {
 		return
 	}
 
-	// Convert request data to domain.Booking struct
-	booking := &domain.Booking{
-		ID:           zeroValueOrDefault(req.ID, 0),
-		CustomerID:   zeroValueOrDefault(req.CustomerID, 0),
-		RatePriceId:  zeroValueOrDefault(req.RatePriceId, 0),
-		RoomID:       zeroValueOrDefault(req.RoomID, 0),
-		CheckInDate:  req.CheckInDate,
-		CheckOutDate: req.CheckOutDate,
-		Status:       zeroValueOrDefault(req.Status, domain.BookingStatus(0)),
-		TotalAmount:  zeroValueOrDefault(req.TotalAmount, 0),
-		BookingDate:  req.BookingDate,
+	// Initialize booking with nil values
+	booking := &domain.Booking{}
+
+	// Only parse and set values if they exist in query params
+	if id := ctx.Query("id"); id != "" {
+		if idUint, err := strconv.ParseUint(id, 10, 64); err == nil {
+			booking.ID = idUint
+		}
 	}
 
-	// log the request
-	fmt.Printf("Request: %+v", req)
+	if customerID := ctx.Query("customer_id"); customerID != "" {
+		if customerIDUint, err := strconv.ParseUint(customerID, 10, 64); err == nil {
+			booking.CustomerID = customerIDUint
+		}
+	}
+
+	if checkInDate := ctx.Query("check_in_date"); checkInDate != "" {
+		if parsed, err := time.Parse("2006-01-02", checkInDate); err == nil {
+			booking.CheckInDate = &parsed
+		}
+	}
+
+	if checkOutDate := ctx.Query("check_out_date"); checkOutDate != "" {
+		if parsed, err := time.Parse("2006-01-02", checkOutDate); err == nil {
+			booking.CheckOutDate = &parsed
+		}
+	}
+
+	if status := ctx.Query("status"); status != "" {
+		if statusUint, err := strconv.ParseUint(status, 10, 64); err == nil {
+			booking.Status = domain.BookingStatus(statusUint)
+		}
+	}
+
+	if totalAmount := ctx.Query("total_amount"); totalAmount != "" {
+		if amount, err := strconv.ParseFloat(totalAmount, 64); err == nil {
+			booking.TotalAmount = amount
+		}
+	}
 
 	bookings, totalCount, err := bh.svc.ListBookingsWithFilter(ctx, booking, skipUint, limitUint)
 	if err != nil {
@@ -274,8 +296,16 @@ func (bh *BookingHandler) ListBookingsWithFilter(ctx *gin.Context) {
 		bookingsList = append(bookingsList, rsp)
 	}
 
-	meta := newMeta(totalCount, req.Limit, req.Skip)
-	rsp := toMap(meta, bookingsList, "bookings")
+	meta := map[string]interface{}{
+		"total": totalCount,
+		"limit": limitUint,
+		"skip":  skipUint,
+	}
+	
+	rsp := map[string]interface{}{
+		"bookings": bookingsList,
+		"meta":     meta,
+	}
 
 	handleSuccess(ctx, rsp)
 }

@@ -21,10 +21,12 @@ import {
   Stack,
   Pagination,
   Chip,
+  Grid,
 } from '@mui/material';
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { LocalizationProvider, MobileDatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { getPaymentStatusMessage } from '../utils/paymentEnums';
+import SearchIcon from '@mui/icons-material/Search';
 
 const Booking = () => {
   const token = localStorage.getItem('token');
@@ -77,12 +79,12 @@ const Booking = () => {
       }
 
       const data = await response.json();
-      if (data && data.data && data.data.booking_customer_payments) {
-        setBookings(data.data.booking_customer_payments);
+      if (data && data.data && (data.data.booking_customer_payments || data.data.bookings)) {
+        setBookings(data.data.booking_customer_payments || data.data.bookings);
         if (data.data.meta && typeof data.data.meta.total === 'number') {
           setTotalCount(data.data.meta.total);
         } else {
-          setTotalCount(data.data.booking_customer_payments.length);
+          setTotalCount((data.data.booking_customer_payments || data.data.bookings).length);
         }
       } else {
         setBookings([]);
@@ -99,7 +101,7 @@ const Booking = () => {
 
   useEffect(() => {
     fetchBookings(page, rowsPerPage);
-  }, [page, rowsPerPage, filters, statusFilter]);
+  }, [page, rowsPerPage]);
 
   const handlePageChange = (event, newPage) => {
     setPage(newPage - 1);
@@ -235,49 +237,168 @@ const Booking = () => {
         >
           Add Booking
         </Button>
-        
-        <Stack 
-          direction="row" 
-          spacing={2} 
-          alignItems="center"
-          sx={{ marginLeft: 'auto' }}
-        >
-          <Box sx={{ mr: 2 }}>
-            <select
-              value={rowsPerPage}
-              onChange={(e) => {
-                setRowsPerPage(Number(e.target.value));
-                setPage(0);
-              }}
-              style={{
-                padding: '5px',
-                borderRadius: '4px',
-                border: '1px solid #ccc'
-              }}
-            >
-              <option value={5}>5 per page</option>
-              <option value={10}>10 per page</option>
-              <option value={25}>25 per page</option>
-            </select>
-          </Box>
-          
-          <Pagination
-            count={Math.ceil(totalCount / rowsPerPage)}
-            page={page + 1}
-            onChange={handlePageChange}
-            color="primary"
-            showFirstButton
-            showLastButton
-            siblingCount={1}
-            boundaryCount={1}
-            sx={{
-              '& .MuiPagination-ul': {
-                flexWrap: 'nowrap'
-              }
-            }}
-          />
-        </Stack>
       </Box>
+
+      <Box sx={{ mb: 2 }}>
+        <Paper elevation={1} sx={{ p: 1.5, backgroundColor: '#f8f9fa' }}>
+          <Grid container spacing={1} alignItems="center">
+            {/* First Row */}
+            <Grid item xs={12} md={10}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={1}>
+                {/* ID Fields */}
+                <Stack direction="row" spacing={1} sx={{ width: { xs: '100%', md: '30%' } }}>
+                  <TextField
+                    size="small"
+                    placeholder="ID"
+                    value={filters.id}
+                    onChange={(e) => setFilters({ ...filters, id: e.target.value })}
+                    sx={{ width: '45%' }}
+                  />
+                  <TextField
+                    size="small"
+                    placeholder="Guest ID"
+                    value={filters.customer_id}
+                    onChange={(e) => setFilters({ ...filters, customer_id: e.target.value })}
+                    sx={{ width: '55%' }}
+                  />
+                </Stack>
+
+                {/* Date Fields */}
+                <Stack direction="row" spacing={1} sx={{ width: { xs: '100%', md: '40%' } }}>
+                  <TextField
+                    type="date"
+                    size="small"
+                    value={filters.check_in_date ? filters.check_in_date.toISOString().split('T')[0] : ''}
+                    onChange={(e) => setFilters({ ...filters, check_in_date: new Date(e.target.value) })}
+                    sx={{ width: '50%' }}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    placeholder="Check-in"
+                  />
+                  <TextField
+                    type="date"
+                    size="small"
+                    value={filters.check_out_date ? filters.check_out_date.toISOString().split('T')[0] : ''}
+                    onChange={(e) => setFilters({ ...filters, check_out_date: new Date(e.target.value) })}
+                    sx={{ width: '50%' }}
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    placeholder="Check-out"
+                  />
+                </Stack>
+
+                {/* Status and Amount */}
+                <Stack direction="row" spacing={1} sx={{ width: { xs: '100%', md: '30%' } }}>
+                  <FormControl size="small" sx={{ width: '60%' }}>
+                    <Select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      displayEmpty
+                      sx={{ height: '40px' }}
+                    >
+                      <MenuItem value="">All Status</MenuItem>
+                      <MenuItem value="1">Pending</MenuItem>
+                      <MenuItem value="2">Confirmed</MenuItem>
+                      <MenuItem value="3">Checked In</MenuItem>
+                      <MenuItem value="4">Checked Out</MenuItem>
+                      <MenuItem value="5">Canceled</MenuItem>
+                      <MenuItem value="6">Completed</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <TextField
+                    size="small"
+                    placeholder="Amount"
+                    value={filters.total_amount}
+                    onChange={(e) => setFilters({ ...filters, total_amount: e.target.value })}
+                    sx={{ width: '40%' }}
+                  />
+                </Stack>
+              </Stack>
+            </Grid>
+
+            {/* Buttons */}
+            <Grid item xs={12} md={2}>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    setPage(0);
+                    fetchBookings(0, rowsPerPage);
+                  }}
+                  startIcon={<SearchIcon />}
+                  size="small"
+                  fullWidth
+                >
+                  Search
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setFilters({
+                      id: '',
+                      customer_id: '',
+                      check_in_date: null,
+                      check_out_date: null,
+                      total_amount: '',
+                    });
+                    setStatusFilter('');
+                    setPage(0);
+                    fetchBookings(0, rowsPerPage);
+                  }}
+                  size="small"
+                  sx={{ minWidth: 'auto', width: '40px', p: 0 }}
+                >
+                  ×
+                </Button>
+              </Stack>
+            </Grid>
+          </Grid>
+        </Paper>
+      </Box>
+
+      <Stack 
+        direction="row" 
+        spacing={2} 
+        alignItems="center"
+        sx={{ marginLeft: 'auto' }}
+      >
+        <Box sx={{ mr: 2 }}>
+          <select
+            value={rowsPerPage}
+            onChange={(e) => {
+              setRowsPerPage(Number(e.target.value));
+              setPage(0);
+            }}
+            style={{
+              padding: '5px',
+              borderRadius: '4px',
+              border: '1px solid #ccc'
+            }}
+          >
+            <option value={5}>5 per page</option>
+            <option value={10}>10 per page</option>
+            <option value={25}>25 per page</option>
+          </select>
+        </Box>
+        
+        <Pagination
+          count={Math.ceil(totalCount / rowsPerPage)}
+          page={page + 1}
+          onChange={handlePageChange}
+          color="primary"
+          showFirstButton
+          showLastButton
+          siblingCount={1}
+          boundaryCount={1}
+          sx={{
+            '& .MuiPagination-ul': {
+              flexWrap: 'nowrap'
+            }
+          }}
+        />
+      </Stack>
       <TableContainer component={Paper}>
         <Table size="small" className="compact-table">
           <TableHead>
@@ -314,15 +435,18 @@ const Booking = () => {
               </TableRow>
             ) : (
               bookings.map((booking, index) => (
-                <TableRow key={booking.booking_id} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                  <TableCell>{booking.booking_id}</TableCell>
+                <TableRow key={booking.id || booking.booking_id} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                  <TableCell>{booking.id || booking.booking_id}</TableCell>
                   <TableCell style={{ paddingRight: '8px' }}>
                     <Button
                       size="small"
                       color="primary"
                       onClick={() => handleGuestClick(booking.customer_id)}
                     >
-                      {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
+                      {booking.customer_firstname ? 
+                        `${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}` :
+                        `Guest ${booking.customer_id}`
+                      }
                     </Button>
                   </TableCell>
                   <TableCell align="center" style={{ paddingLeft: '8px' }}>
@@ -332,25 +456,26 @@ const Booking = () => {
                         color="primary"
                         onClick={() => handleRoomClick(booking.room_id)}
                       >
-                        {booking.room_number}
-                        <Typography variant="caption" color="textSecondary" style={{ marginLeft: '4px' }}>
-                        {booking.room_type_name}
-                      </Typography>
-
+                        {booking.room_number || `Room ${booking.room_id}`}
+                        {booking.room_type_name && (
+                          <Typography variant="caption" color="textSecondary" style={{ marginLeft: '4px' }}>
+                            {booking.room_type_name}
+                          </Typography>
+                        )}
                       </Button>
                     </Box>
                   </TableCell>
                   <TableCell>{new Date(booking.check_in_date).toLocaleDateString()}</TableCell>
                   <TableCell>{new Date(booking.check_out_date).toLocaleDateString()}</TableCell>
-                  <TableCell>{booking.booking_price}</TableCell>
-                  <TableCell>{renderPaymentStatus(booking.payment_status)}</TableCell>
-                  <TableCell>{renderBookingStatus(booking.booking_status)}</TableCell>
+                  <TableCell>{booking.total_amount || booking.booking_price}</TableCell>
+                  <TableCell>{booking.payment_status ? renderPaymentStatus(booking.payment_status) : '-'}</TableCell>
+                  <TableCell>{renderBookingStatus(booking.status || booking.booking_status)}</TableCell>
                   <TableCell>
                     <Button
                       variant="outlined"
                       color="primary"
                       size="small"
-                      onClick={() => handleEditBooking(booking.booking_id)}
+                      onClick={() => handleEditBooking(booking.id || booking.booking_id)}
                     >
                       Detail
                     </Button>
