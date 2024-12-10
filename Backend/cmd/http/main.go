@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/Coke3a/HotelManagement/internal/adapter/auth/paseto"
 	"github.com/Coke3a/HotelManagement/internal/adapter/config"
@@ -22,7 +23,15 @@ func main() {
 			slog.Error("Error loading environment variables", "error", err)
 			os.Exit(1)
 		}
-	
+
+		// Set timezone to Asia/Bangkok
+		location, err := time.LoadLocation("Asia/Bangkok")
+		if err != nil {
+			slog.Error("Error setting timezone", "error", err)
+			os.Exit(1)
+		}
+		time.Local = location
+
 		slog.Info("Starting the application", "app", config.App.Name, "env", config.App.Env)
 	
 		// Init database

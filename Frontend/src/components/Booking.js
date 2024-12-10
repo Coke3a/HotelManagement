@@ -39,11 +39,17 @@ const Booking = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [filters, setFilters] = useState({
-    id: '',
-    customer_id: '',
+    booking_id: '',
+    booking_price: '',
+    booking_status: '',
     check_in_date: null,
     check_out_date: null,
-    total_amount: '',
+    room_number: '',
+    room_type_name: '',
+    customer_firstname: '',
+    customer_surname: '',
+    payment_status: '',
+    created_at: null,
   });
 
   const fetchBookings = async (page, rowsPerPage) => {
@@ -54,12 +60,17 @@ const Booking = () => {
       const queryParams = new URLSearchParams({
         skip: skip.toString(),
         limit: rowsPerPage.toString(),
-        ...(filters.id && { id: filters.id }),
-        ...(filters.customer_id && { customer_id: filters.customer_id }),
-        ...(statusFilter && { status: statusFilter }),
+        ...(filters.booking_id && { booking_id: filters.booking_id }),
+        ...(filters.booking_price && { booking_price: filters.booking_price }),
+        ...(filters.booking_status && { booking_status: filters.booking_status }),
         ...(filters.check_in_date && { check_in_date: filters.check_in_date.toISOString().split('T')[0] }),
         ...(filters.check_out_date && { check_out_date: filters.check_out_date.toISOString().split('T')[0] }),
-        ...(filters.total_amount && { total_amount: filters.total_amount }),
+        ...(filters.created_at && { created_at: filters.created_at.toISOString().split('T')[0] }),
+        ...(filters.room_number && { room_number: filters.room_number }),
+        ...(filters.room_type_name && { room_type_name: filters.room_type_name }),
+        ...(filters.customer_firstname && { customer_firstname: filters.customer_firstname }),
+        ...(filters.customer_surname && { customer_surname: filters.customer_surname }),
+        ...(filters.payment_status && { payment_status: filters.payment_status }),
       });
 
       const response = await fetch(`http://localhost:8080/v1/booking/?${queryParams.toString()}`, {
@@ -242,23 +253,22 @@ const Booking = () => {
       <Box sx={{ mb: 2 }}>
         <Paper elevation={1} sx={{ p: 1.5, backgroundColor: '#f8f9fa' }}>
           <Grid container spacing={1} alignItems="center">
-            {/* First Row */}
             <Grid item xs={12} md={10}>
               <Stack direction={{ xs: 'column', md: 'row' }} spacing={1}>
-                {/* ID Fields */}
+                {/* ID and Price Fields */}
                 <Stack direction="row" spacing={1} sx={{ width: { xs: '100%', md: '30%' } }}>
                   <TextField
                     size="small"
-                    placeholder="ID"
-                    value={filters.id}
-                    onChange={(e) => setFilters({ ...filters, id: e.target.value })}
+                    placeholder="Booking ID"
+                    value={filters.booking_id}
+                    onChange={(e) => setFilters({ ...filters, booking_id: e.target.value })}
                     sx={{ width: '45%' }}
                   />
                   <TextField
                     size="small"
-                    placeholder="Guest ID"
-                    value={filters.customer_id}
-                    onChange={(e) => setFilters({ ...filters, customer_id: e.target.value })}
+                    placeholder="Price"
+                    value={filters.booking_price}
+                    onChange={(e) => setFilters({ ...filters, booking_price: e.target.value })}
                     sx={{ width: '55%' }}
                   />
                 </Stack>
@@ -271,9 +281,7 @@ const Booking = () => {
                     value={filters.check_in_date ? filters.check_in_date.toISOString().split('T')[0] : ''}
                     onChange={(e) => setFilters({ ...filters, check_in_date: new Date(e.target.value) })}
                     sx={{ width: '50%' }}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
+                    InputLabelProps={{ shrink: true }}
                     placeholder="Check-in"
                   />
                   <TextField
@@ -282,19 +290,17 @@ const Booking = () => {
                     value={filters.check_out_date ? filters.check_out_date.toISOString().split('T')[0] : ''}
                     onChange={(e) => setFilters({ ...filters, check_out_date: new Date(e.target.value) })}
                     sx={{ width: '50%' }}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
+                    InputLabelProps={{ shrink: true }}
                     placeholder="Check-out"
                   />
                 </Stack>
 
-                {/* Status and Amount */}
+                {/* Status Fields */}
                 <Stack direction="row" spacing={1} sx={{ width: { xs: '100%', md: '30%' } }}>
-                  <FormControl size="small" sx={{ width: '60%' }}>
+                  <FormControl size="small" sx={{ width: '50%' }}>
                     <Select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
+                      value={filters.booking_status}
+                      onChange={(e) => setFilters({ ...filters, booking_status: e.target.value })}
                       displayEmpty
                       sx={{ height: '40px' }}
                     >
@@ -307,14 +313,53 @@ const Booking = () => {
                       <MenuItem value="6">Completed</MenuItem>
                     </Select>
                   </FormControl>
-                  <TextField
-                    size="small"
-                    placeholder="Amount"
-                    value={filters.total_amount}
-                    onChange={(e) => setFilters({ ...filters, total_amount: e.target.value })}
-                    sx={{ width: '40%' }}
-                  />
+                  <FormControl size="small" sx={{ width: '50%' }}>
+                    <Select
+                      value={filters.payment_status}
+                      onChange={(e) => setFilters({ ...filters, payment_status: e.target.value })}
+                      displayEmpty
+                      sx={{ height: '40px' }}
+                    >
+                      <MenuItem value="">All Payments</MenuItem>
+                      <MenuItem value="1">Pending</MenuItem>
+                      <MenuItem value="2">Completed</MenuItem>
+                      <MenuItem value="3">Failed</MenuItem>
+                      <MenuItem value="4">Refunded</MenuItem>
+                    </Select>
+                  </FormControl>
                 </Stack>
+              </Stack>
+
+              {/* Second Row */}
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ mt: 1 }}>
+                <TextField
+                  size="small"
+                  placeholder="Room Number"
+                  value={filters.room_number}
+                  onChange={(e) => setFilters({ ...filters, room_number: e.target.value })}
+                  sx={{ width: { xs: '100%', md: '25%' } }}
+                />
+                <TextField
+                  size="small"
+                  placeholder="Room Type"
+                  value={filters.room_type_name}
+                  onChange={(e) => setFilters({ ...filters, room_type_name: e.target.value })}
+                  sx={{ width: { xs: '100%', md: '25%' } }}
+                />
+                <TextField
+                  size="small"
+                  placeholder="Guest First Name"
+                  value={filters.customer_firstname}
+                  onChange={(e) => setFilters({ ...filters, customer_firstname: e.target.value })}
+                  sx={{ width: { xs: '100%', md: '25%' } }}
+                />
+                <TextField
+                  size="small"
+                  placeholder="Guest Last Name"
+                  value={filters.customer_surname}
+                  onChange={(e) => setFilters({ ...filters, customer_surname: e.target.value })}
+                  sx={{ width: { xs: '100%', md: '25%' } }}
+                />
               </Stack>
             </Grid>
 
@@ -337,11 +382,17 @@ const Booking = () => {
                   variant="outlined"
                   onClick={() => {
                     setFilters({
-                      id: '',
-                      customer_id: '',
+                      booking_id: '',
+                      booking_price: '',
+                      booking_status: '',
                       check_in_date: null,
                       check_out_date: null,
-                      total_amount: '',
+                      room_number: '',
+                      room_type_name: '',
+                      customer_firstname: '',
+                      customer_surname: '',
+                      payment_status: '',
+                      created_at: null,
                     });
                     setStatusFilter('');
                     setPage(0);

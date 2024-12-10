@@ -61,7 +61,7 @@ func (lr *LogRepository) GetLogs(ctx *gin.Context, skip, limit uint64) ([]domain
 
 	query := lr.db.QueryBuilder.Select("*").
 		From("logs").
-		OrderBy("id").
+		OrderBy("id DESC").
 		Limit(limit)
 
 	if skip > 0 {

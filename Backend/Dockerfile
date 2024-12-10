@@ -1,6 +1,9 @@
 # build stage
 FROM golang:1.22-alpine AS build
 
+# Install timezone data
+RUN apk add --no-cache tzdata
+
 # set working directory
 WORKDIR /app
 
@@ -16,6 +19,9 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/hotel ./cmd/http/mai
 # final stage
 FROM alpine:latest AS final
 LABEL maintainer="Coke"
+
+# Install timezone data in the final stage
+RUN apk add --no-cache tzdata
 
 # set working directory
 WORKDIR /app

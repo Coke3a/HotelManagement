@@ -63,8 +63,8 @@ func NewRouter(
 			booking := protected.Group("/booking")
 			{
 				booking.POST("/", bookingHandler.CreateBookingAndPayment)
-				//booking.GET("/", bookingHandler.ListBookingCustomerPayments)
-				booking.GET("/", bookingHandler.ListBookingsWithFilter)
+				booking.GET("/", bookingHandler.ListBookingCustomerPaymentsWithFilter)
+				// booking.GET("/", bookingHandler.ListBookingsWithFilter)
 				booking.GET("/:id", bookingHandler.GetBooking)
 				booking.PUT("/", bookingHandler.UpdateBooking)
 				booking.DELETE("/:id", bookingHandler.DeleteBooking)

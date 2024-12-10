@@ -1,8 +1,9 @@
 package service
 
 import (
-	"time"
 	"log/slog"
+	"time"
+	"fmt"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
 	"github.com/gin-gonic/gin"
@@ -25,11 +26,6 @@ func NewBookingService(repo port.BookingRepository, paymentRepo port.PaymentRepo
 func (bs *BookingService) CreateBooking(ctx *gin.Context, booking *domain.Booking) (*domain.Booking, error) {
 	if booking.CustomerID == 0 || booking.RatePriceId == 0 || booking.CheckInDate == nil || booking.CheckOutDate == nil || booking.TotalAmount <= 0 {
 		return nil, domain.ErrInvalidData
-	}
-
-	now := time.Now()
-	if booking.BookingDate == nil {
-		booking.BookingDate = &now
 	}
 
 	// Set initial status to Pending if not provided
@@ -70,10 +66,6 @@ func (bs *BookingService) CreateBookingAndPayment(ctx *gin.Context, booking *dom
 	}
 
 	now := time.Now()
-	if booking.BookingDate == nil {
-		booking.BookingDate = &now
-	}
-
 	// Set initial status to Pending if not provided
 	if booking.Status == 0 {
 		booking.Status = domain.BookingStatusPending
@@ -245,6 +237,16 @@ func (bs *BookingService) GetBookingCustomerPayment(ctx *gin.Context, id uint64)
 func (bs *BookingService) ListBookingCustomerPayments(ctx *gin.Context, skip, limit uint64) ([]domain.BookingCustomerPayment, uint64, error) {
 	bookingCustomerPayments, totalCount, err := bs.repo.ListBookingCustomerPayments(ctx, skip, limit)
 	if err != nil {
+		return nil, 0, domain.ErrInternal
+	}
+
+	return bookingCustomerPayments, totalCount, nil
+}
+
+func (bs *BookingService) ListBookingCustomerPaymentsWithFilter(ctx *gin.Context, bookingCustomerPayment *domain.BookingCustomerPayment, skip, limit uint64) ([]domain.BookingCustomerPayment, uint64, error) {
+	bookingCustomerPayments, totalCount, err := bs.repo.ListBookingCustomerPaymentsWithFilter(ctx, bookingCustomerPayment, skip, limit)
+	if err != nil {
+		fmt.Println("Error in ListBookingCustomerPaymentsWithFilter", err)
 		return nil, 0, domain.ErrInternal
 	}
 

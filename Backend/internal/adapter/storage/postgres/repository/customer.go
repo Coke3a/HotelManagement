@@ -119,7 +119,7 @@ func (cr *CustomerRepository) ListCustomers(ctx *gin.Context, skip, limit uint64
 
 	query := cr.db.QueryBuilder.Select("*").
 		From("customers").
-		OrderBy("id").
+		OrderBy("id DESC").
 		Limit(limit)
 
 	if skip > 0 {

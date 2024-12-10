@@ -2,9 +2,9 @@ package service
 
 import (
 	"fmt"
-	"strings"
 	"time"
 	"log/slog"
+	"strconv"
 	"github.com/gin-gonic/gin"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
@@ -12,7 +12,7 @@ import (
 
 type DailyBookingSummaryService struct {
 	summaryRepo port.DailyBookingSummaryRepository
-	bookingRepo port.BookingRepository
+	bookingRepo port.BookingRepository  
 	logRepo     port.LogRepository
 }
 
@@ -29,45 +29,62 @@ func NewDailyBookingSummaryService(
 }
 
 func (dbs *DailyBookingSummaryService) GenerateDailySummary(ctx *gin.Context, date time.Time) (*domain.DailyBookingSummary, error) {
-	// Get all bookings for the specified date
-	bookings, _, err := dbs.bookingRepo.ListBookingsWithFilter(ctx, &domain.Booking{
-		BookingDate: &date,
+	// Get all created bookings for the specified date
+	createdBookings, createdCount, err := dbs.bookingRepo.ListBookingsWithFilter(ctx, &domain.Booking{
+		CreatedAt: &date,
 	}, 0, 1000)
 	if err != nil {
-		return nil, fmt.Errorf("error getting bookings: %w", err)
+		return nil, fmt.Errorf("error getting created bookings: %w", err)
 	}
 
-	// Initialize counters
-	summary := &domain.DailyBookingSummary{
-		SummaryDate: date,
-		Status:      domain.SummaryStatusUnchecked,
+	// Get all updated bookings for the specified date
+	updatedBookings, updatedCount, err := dbs.bookingRepo.ListBookingsWithFilter(ctx, &domain.Booking{
+		UpdatedAt: &date,
+	}, 0, 1000)
+	if err != nil {
+		return nil, fmt.Errorf("error getting updated bookings: %w", err)
 	}
 
-	bookingIDs := make([]string, 0, len(bookings))
-	
-	// Calculate summary statistics
-	for _, booking := range bookings {
-		summary.TotalBookings++
-		summary.TotalAmount += booking.TotalAmount
-		bookingIDs = append(bookingIDs, fmt.Sprintf("%d", booking.ID))
+	slog.Info("Retrieved bookings",
+		"date", date.Format("2006-01-02"),
+		"created_count", createdCount,
+		"updated_count", updatedCount)
 
-		switch booking.Status {
-		case domain.BookingStatusPending:
-			summary.PendingBookings++
-		case domain.BookingStatusConfirmed:
-			summary.ConfirmedBookings++
-		case domain.BookingStatusCheckedIn:
-			summary.CheckedInBookings++
-		case domain.BookingStatusCheckedOut:
-			summary.CheckedOutBookings++
-		case domain.BookingStatusCanceled:
-			summary.CanceledBookings++
-		case domain.BookingStatusCompleted:
-			summary.CompletedBookings++
+	// Initialize arrays for different booking types
+	var (
+		createdIDs    []uint64
+		completedIDs  []uint64
+		canceledIDs   []uint64
+		totalAmount   float64
+	)
+
+	// Process created bookings
+	for _, booking := range createdBookings {
+		createdIDs = append(createdIDs, booking.ID)
+	}
+
+	// Process updated bookings
+	for _, booking := range updatedBookings {
+		// Check if the booking was already counted in created bookings
+		if !contains(createdIDs, booking.ID) {
+			if booking.Status == domain.BookingStatusCompleted {
+				totalAmount += booking.TotalAmount
+				completedIDs = append(completedIDs, booking.ID)
+			} else if booking.Status == domain.BookingStatusCanceled {
+				canceledIDs = append(canceledIDs, booking.ID)
+			}
 		}
 	}
 
-	summary.BookingIDs = strings.Join(bookingIDs, ",")
+	// Create summary object
+	summary := &domain.DailyBookingSummary{
+		SummaryDate:       date,
+		CreatedBookings:   domain.FormatBookingIDs(createdIDs),
+		CompletedBookings: domain.FormatBookingIDs(completedIDs),
+		CanceledBookings:  domain.FormatBookingIDs(canceledIDs),
+		TotalAmount:       totalAmount,
+		Status:            domain.SummaryStatusUnchecked,
+	}
 
 	// Create or update the summary
 	createdSummary, err := dbs.summaryRepo.CreateDailyBookingSummary(ctx, summary)
@@ -78,11 +95,18 @@ func (dbs *DailyBookingSummaryService) GenerateDailySummary(ctx *gin.Context, da
 	// Log the action
 	userID, exists := ctx.Get("userID")
 	if exists {
+		dateStr := date.Format("20060102") // YYYYMMDD format
+		recordID, err := strconv.ParseUint(dateStr, 10, 64)
+		if err != nil {
+			slog.Error("Error parsing date for log record ID", "error", err)
+			recordID = 0 // Use 0 as fallback
+		}
+		
 		log := &domain.Log{
 			Action:    "CREATE",
 			UserID:    userID.(uint64),
 			TableName: "daily_booking_summary",
-			RecordID:  uint64(0), // Since summary uses date as primary key
+			RecordID:  recordID,
 		}
 		if _, err := dbs.logRepo.CreateLog(ctx, log); err != nil {
 			slog.Error("Error creating log", "error", err)
@@ -90,6 +114,16 @@ func (dbs *DailyBookingSummaryService) GenerateDailySummary(ctx *gin.Context, da
 	}
 
 	return createdSummary, nil
+}
+
+// Helper function to check if a slice contains a value
+func contains(slice []uint64, value uint64) bool {
+	for _, item := range slice {
+		if item == value {
+			return true
+		}
+	}
+	return false
 }
 
 func (dbs *DailyBookingSummaryService) UpdateSummaryStatus(ctx *gin.Context, date time.Time, status domain.SummaryStatus) (*domain.DailyBookingSummary, error) {

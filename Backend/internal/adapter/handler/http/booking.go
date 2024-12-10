@@ -2,7 +2,6 @@ package http
 
 import (
 	"time"
-
 	"errors"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
@@ -54,6 +53,7 @@ func (bh *BookingHandler) CreateBooking(ctx *gin.Context) {
 		return
 	}
 
+	now := time.Now()
 	booking := domain.Booking{
 		CustomerID:   req.CustomerID,
 		RoomID:       req.RoomID,
@@ -63,6 +63,9 @@ func (bh *BookingHandler) CreateBooking(ctx *gin.Context) {
 		CheckOutDate: &req.CheckOutDate,
 		Status:       domain.BookingStatus(req.Status),
 		TotalAmount:  req.TotalAmount,
+		
+		CreatedAt:    &now,
+		UpdatedAt:    &now,
 	}
 
 	createdBooking, err := bh.svc.CreateBooking(ctx, &booking)
@@ -99,6 +102,7 @@ func (bh *BookingHandler) CreateBookingAndPayment(ctx *gin.Context) {
 		return
 	}
 
+	now := time.Now()
 	booking := domain.Booking{
 		CustomerID:   req.CustomerID,
 		RoomID:       req.RoomID,
@@ -108,6 +112,8 @@ func (bh *BookingHandler) CreateBookingAndPayment(ctx *gin.Context) {
 		CheckOutDate: &req.CheckOutDate,
 		Status:       domain.BookingStatus(req.Status),
 		TotalAmount:  req.TotalAmount,
+		CreatedAt:    &now,
+		UpdatedAt:    &now,
 	}
 
 	createdBooking, err := bh.svc.CreateBookingAndPayment(ctx, &booking)
@@ -386,6 +392,7 @@ func (bh *BookingHandler) UpdateBooking(ctx *gin.Context) {
 		return
 	}
 
+	now := time.Now()
 	booking := domain.Booking{
 		ID:           req.BookingID,
 		CustomerID:   req.CustomerID,
@@ -396,6 +403,7 @@ func (bh *BookingHandler) UpdateBooking(ctx *gin.Context) {
 		CheckOutDate: &req.CheckOutDate,
 		Status:       domain.BookingStatus(req.Status),
 		TotalAmount:  req.TotalAmount,
+		UpdatedAt:    &now,
 	}
 
 	updatedBooking, err := bh.svc.UpdateBooking(ctx, &booking)
@@ -459,7 +467,8 @@ type bookingResponse struct {
 	CheckOutDate time.Time            `json:"check_out_date" example:"2024-08-10T15:04:05Z"`
 	Status       domain.BookingStatus `json:"status" example:"confirmed"`
 	TotalAmount  float64              `json:"total_amount" example:"1000.50"`
-	BookingDate  time.Time            `json:"booking_date" example:"2024-07-01T15:04:05Z"`
+	CreatedAt    time.Time            `json:"created_at" example:"2024-07-01T15:04:05Z"`
+	UpdatedAt    time.Time            `json:"updated_at" example:"2024-07-01T15:04:05Z"`
 }
 
 // newBookingResponse creates a new booking response
@@ -468,7 +477,7 @@ func newBookingResponse(booking *domain.Booking) (bookingResponse, error) {
 		return bookingResponse{}, errors.New("booking is nil")
 	}
 
-	var checkInDate, checkOutDate, bookingDate time.Time
+	var checkInDate, checkOutDate, createdAt, updatedAt time.Time
 
 	if booking.CheckInDate != nil {
 		checkInDate = *booking.CheckInDate
@@ -476,8 +485,11 @@ func newBookingResponse(booking *domain.Booking) (bookingResponse, error) {
 	if booking.CheckOutDate != nil {
 		checkOutDate = *booking.CheckOutDate
 	}
-	if booking.BookingDate != nil {
-		bookingDate = *booking.BookingDate
+	if booking.CreatedAt != nil {
+		createdAt = *booking.CreatedAt
+	}
+	if booking.UpdatedAt != nil {
+		updatedAt = *booking.UpdatedAt
 	}
 
 	return bookingResponse{
@@ -490,7 +502,8 @@ func newBookingResponse(booking *domain.Booking) (bookingResponse, error) {
 		CheckOutDate: checkOutDate,
 		Status:       domain.BookingStatus(booking.Status),
 		TotalAmount:  booking.TotalAmount,
-		BookingDate:  bookingDate,
+		CreatedAt:    createdAt,
+		UpdatedAt:    updatedAt,
 	}, nil
 }
 
@@ -650,6 +663,120 @@ func (bh *BookingHandler) ListBookingCustomerPayments(ctx *gin.Context) {
 
 	meta := newMeta(totalCount, req.Limit, req.Skip)
 	rsp := toMap(meta, bcpList, "booking_customer_payments")
+
+	handleSuccess(ctx, rsp)
+}
+
+// listBookingsRequest represents the request body for listing bookings
+type ListBookingsWithFilterRequestWithFilter struct {
+    Skip              uint64                `form:"skip" binding:"required,min=0" example:"0"`
+    Limit             uint64                `form:"limit" binding:"required,min=5" example:"5"`
+    BookingID         string                `form:"booking_id,omitempty" example:"1"`
+    BookingPrice      string                `form:"booking_price,omitempty" example:"100.00"`
+    BookingStatus     string                `form:"booking_status,omitempty" example:"1"`
+    CheckInDate       *time.Time            `form:"check_in_date,omitempty" time_format:"2006-01-02" example:"2023-08-01"`
+    CheckOutDate      *time.Time            `form:"check_out_date,omitempty" time_format:"2006-01-02" example:"2023-08-01"`
+    RoomNumber        string                `form:"room_number,omitempty" example:"101"`
+    RoomTypeName      string                `form:"room_type_name,omitempty" example:"Deluxe"`
+    CustomerFirstName string                `form:"customer_firstname,omitempty" example:"John"`
+    CustomerSurname   string                `form:"customer_surname,omitempty" example:"Doe"`
+    PaymentStatus     string                `form:"payment_status,omitempty" example:"1"`
+	CreatedAt         *time.Time            `form:"created_at,omitempty" time_format:"2006-01-02" example:"2023-08-01"`
+}
+
+func (bh *BookingHandler) ListBookingCustomerPaymentsWithFilter(ctx *gin.Context) {
+	var bookingsList []bookingCustomerPaymentResponse
+
+	skip := ctx.Query("skip")
+	limit := ctx.Query("limit")
+	
+	skipUint, err := strconv.ParseUint(skip, 10, 64)
+	if err != nil {
+		validationError(ctx, err)
+		return
+	}
+
+	limitUint, err := strconv.ParseUint(limit, 10, 64)
+	if err != nil {
+		validationError(ctx, err)
+		return
+	}
+
+	// Initialize booking with nil values
+	booking := &domain.BookingCustomerPayment{}
+	if bookingID := ctx.Query("booking_id"); bookingID != "" {
+		if bookingIDUint, err := strconv.ParseUint(bookingID, 10, 64); err == nil {
+			booking.BookingID = bookingIDUint
+		}
+	}
+	if bookingPrice := ctx.Query("booking_price"); bookingPrice != "" {
+		if bookingPriceFloat, err := strconv.ParseFloat(bookingPrice, 64); err == nil {
+			booking.BookingPrice = bookingPriceFloat
+		}
+	}
+	if bookingStatus := ctx.Query("booking_status"); bookingStatus != "" {
+		if bookingStatusUint, err := strconv.ParseUint(bookingStatus, 10, 64); err == nil {
+			booking.BookingStatus = domain.BookingStatus(bookingStatusUint)
+		}
+	}
+	if checkInDate := ctx.Query("check_in_date"); checkInDate != "" {
+		if checkInDate, err := time.Parse("2006-01-02", checkInDate); err == nil {
+			booking.CheckInDate = &checkInDate
+		}
+	}
+	if checkOutDate := ctx.Query("check_out_date"); checkOutDate != "" {
+		if checkOutDate, err := time.Parse("2006-01-02", checkOutDate); err == nil {
+			booking.CheckOutDate = &checkOutDate
+		}
+	}
+	if roomNumber := ctx.Query("room_number"); roomNumber != "" {
+		booking.RoomNumber = roomNumber
+	}
+	if roomTypeName := ctx.Query("room_type_name"); roomTypeName != "" {
+		booking.RoomTypeName = roomTypeName
+	}
+	if customerFirstName := ctx.Query("customer_firstname"); customerFirstName != "" {
+		booking.CustomerFirstName = customerFirstName
+	}
+	if customerSurname := ctx.Query("customer_surname"); customerSurname != "" {
+		booking.CustomerSurname = customerSurname
+	}
+	if paymentStatus := ctx.Query("payment_status"); paymentStatus != "" {
+		if paymentStatusUint, err := strconv.ParseUint(paymentStatus, 10, 64); err == nil {
+			booking.PaymentStatus = &paymentStatusUint
+		}
+	}
+	if createdAt := ctx.Query("created_at"); createdAt != "" {
+		if createdAt, err := time.Parse("2006-01-02", createdAt); err == nil {
+			booking.BookingCreatedAt = &createdAt
+		}
+	}
+
+	bookings, totalCount, err := bh.svc.ListBookingCustomerPaymentsWithFilter(ctx, booking, skipUint, limitUint)
+	if err != nil {
+		handleError(ctx, err)
+		return
+	}
+
+	for _, booking := range bookings {
+		rsp, err := newBookingCustomerPaymentResponse(&booking)
+		if err != nil {
+			handleError(ctx, err)
+			return
+		}
+		bookingsList = append(bookingsList, *rsp)
+	}
+
+	meta := map[string]interface{}{
+		"total": totalCount,
+		"limit": limitUint,
+		"skip":  skipUint,
+	}
+	
+	rsp := map[string]interface{}{
+		"booking_customer_payments": bookingsList,
+		"meta":     meta,
+	}
 
 	handleSuccess(ctx, rsp)
 }

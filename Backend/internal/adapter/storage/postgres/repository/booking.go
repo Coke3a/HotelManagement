@@ -23,7 +23,18 @@ func NewBookingRepository(db *postgres.DB) *BookingRepository {
 
 func (br *BookingRepository) CreateBooking(ctx *gin.Context, booking *domain.Booking) (*domain.Booking, error) {
 	query := br.db.QueryBuilder.Insert("bookings").
-		Columns("customer_id", "rate_prices_id", "room_id", "room_type_id", "check_in_date", "check_out_date", "status", "total_amount", "booking_date").
+		Columns(
+			"customer_id", 
+			"rate_prices_id", 
+			"room_id", 
+			"room_type_id", 
+			"check_in_date", 
+			"check_out_date", 
+			"status", 
+			"total_amount",
+			"created_at",
+			"updated_at",
+		).
 		Values(
 			booking.CustomerID,
 			booking.RatePriceId,
@@ -33,7 +44,8 @@ func (br *BookingRepository) CreateBooking(ctx *gin.Context, booking *domain.Boo
 			booking.CheckOutDate.Format("2006-01-02"),
 			booking.Status,
 			booking.TotalAmount,
-			booking.BookingDate,
+			booking.CreatedAt.Format("2006-01-02 15:04:05"),
+			booking.UpdatedAt.Format("2006-01-02 15:04:05"),
 		).
 		Suffix("RETURNING *")
 
@@ -53,7 +65,6 @@ func (br *BookingRepository) CreateBooking(ctx *gin.Context, booking *domain.Boo
 		&booking.CheckOutDate,
 		&booking.Status,
 		&booking.TotalAmount,
-		&booking.BookingDate,
 		&booking.CreatedAt,
 		&booking.UpdatedAt,
 	)
@@ -92,7 +103,6 @@ func (br *BookingRepository) GetBookingByID(ctx *gin.Context, id uint64) (*domai
 		&booking.CheckOutDate,
 		&booking.Status,
 		&booking.TotalAmount,
-		&booking.BookingDate,
 		&booking.CreatedAt,
 		&booking.UpdatedAt,
 	)
@@ -122,7 +132,7 @@ func (br *BookingRepository) ListBookings(ctx *gin.Context, skip, limit uint64) 
 	}
 
 	query := br.db.QueryBuilder.Select("*").
-		OrderBy("id").
+		OrderBy("id DESC").
 		Limit(limit)
 
 	if skip > 0 {
@@ -153,7 +163,6 @@ func (br *BookingRepository) ListBookings(ctx *gin.Context, skip, limit uint64) 
 			&booking.CheckOutDate,
 			&booking.Status,
 			&booking.TotalAmount,
-			&booking.BookingDate,
 			&booking.CreatedAt,
 			&booking.UpdatedAt,
 		)
@@ -187,7 +196,7 @@ func (rr *BookingRepository) ListBookingsWithFilter(ctx *gin.Context, booking *d
 
 	query := rr.db.QueryBuilder.Select("*").
 		From("bookings").
-		OrderBy("id").
+		OrderBy("id DESC").
 		Limit(limit)
 
 	if skip > 0 {
@@ -222,9 +231,6 @@ func (rr *BookingRepository) ListBookingsWithFilter(ctx *gin.Context, booking *d
 	if booking.TotalAmount != 0 {
 		query = query.Where("total_amount = ?", booking.TotalAmount)
 	}
-	if booking.BookingDate != nil {
-		query = query.Where("booking_date = ?", *booking.BookingDate)
-	}
 	if booking.CreatedAt != nil {
 		query = query.Where("created_at = ?", *booking.CreatedAt)
 	}
@@ -256,7 +262,6 @@ func (rr *BookingRepository) ListBookingsWithFilter(ctx *gin.Context, booking *d
 			&booking.CheckOutDate,
 			&booking.Status,
 			&booking.TotalAmount,
-			&booking.BookingDate,
 			&booking.CreatedAt,
 			&booking.UpdatedAt,
 		)
@@ -339,7 +344,7 @@ func (br *BookingRepository) ListBookingCustomerPayments(ctx *gin.Context, skip,
 
 	query := br.db.QueryBuilder.Select("*").
 		From("booking_customer_payment").
-		OrderBy("booking_id").
+		OrderBy("booking_id DESC").
 		Limit(limit)
 
 	if skip > 0 {
@@ -405,8 +410,8 @@ func (br *BookingRepository) UpdateBooking(ctx *gin.Context, booking *domain.Boo
 		Set("check_out_date", sq.Expr("COALESCE(?, check_out_date)", booking.CheckOutDate)).
 		Set("status", sq.Expr("COALESCE(?, status)", booking.Status)).
 		Set("total_amount", sq.Expr("COALESCE(?, total_amount)", booking.TotalAmount)).
-		Set("booking_date", sq.Expr("COALESCE(?, booking_date)", booking.BookingDate)).
-		Where(sq.Eq{"id": booking.ID}).
+		Set("updated_at", booking.UpdatedAt.Format("2006-01-02 15:04:05")).
+		Where("id = ?", booking.ID).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -425,7 +430,6 @@ func (br *BookingRepository) UpdateBooking(ctx *gin.Context, booking *domain.Boo
 		&booking.CheckOutDate,
 		&booking.Status,
 		&booking.TotalAmount,
-		&booking.BookingDate,
 		&booking.CreatedAt,
 		&booking.UpdatedAt,
 	)
@@ -456,4 +460,130 @@ func (br *BookingRepository) DeleteBooking(ctx *gin.Context, id uint64) error {
 	}
 
 	return nil
+}
+
+func (br *BookingRepository) ListBookingCustomerPaymentsWithFilter(ctx *gin.Context, bookingCustomerPayment *domain.BookingCustomerPayment, skip, limit uint64) ([]domain.BookingCustomerPayment, uint64, error) {
+	var bookings []domain.BookingCustomerPayment
+	var totalCount uint64
+
+	countQuery := br.db.QueryBuilder.Select("COUNT(*)").From("booking_customer_payment")
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	err = br.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	query := br.db.QueryBuilder.Select(
+		"bcp.booking_id",
+		"bcp.customer_id",
+		"bcp.booking_price",
+		"bcp.booking_status",
+		"bcp.check_in_date",
+		"bcp.check_out_date",
+		"bcp.booking_created_at",
+		"bcp.booking_updated_at",
+		"bcp.room_id",
+		"bcp.room_number",
+		"bcp.room_type_id",
+		"bcp.room_type_name",
+		"bcp.floor",
+		"bcp.rate_prices_id",
+		"bcp.customer_firstname",
+		"bcp.customer_surname",
+		"bcp.payment_id",
+		"bcp.payment_status",
+		"bcp.payment_update_date",
+	).From("booking_customer_payment bcp").
+		OrderBy("bcp.booking_id DESC").
+		Limit(limit)
+
+	if skip > 0 {
+		query = query.Offset(skip)
+	}
+
+	// Add WHERE clauses for each non-nil field in the BookingCustomerPayment struct
+	if bookingCustomerPayment.BookingID != 0 {
+		query = query.Where("bcp.booking_id = ?", bookingCustomerPayment.BookingID)
+	}
+	if bookingCustomerPayment.BookingPrice != 0 {
+		query = query.Where("bcp.booking_price = ?", bookingCustomerPayment.BookingPrice)
+	}
+	if bookingCustomerPayment.BookingStatus != 0 {
+		query = query.Where("bcp.booking_status = ?", bookingCustomerPayment.BookingStatus)
+	}
+	if bookingCustomerPayment.CheckInDate != nil {
+		query = query.Where("bcp.check_in_date = ?", *bookingCustomerPayment.CheckInDate)
+	}
+	if bookingCustomerPayment.CheckOutDate != nil {
+		query = query.Where("bcp.check_out_date = ?", *bookingCustomerPayment.CheckOutDate)
+	}
+	if bookingCustomerPayment.RoomNumber != "" {
+		query = query.Where("bcp.room_number = ?", bookingCustomerPayment.RoomNumber)
+	}
+	if bookingCustomerPayment.RoomTypeName != "" {
+		query = query.Where("bcp.room_type_name = ?", bookingCustomerPayment.RoomTypeName)
+	}
+	if bookingCustomerPayment.CustomerFirstName != "" {
+		query = query.Where("bcp.customer_firstname = ?", bookingCustomerPayment.CustomerFirstName)
+	}
+	if bookingCustomerPayment.CustomerSurname != "" {
+		query = query.Where("bcp.customer_surname = ?", bookingCustomerPayment.CustomerSurname)
+	}
+	if bookingCustomerPayment.PaymentStatus != nil && *bookingCustomerPayment.PaymentStatus != 0 {
+		query = query.Where("bcp.payment_status = ?", *bookingCustomerPayment.PaymentStatus)
+	}
+	if bookingCustomerPayment.BookingCreatedAt != nil {
+		query = query.Where("bcp.booking_created_at = ?", *bookingCustomerPayment.BookingCreatedAt)
+	}
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	slog.Debug("SQL QUERY", "query", query)
+
+	rows, err := br.db.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var booking domain.BookingCustomerPayment
+		err := rows.Scan(
+			&booking.BookingID,
+			&booking.CustomerID,
+			&booking.BookingPrice,
+			&booking.BookingStatus,
+			&booking.CheckInDate,
+			&booking.CheckOutDate,
+			&booking.BookingCreatedAt,
+			&booking.BookingUpdatedAt,
+			&booking.RoomID,
+			&booking.RoomNumber,
+			&booking.RoomTypeID,
+			&booking.RoomTypeName,
+			&booking.Floor,
+			&booking.RatePriceID,
+			&booking.CustomerFirstName,
+			&booking.CustomerSurname,
+			&booking.PaymentID,
+			&booking.PaymentStatus,
+			&booking.PaymentUpdateDate,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+
+		bookings = append(bookings, booking)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	return bookings, totalCount, nil
 }

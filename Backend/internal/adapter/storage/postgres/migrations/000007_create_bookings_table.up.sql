@@ -8,7 +8,6 @@ CREATE TABLE bookings (
     check_out_date DATE NOT NULL,
     status INT,
     total_amount DECIMAL(10, 2),
-    booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );

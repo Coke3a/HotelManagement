@@ -103,7 +103,7 @@ func (pr *PaymentRepository) ListPayments(ctx *gin.Context, skip, limit uint64) 
 
 	query := pr.db.QueryBuilder.Select("*").
 		From("payments").
-		OrderBy("id").
+		OrderBy("id DESC").
 		Limit(limit)
 
 	if skip > 0 {
