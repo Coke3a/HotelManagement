@@ -682,6 +682,7 @@ type ListBookingsWithFilterRequestWithFilter struct {
     CustomerSurname   string                `form:"customer_surname,omitempty" example:"Doe"`
     PaymentStatus     string                `form:"payment_status,omitempty" example:"1"`
 	CreatedAt         *time.Time            `form:"created_at,omitempty" time_format:"2006-01-02" example:"2023-08-01"`
+	UpdatedAt         *time.Time            `form:"updated_at,omitempty" time_format:"2006-01-02" example:"2023-08-01"`
 }
 
 func (bh *BookingHandler) ListBookingCustomerPaymentsWithFilter(ctx *gin.Context) {
@@ -749,6 +750,11 @@ func (bh *BookingHandler) ListBookingCustomerPaymentsWithFilter(ctx *gin.Context
 	if createdAt := ctx.Query("created_at"); createdAt != "" {
 		if createdAt, err := time.Parse("2006-01-02", createdAt); err == nil {
 			booking.BookingCreatedAt = &createdAt
+		}
+	}
+	if updatedAt := ctx.Query("updated_at"); updatedAt != "" {
+		if updatedAt, err := time.Parse("2006-01-02", updatedAt); err == nil {
+			booking.BookingUpdatedAt = &updatedAt
 		}
 	}
 

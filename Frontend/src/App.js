@@ -36,7 +36,7 @@ import GuestTypeEdit from "./components/GuestTypeEdit";
 import ReceiptPrint from './components/ReceiptPrint';
 import Log from "./components/Log";
 import DailyBookingSummary from './components/DailyBookingSummary';
-
+import DailyBookingSummaryEdit from './components/DailyBookingSummaryEdit';
 import { logout } from './utils/auth';
 import { UserRoleEnum } from './utils/userRoleEnum';
 
@@ -100,6 +100,7 @@ const App = () => {
                   <Route path="/receipt/:id" element={<ReceiptPrint />} />
                   <Route path="/logs" element={<Log />} />
                   <Route path="/daily-summary" element={<DailyBookingSummary />} />
+                  <Route path="/daily-summary/edit/:date" element={<DailyBookingSummaryEdit />} />
                 </Route>
               </Routes>
             </Box>

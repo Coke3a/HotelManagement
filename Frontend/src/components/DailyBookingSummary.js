@@ -1,18 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Space, Button, Tag, DatePicker, message } from 'antd';
+import { Space, Button, DatePicker, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { EditOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { handleTokenExpiration } from '../utils/api';
+import { countBookings } from '../utils/bookingUtils';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Paper,
+  Typography,
+  CircularProgress,
+  Chip
+} from '@mui/material';
 
 const DailyBookingSummary = () => {
   const [summaries, setSummaries] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-    total: 0,
-  });
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
@@ -33,12 +41,6 @@ const DailyBookingSummary = () => {
 
       const data = await response.json();
       setSummaries(data.data);
-      setPagination({
-        ...pagination,
-        total: data.total,
-        current: page,
-        pageSize: limit,
-      });
     } catch (error) {
       console.error('Error fetching summaries:', error);
       message.error('Failed to fetch summaries');
@@ -73,57 +75,55 @@ const DailyBookingSummary = () => {
     }
   };
 
-  const getStatusTag = (status) => {
-    const statusMap = {
-      0: { color: 'default', text: 'Unchecked' },
-      1: { color: 'processing', text: 'Checked' },
-      2: { color: 'success', text: 'Confirmed' },
-    };
-    
-    const statusInfo = statusMap[status] || { color: 'default', text: 'Unknown' };
-    return <Tag color={statusInfo.color}>{statusInfo.text}</Tag>;
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 0: // Unchecked
+        return {
+          backgroundColor: '#FFF4E5',
+          textColor: '#663C00'
+        };
+      case 1: // Checked
+        return {
+          backgroundColor: '#E8F4FD',
+          textColor: '#0A4FA6'
+        };
+      case 2: // Confirmed
+        return {
+          backgroundColor: '#EDF7ED',
+          textColor: '#1E4620'
+        };
+      default:
+        return {
+          backgroundColor: '#F5F5F5',
+          textColor: '#666666'
+        };
+    }
   };
 
-  const columns = [
-    {
-      title: 'Date',
-      dataIndex: 'summaryDate',
-      key: 'summaryDate',
-      render: (date) => dayjs(date).format('YYYY-MM-DD'),
-    },
-    {
-      title: 'Total Bookings',
-      dataIndex: 'totalBookings',
-      key: 'totalBookings',
-    },
-    {
-      title: 'Total Amount',
-      dataIndex: 'totalAmount',
-      key: 'totalAmount',
-      render: (amount) => amount ? `${amount.toFixed(2)}` : '0.00',
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: getStatusTag,
-    },
-    {
-      title: 'Action',
-      key: 'action',
-      render: (_, record) => (
-        <Space>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/daily-summary/${dayjs(record.summaryDate).format('YYYY-MM-DD')}`)}
-          >
-            Edit
-          </Button>
-        </Space>
-      ),
-    },
-  ];
+  const renderStatus = (status) => {
+    const statusText = {
+      0: 'Unchecked',
+      1: 'Checked',
+      2: 'Confirmed'
+    }[status] || 'Unknown';
+
+    const { backgroundColor, textColor } = getStatusColor(status);
+
+    return (
+      <Chip 
+        label={statusText}
+        sx={{
+          backgroundColor: backgroundColor,
+          color: textColor,
+          fontWeight: 'medium',
+          '&:hover': {
+            backgroundColor: backgroundColor,
+          }
+        }}
+        size="small"
+      />
+    );
+  };
 
   useEffect(() => {
     fetchSummaries();
@@ -132,7 +132,6 @@ const DailyBookingSummary = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between mb-4">
-        <h1 className="text-2xl font-bold">Daily Booking Summaries</h1>
         <Space>
           <DatePicker onChange={handleGenerateSummary} />
           <Button type="primary" onClick={() => handleGenerateSummary(dayjs())}>
@@ -140,14 +139,60 @@ const DailyBookingSummary = () => {
           </Button>
         </Space>
       </div>
-      <Table
-        columns={columns}
-        dataSource={summaries}
-        rowKey="summaryDate"
-        pagination={pagination}
-        loading={loading}
-        onChange={(pagination) => fetchSummaries(pagination.current, pagination.pageSize)}
-      />
+      
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+              <TableCell>Date</TableCell>
+              <TableCell>Created Bookings</TableCell>
+              <TableCell>Completed Bookings</TableCell>
+              <TableCell>Canceled Bookings</TableCell>
+              <TableCell>Total Amount</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Created At</TableCell>
+              <TableCell>Action</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={8} align="center">
+                  <CircularProgress size={24} />
+                </TableCell>
+              </TableRow>
+            ) : summaries.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} align="center">
+                  <Typography variant="body2">No summaries found</Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
+              summaries.map((summary, index) => (
+                <TableRow key={summary.SummaryDate} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                  <TableCell>{dayjs(summary.SummaryDate).format('YYYY-MM-DD')}</TableCell>
+                  <TableCell>{countBookings(summary.CreatedBookings)}</TableCell>
+                  <TableCell>{countBookings(summary.CompletedBookings)}</TableCell>
+                  <TableCell>{countBookings(summary.CanceledBookings)}</TableCell>
+                  <TableCell>{summary.TotalAmount.toFixed(2)}</TableCell>
+                  <TableCell>{renderStatus(summary.Status)}</TableCell>
+                  <TableCell>{dayjs(summary.CreatedAt).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => navigate(`/daily-summary/edit/${dayjs(summary.SummaryDate).format('YYYY-MM-DD')}`)}
+                      icon={<EditOutlined />}
+                    >
+                      Detail
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </div>
   );
 };

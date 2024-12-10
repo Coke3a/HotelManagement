@@ -66,13 +66,11 @@ func (dbs *DailyBookingSummaryService) GenerateDailySummary(ctx *gin.Context, da
 	// Process updated bookings
 	for _, booking := range updatedBookings {
 		// Check if the booking was already counted in created bookings
-		if !contains(createdIDs, booking.ID) {
-			if booking.Status == domain.BookingStatusCompleted {
-				totalAmount += booking.TotalAmount
-				completedIDs = append(completedIDs, booking.ID)
-			} else if booking.Status == domain.BookingStatusCanceled {
-				canceledIDs = append(canceledIDs, booking.ID)
-			}
+		if booking.Status == domain.BookingStatusCompleted {
+			totalAmount += booking.TotalAmount
+			completedIDs = append(completedIDs, booking.ID)
+		} else if booking.Status == domain.BookingStatusCanceled {
+			canceledIDs = append(canceledIDs, booking.ID)
 		}
 	}
 
