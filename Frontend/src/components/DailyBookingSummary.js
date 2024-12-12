@@ -174,7 +174,7 @@ const DailyBookingSummary = () => {
                   <TableCell>{countBookings(summary.CreatedBookings)}</TableCell>
                   <TableCell>{countBookings(summary.CompletedBookings)}</TableCell>
                   <TableCell>{countBookings(summary.CanceledBookings)}</TableCell>
-                  <TableCell>{summary.TotalAmount.toFixed(2)}</TableCell>
+                  <TableCell>{summary.TotalAmount}</TableCell>
                   <TableCell>{renderStatus(summary.Status)}</TableCell>
                   <TableCell>{dayjs(summary.CreatedAt).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
                   <TableCell>

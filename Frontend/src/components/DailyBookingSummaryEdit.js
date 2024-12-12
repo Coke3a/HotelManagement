@@ -21,6 +21,9 @@ import {
   Chip,
   ToggleButtonGroup,
   ToggleButton,
+  FormControl,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { BookingStatus, getBookingStatusMessage } from '../utils/bookingStatusEnums';
@@ -29,8 +32,11 @@ const DailyBookingSummaryEdit = () => {
   const { date } = useParams();
   const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
-  const [bookings, setBookings] = useState([]);
+  const [createdBookings, setCreatedBookings] = useState([]);
+  const [completedBookings, setCompletedBookings] = useState([]);
+  const [canceledBookings, setCanceledBookings] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(false);
   const token = localStorage.getItem('token');
 
   const fetchBookings = async (filterParams, skip = 0, limit = 100) => {
@@ -54,7 +60,7 @@ const DailyBookingSummaryEdit = () => {
       }
 
       const data = await response.json();
-      return Array.isArray(data.data) ? data.data : [];
+      return Array.isArray(data.data?.booking_customer_payments) ? data.data.booking_customer_payments : [];
     } catch (error) {
       console.error('Error fetching bookings:', error);
       return [];
@@ -79,51 +85,23 @@ const DailyBookingSummaryEdit = () => {
       const result = await response.json();
       setSummary(result);
 
-      // Fetch bookings based on date and status
-      const allBookings = [];
-
       // Fetch created bookings
       const createdBookings = await fetchBookings({ created_at: date }, 0, 100);
-      allBookings.push(...createdBookings);
+      setCreatedBookings(createdBookings);
 
       // Fetch completed bookings
       const completedBookings = await fetchBookings({ updated_at: date, booking_status: BookingStatus.COMPLETED }, 0, 100);
-      allBookings.push(...completedBookings);
+      setCompletedBookings(completedBookings);
 
       // Fetch canceled bookings
       const canceledBookings = await fetchBookings({ updated_at: date, booking_status: BookingStatus.CANCELED }, 0, 100);
-      allBookings.push(...canceledBookings);
+      setCanceledBookings(canceledBookings);
 
-      setBookings(allBookings);
     } catch (error) {
       console.error('Error fetching summary:', error);
       message.error('Failed to fetch summary');
     }
     setLoading(false);
-  };
-
-  const handleStatusChange = async (event, newStatus) => {
-    if (newStatus !== null) {
-      try {
-        const response = await fetch(`http://localhost:8080/v1/daily-summary/status?date=${date}&status=${newStatus}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to update status');
-        }
-
-        message.success('Status updated successfully');
-        fetchSummary();
-      } catch (error) {
-        console.error('Error updating status:', error);
-        message.error('Failed to update status');
-      }
-    }
   };
 
   const renderBookingStatus = (status) => {
@@ -177,6 +155,37 @@ const DailyBookingSummaryEdit = () => {
     );
   };
 
+  const handleStatusChange = async (event) => {
+    const newStatus = event.target.value;
+    setStatusLoading(true);
+    try {
+      const response = await fetch(`http://localhost:8080/v1/daily-summary/status?date=${date}&status=${newStatus}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+
+      setSummary(prev => ({ ...prev, Status: parseInt(newStatus) }));
+      message.success('Status updated successfully');
+    } catch (error) {
+      console.error('Error updating status:', error);
+      message.error('Failed to update status');
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (date) {
       fetchSummary();
@@ -198,6 +207,73 @@ const DailyBookingSummaryEdit = () => {
       </Box>
     );
   }
+
+  const renderBookingsTable = (bookings, title) => (
+    <Grid item xs={12}>
+      <Card>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>{title}</Typography>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                  <TableCell>Booking ID</TableCell>
+                  <TableCell>Customer</TableCell>
+                  <TableCell>Room</TableCell>
+                  <TableCell>Check In</TableCell>
+                  <TableCell>Check Out</TableCell>
+                  <TableCell>Amount</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {bookings.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">
+                      <Typography variant="body2">No bookings found</Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  bookings.map((booking, index) => (
+                    <TableRow key={booking.booking_id} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
+                      <TableCell>{booking.booking_id}</TableCell>
+                      <TableCell>
+                        <Button
+                          size="small"
+                          color="primary"
+                          onClick={() => navigate(`/guest/edit/${booking.customer_id}`)}
+                        >
+                          {booking.customer_firstname ? 
+                            `${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}` :
+                            `Guest ${booking.customer_id}`
+                          }
+                        </Button>
+                      </TableCell>
+                      <TableCell>{booking.room_number}</TableCell>
+                      <TableCell>{dayjs(booking.check_in_date).format('YYYY-MM-DD')}</TableCell>
+                      <TableCell>{dayjs(booking.check_out_date).format('YYYY-MM-DD')}</TableCell>
+                      <TableCell>{booking.booking_price}</TableCell>
+                      <TableCell>{renderBookingStatus(booking.booking_status)}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => navigate(`/booking/edit/${booking.booking_id}`)}
+                        >
+                          Detail
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
+    </Grid>
+  );
 
   return (
     <Box p={3}>
@@ -237,82 +313,43 @@ const DailyBookingSummaryEdit = () => {
                 <Grid item xs={12} sm={6} md={4}>
                   <Typography variant="subtitle2" color="textSecondary">Total Amount</Typography>
                   <Typography variant="body1">
-                    {summary.TotalAmount.toFixed(2)}
+                    {summary.TotalAmount}
                   </Typography>
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                   <Typography variant="subtitle2" color="textSecondary">Created At</Typography>
                   <Typography variant="body1">
-                    {summary.created_at ? dayjs(summary.created_at).format('YYYY-MM-DD HH:mm:ss') : '-'}
+                    {summary.CreatedAt ? dayjs(summary.CreatedAt).format('YYYY-MM-DD HH:mm:ss') : '-'}
                   </Typography>
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
                   <Typography variant="subtitle2" color="textSecondary">Updated At</Typography>
                   <Typography variant="body1">
-                    {summary.updated_at ? dayjs(summary.updated_at).format('YYYY-MM-DD HH:mm:ss') : '-'}
+                    {summary.UpdatedAt ? dayjs(summary.UpdatedAt).format('YYYY-MM-DD HH:mm:ss') : '-'}
                   </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6} md={4}>
+                  <Typography variant="subtitle2" color="textSecondary">Status</Typography>
+                  <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+                    <Select
+                      value={summary.Status}
+                      onChange={handleStatusChange}
+                      disabled={statusLoading}
+                    >
+                      <MenuItem value={0}>Unchecked</MenuItem>
+                      <MenuItem value={1}>Checked</MenuItem>
+                      <MenuItem value={2}>Confirmed</MenuItem>
+                    </Select>
+                  </FormControl>
                 </Grid>
               </Grid>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>Bookings</Typography>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                      <TableCell>Booking ID</TableCell>
-                      <TableCell>Customer</TableCell>
-                      <TableCell>Room</TableCell>
-                      <TableCell>Check In</TableCell>
-                      <TableCell>Check Out</TableCell>
-                      <TableCell>Amount</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Action</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {bookings.map((booking, index) => (
-                      <TableRow key={booking.id} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                        <TableCell>{booking.id}</TableCell>
-                        <TableCell>
-                          <Button
-                            size="small"
-                            color="primary"
-                            onClick={() => navigate(`/guest/edit/${booking.customer_id}`)}
-                          >
-                            {booking.customer_firstname ? 
-                              `${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}` :
-                              `Guest ${booking.customer_id}`
-                            }
-                          </Button>
-                        </TableCell>
-                        <TableCell>{booking.room_number}</TableCell>
-                        <TableCell>{dayjs(booking.check_in_date).format('YYYY-MM-DD')}</TableCell>
-                        <TableCell>{dayjs(booking.check_out_date).format('YYYY-MM-DD')}</TableCell>
-                        <TableCell>{booking.total_amount || booking.booking_price}</TableCell>
-                        <TableCell>{renderBookingStatus(booking.booking_status)}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => navigate(`/booking/edit/${booking.id}`)}
-                          >
-                            Detail
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
+        {renderBookingsTable(createdBookings, "Created Bookings")}
+        {renderBookingsTable(completedBookings, "Completed Bookings")}
+        {renderBookingsTable(canceledBookings, "Canceled Bookings")}
       </Grid>
     </Box>
   );

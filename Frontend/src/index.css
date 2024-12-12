@@ -327,3 +327,43 @@ body,
   background-color: #ffffff;
   border-radius: 4px;
 }
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+  border: 1px solid #e5e7eb;
+}
+
+.dashboard-table thead th {
+  background-color: #312e81;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.dashboard-table tbody td {
+  background-color: white;
+  padding: 0.5rem;
+}
+
+.dashboard-table tbody tr:hover td {
+  background-color: #f9fafb;
+}
+
+.dashboard-table .room-cell {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background-color: white;
+  border-right: 2px solid #e5e7eb;
+}
+
+.dashboard-table tbody tr:hover .room-cell {
+  background-color: #f9fafb;
+}

@@ -14,7 +14,6 @@ const PaymentEdit = () => {
     booking_id: '',
     amount: '',
     payment_method: '',
-    payment_date: null,
     status: '',
   });
   const [loading, setLoading] = useState(true);
@@ -43,7 +42,6 @@ const PaymentEdit = () => {
         const data = await response.json();
         setPayment({
           ...data.data,
-          payment_date: new Date(data.data.payment_date),
           payment_method: data.data.payment_method === "Not specified" ? PaymentMethod.NOT_SPECIFIED : data.data.payment_method,
         });
       } catch (error) {
@@ -62,10 +60,6 @@ const PaymentEdit = () => {
     setPayment({ ...payment, [name]: value });
   };
 
-  const handleDateChange = (date) => {
-    setPayment({ ...payment, payment_date: date });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -79,10 +73,9 @@ const PaymentEdit = () => {
         },
         body: JSON.stringify({
           ...payment,
-          payment_date: payment.payment_date.toISOString(),
           amount: parseFloat(payment.amount),
           status: parseInt(payment.status),
-          payment_method: parseInt(payment.payment_method), // Ensure this is sent as an integer
+          payment_method: parseInt(payment.payment_method),
         }),
       });
 
@@ -174,17 +167,6 @@ const PaymentEdit = () => {
                   <MenuItem value={PaymentMethod.BANK_TRANSFER}>Bank Transfer</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Payment Date"
-                  value={payment.payment_date}
-                  onChange={handleDateChange}
-                  renderInput={(params) => <TextField {...params} fullWidth margin="normal" required className="form-input" />}
-                  inputFormat="yyyy-MM-dd"
-                />
-              </LocalizationProvider>
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth margin="normal" required className="form-input">

@@ -215,7 +215,7 @@ const Payment = () => {
               <TableCell>Amount</TableCell>
               <TableCell>Payment Method</TableCell>
               <TableCell>Status</TableCell>
-              <TableCell>Created At</TableCell>
+              <TableCell>Payment Date</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -241,7 +241,7 @@ const Payment = () => {
                   <TableCell>{payment.amount}</TableCell>
                   <TableCell>{renderPaymentMethod(payment.payment_method)}</TableCell>
                   <TableCell>{renderPaymentStatus(payment.status)}</TableCell>
-                  <TableCell>{new Date(payment.created_at).toLocaleString()}</TableCell>
+                  <TableCell>{new Date(payment.payment_date).toLocaleString()}</TableCell>
                   <TableCell>
                     <Button
                       variant="outlined"

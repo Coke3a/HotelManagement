@@ -501,7 +501,7 @@ const Booking = () => {
                     </Button>
                   </TableCell>
                   <TableCell align="center" style={{ paddingLeft: '8px' }}>
-                    <Box display="flex" flexDirection="row" alignItems="center" justifyContent="center">
+                    <Box display="flex" flexDirection="row" alignItems="center" justifyContent="">
                       <Button
                         size="small"
                         color="primary"
