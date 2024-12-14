@@ -21,7 +21,7 @@ func NewAuthHandler(svc port.AuthService) *AuthHandler {
 // loginRequest represents the request body for logging in a user
 type loginRequest struct {
 	Username    string `json:"username" binding:"required" example:"username1234"`
-	Password string `json:"password" binding:"required,min=8" example:"12345678" minLength:"8"`
+	Password string `json:"password" binding:"required" example:"12345678" minLength:"1"`
 }
 
 // Login godoc
