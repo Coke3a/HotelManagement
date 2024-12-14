@@ -5,8 +5,7 @@ import "time"
 type BookingStatus int
 
 const (
-    BookingStatusPending BookingStatus = iota + 1
-    BookingStatusConfirmed
+    BookingStatusUncheckIn BookingStatus = iota + 1
     BookingStatusCheckedIn
     BookingStatusCheckedOut
     BookingStatusCanceled

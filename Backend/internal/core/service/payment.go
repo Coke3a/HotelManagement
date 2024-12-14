@@ -28,7 +28,7 @@ func (ps *PaymentService) ProcessPayment(ctx *gin.Context, payment *domain.Payme
 		return nil, domain.ErrInvalidData
 	}
 	if payment.Status == 0 {
-		payment.Status = domain.PaymentStatusPending
+		payment.Status = domain.PaymentStatusUnpaid
 	}
 
 	// Set the payment date if it's not already set

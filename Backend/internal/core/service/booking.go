@@ -30,7 +30,7 @@ func (bs *BookingService) CreateBooking(ctx *gin.Context, booking *domain.Bookin
 
 	// Set initial status to Pending if not provided
 	if booking.Status == 0 {
-		booking.Status = domain.BookingStatusPending
+		booking.Status = domain.BookingStatusUncheckIn
 	}
 
 	createdBooking, err := bs.repo.CreateBooking(ctx, booking)
@@ -68,7 +68,7 @@ func (bs *BookingService) CreateBookingAndPayment(ctx *gin.Context, booking *dom
 	now := time.Now()
 	// Set initial status to Pending if not provided
 	if booking.Status == 0 {
-		booking.Status = domain.BookingStatusPending
+		booking.Status = domain.BookingStatusUncheckIn
 	}
 
 	// Create the booking
@@ -86,7 +86,7 @@ func (bs *BookingService) CreateBookingAndPayment(ctx *gin.Context, booking *dom
 		Amount:        booking.TotalAmount,
 		PaymentMethod: domain.PaymentMethodNotSpecified,
 		PaymentDate:   &now,
-		Status:        domain.PaymentStatusPending,
+		Status:        domain.PaymentStatusUnpaid,
 	}
 
 	// Create the payment

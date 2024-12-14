@@ -176,10 +176,8 @@ const PaymentEdit = () => {
                   value={payment.status}
                   onChange={handleChange}
                 >
-                  <MenuItem value={PaymentStatus.PENDING}>Pending</MenuItem>
-                  <MenuItem value={PaymentStatus.COMPLETED}>Completed</MenuItem>
-                  <MenuItem value={PaymentStatus.FAILED}>Failed</MenuItem>
-                  <MenuItem value={PaymentStatus.REFUNDED}>Refunded</MenuItem>
+                  <MenuItem value={PaymentStatus.UNPAID}>Unpaid</MenuItem>
+                  <MenuItem value={PaymentStatus.PAID}>Paid</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

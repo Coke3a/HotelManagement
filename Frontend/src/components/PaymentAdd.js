@@ -105,10 +105,8 @@ const PaymentAdd = () => {
               value={payment.status}
               onChange={handleChange}
             >
-              <MenuItem value="pending">Pending</MenuItem>
-              <MenuItem value="completed">Completed</MenuItem>
-              <MenuItem value="failed">Failed</MenuItem>
-              <MenuItem value="refunded">Refunded</MenuItem>
+              <MenuItem value="unpaid">Unpaid</MenuItem>
+              <MenuItem value="paid">Paid</MenuItem>
             </Select>
           </FormControl>
           <Button type="submit" variant="contained" color="primary" className="form-submit" disabled={loading}>

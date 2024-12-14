@@ -6,10 +6,8 @@ type PaymentStatus int
 type PaymentMethod int
 
 const (
-	PaymentStatusPending PaymentStatus = iota + 1
-	PaymentStatusCompleted
-	PaymentStatusFailed
-	PaymentStatusRefunded
+	PaymentStatusUnpaid PaymentStatus = iota + 1
+	PaymentStatusPaid
 )
 
 const (

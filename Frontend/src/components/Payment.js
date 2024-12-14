@@ -20,6 +20,7 @@ import {
 import { getPaymentStatusMessage, getPaymentMethodMessage, PaymentStatus, PaymentMethod } from '../utils/paymentEnums';
 import { getUserRole } from '../utils/auth';
 import EditIcon from '@mui/icons-material/Edit';
+import { handleTokenExpiration } from '../utils/api';
 
 const Payment = () => {
   const token = localStorage.getItem('token');
@@ -94,17 +95,11 @@ const Payment = () => {
     let statusColor;
 
     switch (status) {
-      case PaymentStatus.PENDING:
+      case PaymentStatus.UNPAID:
         statusColor = 'warning';
         break;
-      case PaymentStatus.COMPLETED:
+      case PaymentStatus.PAID:
         statusColor = 'success';
-        break;
-      case PaymentStatus.FAILED:
-        statusColor = 'error';
-        break;
-      case PaymentStatus.REFUNDED:
-        statusColor = 'info';
         break;
       default:
         statusColor = 'default';

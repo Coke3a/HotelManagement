@@ -26,8 +26,8 @@ func NewPaymentHandler(svc port.PaymentService) *PaymentHandler {
 type createPaymentRequest struct {
 	BookingID     uint64  `json:"booking_id" binding:"required" example:"1"`
 	Amount        float64 `json:"amount" binding:"required,gt=0" example:"1000.50"`
-	PaymentMethod domain.PaymentMethod  `json:"payment_method" binding:"required" example:"credit_card"`
-	Status        domain.PaymentStatus  `json:"status" binding:"required" example:"0"`
+	PaymentMethod domain.PaymentMethod  `json:"payment_method" binding:"required" example:"1"`
+	Status        domain.PaymentStatus  `json:"status" binding:"required" example:"1"`
 }
 
 // CreatePayment godoc

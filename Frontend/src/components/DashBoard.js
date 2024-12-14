@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, CircularProgress, Button } from '@mui/material';
+import { Typography, CircularProgress, Button, Card, CardContent, Grid } from '@mui/material';
 import { PaymentStatus } from '../utils/paymentEnums';
 import { BookingStatus, getBookingStatusMessage } from '../utils/bookingStatusEnums';
 import { getPaymentStatusMessage } from '../utils/paymentEnums';
 import { useNavigate } from 'react-router-dom';
+import { handleTokenExpiration } from '../utils/api';
 
 const DashBoard = () => {
   const token = localStorage.getItem('token');
   const [rooms, setRooms] = useState([]);
   const [bookings, setBookings] = useState([]);
+  const [todayCheckIns, setTodayCheckIns] = useState([]);
+  const [todayCheckOuts, setTodayCheckOuts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -21,8 +24,9 @@ const DashBoard = () => {
         const dates = generateDates();
         const startDate = dates[0].date;
         const endDate = dates[dates.length - 1].date;
+        const today = new Date().toISOString().slice(0, 10);
 
-        const [bookingsResponse, roomsResponse] = await Promise.all([
+        const [bookingsResponse, roomsResponse, checkInsResponse, checkOutsResponse] = await Promise.all([
           fetch(`http://localhost:8080/v1/booking/?${new URLSearchParams({
             skip: '0',
             limit: '100',
@@ -39,6 +43,26 @@ const DashBoard = () => {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`,
             },
+          }),
+          fetch(`http://localhost:8080/v1/booking/?${new URLSearchParams({
+            skip: '0',
+            limit: '100',
+            check_in_date: today,
+          })}`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+          }),
+          fetch(`http://localhost:8080/v1/booking/?${new URLSearchParams({
+            skip: '0',
+            limit: '100',
+            check_out_date: today,
+          })}`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
           })
         ]);
 
@@ -47,13 +71,21 @@ const DashBoard = () => {
           return;
         }
 
-        const [bookingsData, roomsData] = await Promise.all([
+        const [bookingsData, roomsData, checkInsData, checkOutsData] = await Promise.all([
           bookingsResponse.json(),
-          roomsResponse.json()
+          roomsResponse.json(),
+          checkInsResponse.json(),
+          checkOutsResponse.json()
         ]);
 
         const bookingPayments = bookingsData.data.booking_customer_payments || [];
         setBookings(bookingPayments);
+
+        const checkInPayments = checkInsData.data.booking_customer_payments || [];
+        setTodayCheckIns(checkInPayments);
+
+        const checkOutPayments = checkOutsData.data.booking_customer_payments || [];
+        setTodayCheckOuts(checkOutPayments);
 
         const roomsWithRoomType = roomsData.data?.rooms || [];
         setRooms(roomsWithRoomType);
@@ -62,6 +94,8 @@ const DashBoard = () => {
         setError(error.message);
         setRooms([]);
         setBookings([]);
+        setTodayCheckIns([]);
+        setTodayCheckOuts([]);
       } finally {
         setLoading(false);
       }
@@ -126,29 +160,40 @@ const DashBoard = () => {
             <td 
               key={`${room.id}-${dateObj.date}`}
               colSpan={colspan}
-              className="p-0.5 h-12 border-r border-gray-200"
+              className="p-0.5 h-10 border-r border-gray-200"
             >
               <div
-                className="h-full w-full transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col items-center justify-center p-1 space-y-0.5 rounded-lg text-xs"
-                style={{ backgroundColor: getStatusColor(booking) }}
+                className="h-full w-full transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col items-center justify-center p-0.5 space-y-0.5 rounded booking-hover-effect"
+                style={{ 
+                  backgroundColor: getStatusColor(booking),
+                  transition: 'all 0.2s ease-in-out'
+                }}
                 onClick={() => navigate(`/booking/edit/${booking.booking_id}`)}
                 title={`${booking.customer_firstname} ${booking.customer_surname} (${booking.check_in_date} - ${booking.check_out_date})`}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               >
-                <div className="font-semibold text-blue-900 text-xs">
+                <div className="font-semibold text-blue-900 text-[11px]">
                   {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
                 </div>
-                <div className="flex items-center space-x-1 text-xs bg-white/50 px-1.5 py-0.5 rounded">
+                <div className="flex items-center space-x-0.5 text-[10px] bg-white/50 px-1 py-0.5 rounded-sm">
                   <span 
-                    className="w-1.5 h-1.5 rounded-full"
+                    className="w-1 h-1 rounded-full"
                     style={{ backgroundColor: getBookingStatusColor(booking.booking_status) }}
                   />
                   <span className="font-medium">
                     {getBookingStatusMessage(booking.booking_status)}
                   </span>
                 </div>
-                <div className="flex items-center space-x-1 text-xs bg-white/50 px-1.5 py-0.5 rounded">
+                <div className="flex items-center space-x-0.5 text-[10px] bg-white/50 px-1 py-0.5 rounded-sm">
                   <span 
-                    className="w-1.5 h-1.5 rounded-full"
+                    className="w-1 h-1 rounded-full"
                     style={{ backgroundColor: getPaymentStatusColor(booking.payment_status) }}
                   />
                   <span className="font-medium">
@@ -230,6 +275,17 @@ const DashBoard = () => {
     }
   };
 
+  // Calculate today's check-ins, check-outs, and remaining bookings
+  const today = new Date().toISOString().slice(0, 10);
+  const checkInTodayCount = todayCheckIns.length;
+  const checkOutTodayCount = todayCheckOuts.length;
+  const remainingCheckInCount = todayCheckIns.filter(booking => 
+    booking.booking_status !== BookingStatus.CHECKED_IN
+  ).length;
+  const remainingCheckOutCount = todayCheckOuts.filter(booking => 
+    booking.booking_status !== BookingStatus.CHECKED_OUT
+  ).length;
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -237,6 +293,45 @@ const DashBoard = () => {
           Dashboard
         </Typography>
       </div>
+
+      <Grid container spacing={3} className="mb-4">
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle2" color="textSecondary">
+                Check-ins Today
+              </Typography>
+              <Typography variant="h6" className="text-indigo-900">
+                {checkInTodayCount}
+              </Typography>
+              <Typography variant="subtitle2" color="textSecondary" className="mt-2">
+                Remaining Check-ins
+              </Typography>
+              <Typography variant="h6" className="text-indigo-900">
+                {remainingCheckInCount}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="subtitle2" color="textSecondary">
+                Check-outs Today
+              </Typography>
+              <Typography variant="h6" className="text-indigo-900">
+                {checkOutTodayCount}
+              </Typography>
+              <Typography variant="subtitle2" color="textSecondary" className="mt-2">
+                Remaining Check-outs
+              </Typography>
+              <Typography variant="h6" className="text-indigo-900">
+                {remainingCheckOutCount}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
       <div className="overflow-auto rounded-lg shadow">
         <table className="w-full border-collapse table-auto dashboard-table">
@@ -248,10 +343,10 @@ const DashBoard = () => {
               {generateDates().map((dateObj) => (
                 <th 
                   key={dateObj.date}
-                  className="bg-indigo-900 p-2 text-xs font-semibold tracking-wide text-center text-white border-b border-r border-indigo-800 min-w-[100px]"
+                  className="bg-indigo-900 p-1.5 text-[11px] font-semibold tracking-wide text-center text-white border-b border-r border-indigo-800 min-w-[80px]"
                 >
                   <div className="font-bold">{dateObj.dayOfWeek}</div>
-                  <div className="text-indigo-200 text-xs mt-0.5">{dateObj.date}</div>
+                  <div className="text-indigo-200 text-[10px] mt-0.5">{dateObj.date}</div>
                 </th>
               ))}
             </tr>
@@ -278,9 +373,9 @@ const DashBoard = () => {
             ) : (
               rooms.map((room) => (
                 <tr key={room.id} className="hover:bg-gray-50">
-                  <td className="room-cell p-2 text-xs border-r border-gray-200">
+                  <td className="room-cell p-1.5 text-[11px] border-r border-gray-200">
                     <div className="font-semibold text-indigo-900">{room.room_number}</div>
-                    <div className="text-gray-600 text-xs">{room.room_type_name}</div>
+                    <div className="text-gray-600 text-[10px]">{room.room_type_name}</div>
                   </td>
                   {renderBookingRow(room)}
                 </tr>

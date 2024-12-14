@@ -17,6 +17,7 @@ import {
   Pagination,
 } from '@mui/material';
 import { getUserRole } from '../utils/auth';
+import { handleTokenExpiration } from '../utils/api';
 
 const GuestType = () => {
   const token = localStorage.getItem('token');

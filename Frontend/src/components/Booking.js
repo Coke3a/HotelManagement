@@ -137,12 +137,11 @@ const Booking = () => {
   const getStatusString = (status, type = 'booking') => {
     if (type === 'booking') {
       switch (status) {
-        case 1: return 'Pending';
-        case 2: return 'Confirmed';
-        case 3: return 'Checked In';
-        case 4: return 'Checked Out';
-        case 5: return 'Canceled';
-        case 6: return 'Completed';
+        case 1: return 'Uncheck-in';
+        case 2: return 'Check-in';
+        case 3: return 'Check-out';
+        case 4: return 'Cancelled';
+        case 5: return 'Completed';
         default: return 'Unknown';
       }
     } else if (type === 'payment') {

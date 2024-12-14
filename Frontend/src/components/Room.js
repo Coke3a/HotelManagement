@@ -14,9 +14,11 @@ import {
   Typography,
   Stack,
   Pagination,
+  Chip,
 } from '@mui/material';
 import { getUserRole } from '../utils/auth';
 import { UserRoleEnum } from '../utils/userRoleEnum';
+import { handleTokenExpiration } from '../utils/api';
 
 const Room = () => {
   const navigate = useNavigate();
@@ -92,12 +94,42 @@ const Room = () => {
   const getStatusMessage = (status) => {
     switch (status) {
       case 1:
-        return 'Available';
+        return {
+          label: 'Available',
+          backgroundColor: '#EDF7ED',  // Light green
+          textColor: '#1E4620'
+        };
       case 2:
-        return 'Maintenance';
+        return {
+          label: 'Maintenance',
+          backgroundColor: '#FEEBEE',  // Light red
+          textColor: '#7F1D1D'
+        };
       default:
-        return 'Unknown';
+        return {
+          label: 'Unknown',
+          backgroundColor: '#F5F5F5',  // Light grey
+          textColor: '#666666'
+        };
     }
+  };
+
+  const renderStatus = (status) => {
+    const statusInfo = getStatusMessage(status);
+    return (
+      <Chip 
+        label={statusInfo.label}
+        sx={{
+          backgroundColor: statusInfo.backgroundColor,
+          color: statusInfo.textColor,
+          fontWeight: 'medium',
+          '&:hover': {
+            backgroundColor: statusInfo.backgroundColor,
+          }
+        }}
+        size="small"
+      />
+    );
   };
 
   return (
@@ -194,7 +226,7 @@ const Room = () => {
                   <TableCell>{room.id}</TableCell>
                   <TableCell>{room.room_number}</TableCell>
                   <TableCell>{room.room_type_name || 'Unknown'}</TableCell>
-                  <TableCell>{getStatusMessage(room.status)}</TableCell>
+                  <TableCell>{renderStatus(room.status)}</TableCell>
                   <TableCell>{room.floor}</TableCell>
                   <TableCell>
                     {userRole === UserRoleEnum.ADMIN && (

@@ -369,12 +369,11 @@ const BookingEdit = () => {
                   value={booking.status}
                   onChange={handleChange}
                 >
-                  <MenuItem value={1}>Pending</MenuItem>
-                  <MenuItem value={2}>Confirmed</MenuItem>
-                  <MenuItem value={3}>Checked In</MenuItem>
-                  <MenuItem value={4}>Checked Out</MenuItem>
-                  <MenuItem value={5}>Canceled</MenuItem>
-                  <MenuItem value={6}>Completed</MenuItem>
+                  <MenuItem value={1}>Uncheck-in</MenuItem>
+                  <MenuItem value={2}>Check-in</MenuItem>
+                  <MenuItem value={3}>Check-out</MenuItem>
+                  <MenuItem value={4}>Cancelled</MenuItem>
+                  <MenuItem value={5}>Completed</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

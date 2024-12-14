@@ -1,20 +1,14 @@
 export const PaymentStatus = {
-  PENDING: 1,
-  COMPLETED: 2,
-  FAILED: 3,
-  REFUNDED: 4
+  UNPAID: 1,
+  PAID: 2
 };
 
 export const getPaymentStatusMessage = (status) => {
   switch (status) {
-    case PaymentStatus.PENDING:
-      return 'Pending';
-    case PaymentStatus.COMPLETED:
-      return 'Completed';
-    case PaymentStatus.FAILED:
-      return 'Failed';
-    case PaymentStatus.REFUNDED:
-      return 'Refunded';
+    case PaymentStatus.UNPAID:
+      return 'Unpaid';
+    case PaymentStatus.PAID:
+      return 'Paid';
     default:
       return 'Unknown';
   }
