@@ -16,6 +16,8 @@ SELECT
     b.rate_prices_id,
     c.firstname AS customer_firstname,
     c.surname AS customer_surname,
+    c.identity_number AS customer_identity_number,
+    c.address AS customer_address,
     p.id AS payment_id,
     p.status AS payment_status,
     p.updated_at AS payment_update_date

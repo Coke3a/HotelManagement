@@ -85,7 +85,7 @@ const ReceiptPrint = () => {
                 <div className="customer-info">
                     <p><span>ชื่อ (Customer Name):</span> {booking.customer_firstname} {booking.customer_surname}</p>
                     <p><span>ที่อยู่ (Address):</span> {booking.customer_address || '-'}</p>
-                    <p><span>เลขประจำตัวผู้เสียภาษี (Tax ID):</span> {booking.customer_tax_id || '-'}</p>
+                    <p><span>เลขประจำตัวผู้เสียภาษี (Tax ID):</span> {booking.customer_identity_number || '-'}</p>
                 </div>
                 <table className="receipt-details">
                     <thead>

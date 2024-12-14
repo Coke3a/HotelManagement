@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import GuestAdd from './GuestAdd';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 
 const BookingEdit = () => {
   const token = localStorage.getItem('token');
@@ -248,8 +249,10 @@ const BookingEdit = () => {
       <Box display="flex" justifyContent="space-between" alignItems="center" marginBottom={2}>
         <Button
           variant="contained"
-          color="secondary"
+          color="primary"
           onClick={() => navigate(`/receipt/${id}`)}
+          startIcon={<ReceiptLongIcon />}
+          style={{ textTransform: 'none', fontWeight: 'bold' }}
         >
           Print Receipt
         </Button>

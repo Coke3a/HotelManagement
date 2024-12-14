@@ -518,6 +518,8 @@ type bookingCustomerPaymentResponse struct {
 	BookingUpdatedAt  string               `json:"booking_updated_at"`
 	CustomerFirstName string               `json:"customer_firstname"`
 	CustomerSurname   string               `json:"customer_surname"`
+	CustomerIdentityNumber string          `json:"customer_identity_number"`
+	CustomerAddress string                 `json:"customer_address"`
 	RoomID            uint64               `json:"room_id"`
 	RoomNumber        string               `json:"room_number"`
 	Floor             uint64               `json:"floor"`
@@ -542,6 +544,8 @@ func newBookingCustomerPaymentResponse(bcp *domain.BookingCustomerPayment) (*boo
 		CustomerID:        bcp.CustomerID,
 		CustomerFirstName: bcp.CustomerFirstName,
 		CustomerSurname:   bcp.CustomerSurname,
+		CustomerIdentityNumber: bcp.CustomerIdentityNumber,
+		CustomerAddress: bcp.CustomerAddress,
 		RoomID:            bcp.RoomID,
 		RoomNumber:        bcp.RoomNumber,
 		Floor:             bcp.Floor,

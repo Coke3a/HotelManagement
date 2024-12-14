@@ -19,6 +19,8 @@ type BookingCustomerPayment struct {
 	RoomTypeName      string
 	CustomerFirstName string
 	CustomerSurname   string
+	CustomerIdentityNumber string
+	CustomerAddress string
 	PaymentID         *uint64
 	PaymentStatus     *uint64
 	PaymentUpdateDate *time.Time
