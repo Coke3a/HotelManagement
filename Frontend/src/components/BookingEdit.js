@@ -381,7 +381,14 @@ const BookingEdit = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12}>
-              <Button type="submit" variant="contained" color="primary" fullWidth disabled={loading}>
+              <Button 
+                type="submit" 
+                variant="contained" 
+                color="primary" 
+                className="form-submit" 
+                disabled={loading}
+                style={{ marginTop: '16px' }}
+              >
                 {loading ? 'Updating Booking...' : 'Update Booking'}
               </Button>
             </Grid>
