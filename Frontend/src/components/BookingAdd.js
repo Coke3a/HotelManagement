@@ -33,11 +33,16 @@ const BookingAdd = () => {
   
   const fetchAvailableRooms = async () => {
     if (!booking.check_in_date || !booking.check_out_date) return;
-    const savedBooking = localStorage.getItem('tempBooking');
     setLoading(true);
     try {
-      const checkInDate = booking.check_in_date.toISOString().split('T')[0];
-      const checkOutDate = booking.check_out_date.toISOString().split('T')[0];
+      const checkInDate = booking.check_in_date.toLocaleDateString('en-CA', { 
+        timeZone: 'Asia/Bangkok'
+      });
+
+      const checkOutDate = booking.check_out_date.toLocaleDateString('en-CA', {
+        timeZone: 'Asia/Bangkok'
+      });
+
       const response = await fetch(`http://localhost:8080/v1/rooms/available?check_in_date=${checkInDate}&check_out_date=${checkOutDate}`, {
         headers: {
           'Content-Type': 'application/json',
@@ -201,6 +206,13 @@ const BookingAdd = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Convert dates to ISO format with Bangkok timezone offset
+      const checkInDate = new Date(booking.check_in_date);
+      checkInDate.setHours(17, 0, 0, 0); // Set to 17:00:00.000
+      
+      const checkOutDate = new Date(booking.check_out_date);
+      checkOutDate.setHours(17, 0, 0, 0); // Set to 17:00:00.000
+
       const response = await fetch('http://localhost:8080/v1/booking/', {
         method: 'POST',
         headers: {  
@@ -212,8 +224,8 @@ const BookingAdd = () => {
           rate_prices_id: parseInt(booking.rate_prices_id),
           room_id: parseInt(selectedRoom.id),
           room_type_id: parseInt(selectedRoom.room_type_id),
-          check_in_date: booking.check_in_date.toISOString(),
-          check_out_date: booking.check_out_date.toISOString(),
+          check_in_date: checkInDate.toISOString(), // Will output format like 2024-12-21T17:00:00.000Z
+          check_out_date: checkOutDate.toISOString(), // Will output format like 2024-12-21T17:00:00.000Z
           status: parseInt(booking.status),
           total_amount: parseFloat(booking.total_amount),
         }),
@@ -332,6 +344,7 @@ const BookingAdd = () => {
                     renderInput={(params) => <TextField {...params} fullWidth />}
                     inputFormat="yyyy-MM-dd"
                     minDate={today}
+                    timezone="Asia/Bangkok"
                   />
                 </LocalizationProvider>
               </FormControl>
@@ -346,6 +359,7 @@ const BookingAdd = () => {
                     renderInput={(params) => <TextField {...params} fullWidth />}
                     inputFormat="yyyy-MM-dd"
                     minDate={booking.check_in_date ? new Date(booking.check_in_date.getTime() + 86400000) : new Date(today.getTime() + 86400000)}
+                    timezone="Asia/Bangkok"
                   />
                 </LocalizationProvider>
               </FormControl>
