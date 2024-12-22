@@ -162,6 +162,118 @@ func (cr *CustomerRepository) ListCustomers(ctx *gin.Context, skip, limit uint64
 	return customers, totalCount, nil
 }
 
+func (cr *CustomerRepository) ListCustomersWithFilter(ctx *gin.Context, customer *domain.Customer, skip, limit uint64) ([]domain.Customer, uint64, error) {
+	var customers []domain.Customer
+	var totalCount uint64
+
+	conditions := sq.And{}
+	if customer.ID != 0 {
+		conditions = append(conditions, sq.Eq{"id": customer.ID})
+	}
+
+	if customer.FirstName != "" {
+		conditions = append(conditions, sq.Eq{"firstname": customer.FirstName})
+	}
+	if customer.Surname != "" {
+		conditions = append(conditions, sq.Eq{"surname": customer.Surname})
+	}
+	if customer.Email != "" {
+		conditions = append(conditions, sq.Eq{"email": customer.Email})
+	}
+	if customer.Phone != "" {
+		conditions = append(conditions, sq.Eq{"phone": customer.Phone})
+	}
+	if customer.Address != "" {
+		conditions = append(conditions, sq.Eq{"address": customer.Address})
+	}
+	if customer.Gender != "" {
+		conditions = append(conditions, sq.Eq{"gender": customer.Gender})
+	}
+	if customer.IdentityNumber != "" {
+		conditions = append(conditions, sq.Eq{"identity_number": customer.IdentityNumber})
+	}
+	if customer.CustomerTypeID != 0 {
+		conditions = append(conditions, sq.Eq{"customer_type_id": customer.CustomerTypeID})
+	}
+	if customer.Preferences != "" {
+		conditions = append(conditions, sq.Eq{"preferences": customer.Preferences})
+	}
+	if customer.CreatedAt != nil {
+		dateStr := customer.CreatedAt.Format("2006-01-02")
+		conditions = append(conditions, sq.Expr("created_at::date = ?", dateStr))
+	}
+	if customer.UpdatedAt != nil {
+		dateStr := customer.UpdatedAt.Format("2006-01-02")
+		conditions = append(conditions, sq.Expr("updated_at::date = ?", dateStr))
+	}
+
+	countQuery := cr.db.QueryBuilder.Select("COUNT(*)").From("customers")
+	if len(conditions) > 0 {
+		countQuery = countQuery.Where(conditions)
+	}
+	countSql, countArgs, err := countQuery.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	err = cr.db.QueryRow(ctx, countSql, countArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	query := cr.db.QueryBuilder.Select("*").
+		From("customers").
+		OrderBy("id DESC").
+		Limit(limit)
+
+	if len(conditions) > 0 {
+		query = query.Where(conditions)
+	}
+	
+	if skip > 0 {
+		query = query.Offset(skip)
+	}
+
+	sql, args, err := query.ToSql()
+	if err != nil {
+		return nil, 0, err
+	}
+	slog.Debug("SQL QUERY", "query", query)
+
+	rows, err := cr.db.Query(ctx, sql, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var customer domain.Customer
+		err := rows.Scan(
+			&customer.ID,
+			&customer.FirstName,
+			&customer.Surname,
+			&customer.IdentityNumber,
+			&customer.Email,
+			&customer.Phone,
+			&customer.Address,
+			&customer.Gender,
+			&customer.CustomerTypeID,
+			&customer.Preferences,
+			&customer.CreatedAt,
+			&customer.UpdatedAt,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+		customers = append(customers, customer)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	return customers, totalCount, nil
+}
+
 func (cr *CustomerRepository) UpdateCustomer(ctx *gin.Context, customer *domain.Customer) (*domain.Customer, error) {
 	query := cr.db.QueryBuilder.Update("customers").
 		Set("firstname", sq.Expr("COALESCE(?, firstname)", customer.FirstName)).

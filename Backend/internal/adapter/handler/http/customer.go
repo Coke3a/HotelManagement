@@ -84,8 +84,20 @@ func (ch *CustomerHandler) CreateCustomer(ctx *gin.Context) {
 
 // listCustomersRequest represents the request body for listing customers
 type listCustomersRequest struct {
-	Skip  uint64 `form:"skip" binding:"required,min=0" example:"0"`
-	Limit uint64 `form:"limit" binding:"required,min=5" example:"5"`
+	Skip  			uint64 `form:"skip" binding:"required,min=0" example:"0"`
+	Limit 			uint64 `form:"limit" binding:"required,min=5" example:"5"`
+	ID 				uint64 `form:"id" binding:"omitempty" example:"1"`
+	FirstName 		string `form:"firstname" binding:"omitempty" example:"John"`
+	Surname 		string `form:"surname" binding:"omitempty" example:"Doe"`
+	Email           string     `form:"email" binding:"omitempty" example:"john.doe@example.com"`
+	Phone           string     `form:"phone" binding:"omitempty" example:"123-456-7890"`
+	Address         string     `form:"address" binding:"omitempty" example:"123 Elm Street"`
+	Gender          string     `form:"gender" binding:"omitempty" example:"male"`
+	CustomerTypeID  uint64     `form:"customer_type_id" binding:"omitempty" example:"1"`
+	Preferences     string     `form:"preferences" binding:"omitempty" example:"sea view, non-smoking"`
+	IdentityNumber  string     `form:"identity_number" binding:"omitempty" example:"1234567890"`
+	CreatedAt       *time.Time `form:"created_at" time_format:"2006-01-02" example:"2023-08-01"`
+	UpdatedAt       *time.Time `form:"updated_at" time_format:"2006-01-02" example:"2023-08-01"`
 }
 
 // ListCustomers godoc
@@ -103,7 +115,6 @@ type listCustomersRequest struct {
 //	@Router			/customers [get]
 //	@Security		BearerAuth
 func (ch *CustomerHandler) ListCustomers(ctx *gin.Context) {
-	var req listCustomersRequest
 	var customersList []customerResponse
 
     skip := ctx.Query("skip")
@@ -121,7 +132,54 @@ func (ch *CustomerHandler) ListCustomers(ctx *gin.Context) {
         return
     }
 
-	customers, totalCount, err := ch.svc.ListCustomers(ctx, skipUint, limitUint)
+	// Initialize customer with nil values
+	customer := &domain.Customer{}
+	if id := ctx.Query("id"); id != "" {
+		if idUint, err := strconv.ParseUint(id, 10, 64); err == nil {
+			customer.ID = idUint
+		}
+	}
+	if firstName := ctx.Query("firstname"); firstName != "" {
+		customer.FirstName = firstName
+	}
+	if surname := ctx.Query("surname"); surname != "" {
+		customer.Surname = surname
+	}
+	if email := ctx.Query("email"); email != "" {
+		customer.Email = email
+	}
+	if phone := ctx.Query("phone"); phone != "" {
+		customer.Phone = phone
+	}
+	if address := ctx.Query("address"); address != "" {
+		customer.Address = address
+	}
+	if gender := ctx.Query("gender"); gender != "" {
+		customer.Gender = gender
+	}
+	if customerTypeID := ctx.Query("customer_type_id"); customerTypeID != "" {
+		if customerTypeIDUint, err := strconv.ParseUint(customerTypeID, 10, 64); err == nil {
+			customer.CustomerTypeID = customerTypeIDUint
+		}
+	}
+	if preferences := ctx.Query("preferences"); preferences != "" {
+		customer.Preferences = preferences
+	}
+	if identityNumber := ctx.Query("identity_number"); identityNumber != "" {
+		customer.IdentityNumber = identityNumber
+	}
+	if createdAt := ctx.Query("created_at"); createdAt != "" {
+		if createdAtTime, err := time.Parse("2006-01-02", createdAt); err == nil {
+			customer.CreatedAt = &createdAtTime
+		}
+	}
+	if updatedAt := ctx.Query("updated_at"); updatedAt != "" {
+		if updatedAtTime, err := time.Parse("2006-01-02", updatedAt); err == nil {
+			customer.UpdatedAt = &updatedAtTime
+		}
+	}
+
+	customers, totalCount, err := ch.svc.ListCustomersWithFilter(ctx, customer, skipUint, limitUint)
 	if err != nil {
 		handleError(ctx, err)
 		return
@@ -136,8 +194,15 @@ func (ch *CustomerHandler) ListCustomers(ctx *gin.Context) {
 		customersList = append(customersList, customerResponse)
 	}
 
-	meta := newMeta(totalCount, req.Limit, req.Skip)
-	rsp := toMap(meta, customersList, "customers")
+	meta := map[string]interface{}{
+		"total": totalCount,
+		"limit": limitUint,
+		"skip":  skipUint,
+	}
+	rsp := map[string]interface{}{
+		"customers": customersList,
+		"meta":     meta,
+	}
 
 	handleSuccess(ctx, rsp)
 }

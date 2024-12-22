@@ -14,8 +14,14 @@ import {
   Typography,
   Stack,
   Pagination,
+  Grid,
+  TextField,
+  FormControl,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { handleTokenExpiration } from '../utils/api';
+import SearchIcon from '@mui/icons-material/Search';
 
 const Guest = () => {
   const token = localStorage.getItem('token');
@@ -27,6 +33,15 @@ const Guest = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({
+    id: '',
+    firstname: '',
+    surname: '',
+    email: '',
+    phone: '',
+    customer_type_id: '',
+    identity_number: '',
+  });
 
   const fetchGuests = async (page, rowsPerPage) => {
     setLoading(true);
@@ -35,6 +50,13 @@ const Guest = () => {
       const queryParams = new URLSearchParams({
         skip: skip.toString(),
         limit: rowsPerPage.toString(),
+        ...(filters.id && { id: filters.id }),
+        ...(filters.firstname && { firstname: filters.firstname }),
+        ...(filters.surname && { surname: filters.surname }),
+        ...(filters.email && { email: filters.email }),
+        ...(filters.phone && { phone: filters.phone }),
+        ...(filters.customer_type_id && { customer_type_id: filters.customer_type_id }),
+        ...(filters.identity_number && { identity_number: filters.identity_number }),
       });
 
       const response = await fetch(`http://localhost:8080/v1/customers/?${queryParams.toString()}`, {
@@ -182,6 +204,111 @@ const Guest = () => {
             }}
           />
         </Stack>
+      </Box>
+
+      <Box sx={{ mb: 3 }}>
+        <Paper sx={{ p: 2 }}>
+          <Grid container spacing={2}>
+            {/* First Row */}
+            <Grid item xs={12}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                <TextField
+                  size="small"
+                  placeholder="Guest ID"
+                  value={filters.id}
+                  onChange={(e) => setFilters({ ...filters, id: e.target.value })}
+                  sx={{ width: { xs: '100%', md: '20%' } }}
+                />
+                <TextField
+                  size="small"
+                  placeholder="First Name"
+                  value={filters.firstname}
+                  onChange={(e) => setFilters({ ...filters, firstname: e.target.value })}
+                  sx={{ width: { xs: '100%', md: '20%' } }}
+                />
+                <TextField
+                  size="small"
+                  placeholder="Last Name"
+                  value={filters.surname}
+                  onChange={(e) => setFilters({ ...filters, surname: e.target.value })}
+                  sx={{ width: { xs: '100%', md: '20%' } }}
+                />
+                <TextField
+                  size="small"
+                  placeholder="Identity Number"
+                  value={filters.identity_number}
+                  onChange={(e) => setFilters({ ...filters, identity_number: e.target.value })}
+                  sx={{ width: { xs: '100%', md: '20%' } }}
+                />
+                <FormControl size="small" sx={{ width: { xs: '100%', md: '20%' } }}>
+                  <Select
+                    value={filters.customer_type_id}
+                    onChange={(e) => setFilters({ ...filters, customer_type_id: e.target.value })}
+                    displayEmpty
+                  >
+                    <MenuItem value="">All Types</MenuItem>
+                    {guestTypes.map((type) => (
+                      <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Stack>
+            </Grid>
+
+            {/* Second Row */}
+            <Grid item xs={12}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+                <TextField
+                  size="small"
+                  placeholder="Email"
+                  value={filters.email}
+                  onChange={(e) => setFilters({ ...filters, email: e.target.value })}
+                  sx={{ width: { xs: '100%', md: '30%' } }}
+                />
+                <TextField
+                  size="small"
+                  placeholder="Phone"
+                  value={filters.phone}
+                  onChange={(e) => setFilters({ ...filters, phone: e.target.value })}
+                  sx={{ width: { xs: '100%', md: '30%' } }}
+                />
+                <Stack direction="row" spacing={1} sx={{ width: { xs: '100%', md: '40%' } }}>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      setPage(0);
+                      fetchGuests(0, rowsPerPage);
+                    }}
+                    startIcon={<SearchIcon />}
+                    size="small"
+                    fullWidth
+                  >
+                    Search
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      setFilters({
+                        id: '',
+                        firstname: '',
+                        surname: '',
+                        email: '',
+                        phone: '',
+                        customer_type_id: '',
+                      });
+                      setPage(0);
+                      fetchGuests(0, rowsPerPage);
+                    }}
+                    size="small"
+                    sx={{ minWidth: 'auto', width: '40px', p: 0 }}
+                  >
+                    ×
+                  </Button>
+                </Stack>
+              </Stack>
+            </Grid>
+          </Grid>
+        </Paper>
       </Box>
 
       <TableContainer component={Paper}>

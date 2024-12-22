@@ -11,6 +11,7 @@ type CustomerRepository interface {
 	ListCustomers(ctx *gin.Context, skip, limit uint64) ([]domain.Customer, uint64, error)
 	UpdateCustomer(ctx *gin.Context, customer *domain.Customer) (*domain.Customer, error)
 	DeleteCustomer(ctx *gin.Context, id uint64) error
+	ListCustomersWithFilter(ctx *gin.Context, customer *domain.Customer, skip, limit uint64) ([]domain.Customer, uint64, error)
 }
 
 type CustomerService interface {
@@ -19,4 +20,5 @@ type CustomerService interface {
 	ListCustomers(ctx *gin.Context, skip, limit uint64) ([]domain.Customer, uint64, error)
 	UpdateCustomer(ctx *gin.Context, customer *domain.Customer) (*domain.Customer, error)
 	DeleteCustomer(ctx *gin.Context, id uint64) error
+	ListCustomersWithFilter(ctx *gin.Context, customer *domain.Customer, skip, limit uint64) ([]domain.Customer, uint64, error)
 }

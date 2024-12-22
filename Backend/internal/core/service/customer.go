@@ -152,3 +152,12 @@ func (cs *CustomerService) DeleteCustomer(ctx *gin.Context, id uint64) error {
 
 	return cs.repo.DeleteCustomer(ctx, id)
 }
+
+func (cs *CustomerService) ListCustomersWithFilter(ctx *gin.Context, customer *domain.Customer, skip, limit uint64) ([]domain.Customer, uint64, error) {
+	customers, totalCount, err := cs.repo.ListCustomersWithFilter(ctx, customer, skip, limit)
+	if err != nil {
+		return nil, 0, domain.ErrInternal
+	}
+
+	return customers, totalCount, nil
+}
