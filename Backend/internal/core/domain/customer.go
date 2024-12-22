@@ -10,12 +10,9 @@ type Customer struct {
 	Email           string
 	Phone           string
 	Address         string
-	DateOfBirth     *time.Time
 	Gender          string
-    CustomerTypeID 	uint64
-	JoinDate        *time.Time
+	CustomerTypeID 	uint64
 	Preferences     string
-	LastVisitDate   *time.Time
 	CreatedAt       *time.Time
 	UpdatedAt       *time.Time
 }

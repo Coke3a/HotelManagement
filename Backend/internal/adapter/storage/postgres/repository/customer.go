@@ -23,8 +23,8 @@ func NewCustomerRepository(db *postgres.DB) *CustomerRepository {
 
 func (cr *CustomerRepository) CreateCustomer(ctx *gin.Context, customer *domain.Customer) (*domain.Customer, error) {
 	query := cr.db.QueryBuilder.Insert("customers").
-		Columns("firstname", "surname", "identity_number", "email", "phone", "address", "date_of_birth", "gender", "customer_type_id", "join_date", "preferences", "last_visit_date").
-		Values(customer.FirstName, customer.Surname, customer.IdentityNumber, customer.Email, customer.Phone, customer.Address, customer.DateOfBirth, customer.Gender, customer.CustomerTypeID, customer.JoinDate, customer.Preferences, customer.LastVisitDate).
+		Columns("firstname", "surname", "identity_number", "email", "phone", "address", "gender", "customer_type_id", "preferences").
+		Values(customer.FirstName, customer.Surname, customer.IdentityNumber, customer.Email, customer.Phone, customer.Address, customer.Gender, customer.CustomerTypeID, customer.Preferences).
 		Suffix("RETURNING *")
 
 	sql, args, err := query.ToSql()
@@ -41,12 +41,9 @@ func (cr *CustomerRepository) CreateCustomer(ctx *gin.Context, customer *domain.
 		&customer.Email,
 		&customer.Phone,
 		&customer.Address,
-		&customer.DateOfBirth,
 		&customer.Gender,
 		&customer.CustomerTypeID,
-		&customer.JoinDate,
 		&customer.Preferences,
-		&customer.LastVisitDate,
 		&customer.CreatedAt,
 		&customer.UpdatedAt,
 	)
@@ -83,12 +80,9 @@ func (cr *CustomerRepository) GetCustomerByID(ctx *gin.Context, id uint64) (*dom
 		&customer.Email,
 		&customer.Phone,
 		&customer.Address,
-		&customer.DateOfBirth,
 		&customer.Gender,
 		&customer.CustomerTypeID,
-		&customer.JoinDate,
 		&customer.Preferences,
-		&customer.LastVisitDate,
 		&customer.CreatedAt,
 		&customer.UpdatedAt,
 	)
@@ -148,12 +142,9 @@ func (cr *CustomerRepository) ListCustomers(ctx *gin.Context, skip, limit uint64
 			&customer.Email,
 			&customer.Phone,
 			&customer.Address,
-			&customer.DateOfBirth,
 			&customer.Gender,
 			&customer.CustomerTypeID,
-			&customer.JoinDate,
 			&customer.Preferences,
-			&customer.LastVisitDate,
 			&customer.CreatedAt,
 			&customer.UpdatedAt,
 		)
@@ -179,11 +170,9 @@ func (cr *CustomerRepository) UpdateCustomer(ctx *gin.Context, customer *domain.
 		Set("email", sq.Expr("COALESCE(?, email)", customer.Email)).
 		Set("phone", sq.Expr("COALESCE(?, phone)", customer.Phone)).
 		Set("address", sq.Expr("COALESCE(?, address)", customer.Address)).
-		Set("date_of_birth", sq.Expr("COALESCE(?, date_of_birth)", customer.DateOfBirth)).
 		Set("gender", sq.Expr("COALESCE(?, gender)", customer.Gender)).
 		Set("customer_type_id", sq.Expr("COALESCE(?, customer_type_id)", customer.CustomerTypeID)).
 		Set("preferences", sq.Expr("COALESCE(?, preferences)", customer.Preferences)).
-		Set("last_visit_date", sq.Expr("COALESCE(?, last_visit_date)", customer.LastVisitDate)).
 		Where(sq.Eq{"id": customer.ID}).
 		Suffix("RETURNING *")
 
@@ -201,12 +190,9 @@ func (cr *CustomerRepository) UpdateCustomer(ctx *gin.Context, customer *domain.
 		&customer.Email,
 		&customer.Phone,
 		&customer.Address,
-		&customer.DateOfBirth,
 		&customer.Gender,
 		&customer.CustomerTypeID,
-		&customer.JoinDate,
 		&customer.Preferences,
-		&customer.LastVisitDate,
 		&customer.CreatedAt,
 		&customer.UpdatedAt,
 	)

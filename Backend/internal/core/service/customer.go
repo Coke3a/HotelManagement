@@ -2,7 +2,6 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	"time"
 	"log/slog"
 	"github.com/Coke3a/HotelManagement/internal/core/domain"
 	"github.com/Coke3a/HotelManagement/internal/core/port"
@@ -29,10 +28,6 @@ func (cs *CustomerService) RegisterCustomer(ctx *gin.Context, customer *domain.C
 	if customer.IdentityNumber == "" {
 		return nil, domain.ErrInvalidData
 	}
-
-	// Set default values for join date and membership status
-	now := time.Now()
-	customer.JoinDate = &now
 
 	if customer.CustomerTypeID == 0 {
 		customer.CustomerTypeID = 1
@@ -97,7 +92,7 @@ func (cs *CustomerService) UpdateCustomer(ctx *gin.Context, customer *domain.Cus
 
 	// Check if there are changes
 	isEmpty := customer.FirstName == "" && customer.Surname == "" && customer.Email == "" && customer.Phone == "" && customer.Address == "" && customer.Gender == "" && customer.CustomerTypeID == 0 && customer.Preferences == "" && customer.IdentityNumber == ""
-	isSame := existingCustomer.FirstName == customer.FirstName && existingCustomer.Surname == customer.Surname && existingCustomer.Email == customer.Email && existingCustomer.Phone == customer.Phone && existingCustomer.Address == customer.Address && existingCustomer.Gender == customer.Gender && existingCustomer.CustomerTypeID == customer.CustomerTypeID && existingCustomer.Preferences == customer.Preferences && existingCustomer.IdentityNumber == customer.IdentityNumber && existingCustomer.DateOfBirth == customer.DateOfBirth
+	isSame := existingCustomer.FirstName == customer.FirstName && existingCustomer.Surname == customer.Surname && existingCustomer.Email == customer.Email && existingCustomer.Phone == customer.Phone && existingCustomer.Address == customer.Address && existingCustomer.Gender == customer.Gender && existingCustomer.CustomerTypeID == customer.CustomerTypeID && existingCustomer.Preferences == customer.Preferences && existingCustomer.IdentityNumber == customer.IdentityNumber
 
 	if isEmpty || isSame {
 		return nil, domain.ErrNoUpdatedData

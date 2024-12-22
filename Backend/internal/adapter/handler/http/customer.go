@@ -30,7 +30,6 @@ type createCustomerRequest struct {
 	Email           string     `json:"email"`
 	Phone           string     `json:"phone"`
 	Address         string     `json:"address"`
-	DateOfBirth     string     `json:"date_of_birth"`
 	Gender          string     `json:"gender"`
 	CustomerTypeID  uint64     `json:"customer_type_id"`
 	Preferences     string     `json:"preferences"`
@@ -56,17 +55,6 @@ func (ch *CustomerHandler) CreateCustomer(ctx *gin.Context) {
 		return
 	}
 
-	// Parse the date of birth if provided
-	var dob *time.Time
-	if req.DateOfBirth != "" {
-		parsedDOB, err := time.Parse(time.RFC3339, req.DateOfBirth)
-		if err != nil {
-			validationError(ctx, err)
-			return
-		}
-		dob = &parsedDOB
-	}
-
 	customer := domain.Customer{
 		FirstName:        req.FirstName,
 		Surname:          req.Surname,
@@ -74,7 +62,6 @@ func (ch *CustomerHandler) CreateCustomer(ctx *gin.Context) {
 		Email:            req.Email,
 		Phone:            req.Phone,
 		Address:          req.Address,
-		DateOfBirth:      dob,
 		Gender:           req.Gender,
 		CustomerTypeID:   req.CustomerTypeID,
 		Preferences:      req.Preferences,
@@ -205,12 +192,9 @@ type updateCustomerRequest struct {
 	Email            string `json:"email" example:"john.doe@example.com"`
 	Phone            string `json:"phone" example:"123-456-7890"`
 	Address          string `json:"address" example:"123 Elm Street"`
-	DateOfBirth      string `json:"date_of_birth" example:"1990-01-01"`
 	Gender           string `json:"gender" example:"male"`
 	CustomerTypeID   uint64 `json:"customer_type_id" example:"1"`
-	JoinDate         string `json:"join_date" example:"2024-08-01T15:04:05Z"`
 	Preferences      string `json:"preferences" example:"sea view, non-smoking"`
-	LastVisitDate    string `json:"last_visit_date" example:"2024-08-01T15:04:05Z"`
 }
 
 // UpdateCustomer godoc
@@ -235,28 +219,6 @@ func (ch *CustomerHandler) UpdateCustomer(ctx *gin.Context) {
 		return
 	}
 
-	// Parse the date of birth if provided
-
-	var dob *time.Time
-	if req.DateOfBirth != "" {
-		parsedDOB, err := time.Parse(time.RFC3339, req.DateOfBirth)
-		if err != nil {
-			validationError(ctx, err)
-			return
-		}
-		dob = &parsedDOB
-	}
-
-	var lvd time.Time
-	if req.LastVisitDate != "" {
-		parsedLVD, err := parseTime(req.LastVisitDate)
-		if err != nil {
-			validationError(ctx, err)
-			return
-		}
-		lvd = parsedLVD
-	}
-
 	customer := domain.Customer{
 		ID:               req.ID,
 		FirstName:        req.FirstName,
@@ -265,11 +227,9 @@ func (ch *CustomerHandler) UpdateCustomer(ctx *gin.Context) {
 		Email:            req.Email,
 		Phone:            req.Phone,
 		Address:          req.Address,
-		DateOfBirth:      dob,
 		Gender:           req.Gender,
 		CustomerTypeID:   req.CustomerTypeID,
 		Preferences:      req.Preferences,
-		LastVisitDate:    &lvd,
 	}
 
 	updatedCustomer, err := ch.svc.UpdateCustomer(ctx, &customer)
@@ -331,12 +291,9 @@ type customerResponse struct {
 	Email           string     `json:"email"`
 	Phone           string     `json:"phone"`
 	Address         string     `json:"address"`
-	DateOfBirth     string     `json:"date_of_birth,omitempty"`
 	Gender          string     `json:"gender"`
 	CustomerTypeID  uint64     `json:"customer_type_id"`
-	JoinDate        string     `json:"join_date,omitempty"`
 	Preferences     string     `json:"preferences"`
-	LastVisitDate   string     `json:"last_visit_date,omitempty"`
 	CreatedAt       string     `json:"created_at,omitempty"`
 	UpdatedAt       string     `json:"updated_at,omitempty"`
 }
@@ -347,22 +304,13 @@ func newCustomerResponse(customer *domain.Customer) (customerResponse, error) {
 		return customerResponse{}, errors.New("customer is nil")
 	}
 
-	var dob, lastVisitDate, createdAt, updatedAt, joinDate time.Time
+	var createdAt, updatedAt time.Time
 
-	if customer.DateOfBirth != nil {
-		dob = *customer.DateOfBirth
-	}
-	if customer.LastVisitDate != nil && !customer.LastVisitDate.IsZero() {
-		lastVisitDate = *customer.LastVisitDate
-	}
 	if customer.CreatedAt != nil {
 		createdAt = *customer.CreatedAt
 	}
 	if customer.UpdatedAt != nil {
 		updatedAt = *customer.UpdatedAt
-	}
-	if customer.JoinDate != nil {
-		joinDate = *customer.JoinDate
 	}
 
 	return customerResponse{
@@ -373,12 +321,9 @@ func newCustomerResponse(customer *domain.Customer) (customerResponse, error) {
 		Email:            customer.Email,
 		Phone:            customer.Phone,
 		Address:          customer.Address,
-		DateOfBirth:      dob.Format(time.RFC3339),
 		Gender:           customer.Gender,
 		CustomerTypeID:   customer.CustomerTypeID,
-		JoinDate:         joinDate.Format(time.RFC3339),
 		Preferences:      customer.Preferences,
-		LastVisitDate:    lastVisitDate.Format(time.RFC3339),
 		CreatedAt:        createdAt.Format(time.RFC3339),
 		UpdatedAt:        updatedAt.Format(time.RFC3339),
 	}, nil

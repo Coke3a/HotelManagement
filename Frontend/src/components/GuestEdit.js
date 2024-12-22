@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box, Typography, CircularProgress, Select, MenuItem, FormControl, InputLabel, Grid } from '@mui/material';
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const GuestEdit = () => {
@@ -16,11 +14,9 @@ const GuestEdit = () => {
     email: '',
     phone: '',
     address: '',
-    date_of_birth: null,
     gender: '',
     customer_type_id: '',
     preferences: '',
-    last_visit_date: null,
   });
   const [loading, setLoading] = useState(true);
   const [guestTypes, setGuestTypes] = useState([]);
@@ -49,12 +45,6 @@ const GuestEdit = () => {
         const data = await response.json();
         setGuest({
           ...data.data,
-          date_of_birth: data.data.date_of_birth && data.data.date_of_birth !== "0001-01-01T00:00:00Z" 
-            ? new Date(data.data.date_of_birth) 
-            : null,
-          last_visit_date: data.data.last_visit_date && data.data.last_visit_date !== "0001-01-01T00:00:00Z"
-            ? new Date(data.data.last_visit_date) 
-            : null,
         });
         setLoading(false);
       } catch (error) {
@@ -125,8 +115,6 @@ const GuestEdit = () => {
         },
         body: JSON.stringify({
           ...guest,
-          date_of_birth: guest.date_of_birth ? guest.date_of_birth.toISOString().split('T')[0] : null,
-          last_visit_date: guest.last_visit_date ? guest.last_visit_date.toISOString().split('T')[0] : null,
         }),
       });
 
@@ -244,37 +232,18 @@ const GuestEdit = () => {
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Email"
-                name="email"
-                value={guest.email}
-                onChange={handleChange}
-                margin="normal"
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Phone"
-                name="phone"
-                value={guest.phone}
-                onChange={handleChange}
-                margin="normal"
-                className="form-input"
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Date of Birth"
-                  value={guest.date_of_birth}
-                  onChange={handleDateChange}
-                  renderInput={(params) => <TextField {...params} fullWidth margin="normal" className="form-input" />}
-                  inputFormat="yyyy-MM-dd"
-                />
-              </LocalizationProvider>
+              <FormControl fullWidth margin="normal" required className="form-input">
+                <InputLabel>Guest Type</InputLabel>
+                <Select
+                  name="customer_type_id"
+                  value={guest.customer_type_id}
+                  onChange={handleChange}
+                >
+                  {guestTypes.map((type) => (
+                    <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
               <FormControl fullWidth margin="normal" className="form-input">
@@ -291,18 +260,26 @@ const GuestEdit = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal" required className="form-input">
-                <InputLabel>Guest Type</InputLabel>
-                <Select
-                  name="customer_type_id"
-                  value={guest.customer_type_id}
-                  onChange={handleChange}
-                >
-                  {guestTypes.map((type) => (
-                    <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <TextField
+                fullWidth
+                label="Phone"
+                name="phone"
+                value={guest.phone}
+                onChange={handleChange}
+                margin="normal"
+                className="form-input"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Email"
+                name="email"
+                value={guest.email}
+                onChange={handleChange}
+                margin="normal"
+                className="form-input"
+              />
             </Grid>
             <Grid item xs={12}>
               <TextField

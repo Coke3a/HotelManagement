@@ -12,11 +12,6 @@ import {
   Box,
   CircularProgress,
   Typography,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Stack,
   Pagination,
 } from '@mui/material';
@@ -198,7 +193,6 @@ const Guest = () => {
               <TableCell>Email</TableCell>
               <TableCell>Phone</TableCell>
               <TableCell>Type</TableCell>
-              <TableCell>Last Visit</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -224,11 +218,6 @@ const Guest = () => {
                   <TableCell>{guest.phone}</TableCell>
                   <TableCell>
                     {guestTypes.find(type => type.id === guest.customer_type_id)?.name || 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    {guest.last_visit_date && guest.last_visit_date !== "0001-01-01T00:00:00Z"
-                      ? new Date(guest.last_visit_date).toLocaleDateString()
-                      : 'N/A'}
                   </TableCell>
                   <TableCell>
                     <Button

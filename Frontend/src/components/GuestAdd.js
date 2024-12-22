@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { TextField, Button, Box, Typography, CircularProgress, Select, MenuItem, FormControl, InputLabel, Grid } from '@mui/material';
-import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { useNavigate } from 'react-router-dom';
 
 const GuestAdd = ({ onGuestAdded, isFromBooking = false }) => {
@@ -13,7 +11,7 @@ const GuestAdd = ({ onGuestAdded, isFromBooking = false }) => {
     identity_number: '',
     email: '',
     phone: '',
-    date_of_birth: null,
+    address: '',
     gender: '',
     customer_type_id: '',
     preferences: '',
@@ -200,18 +198,6 @@ const GuestAdd = ({ onGuestAdded, isFromBooking = false }) => {
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Date of Birth"
-                  value={guest.date_of_birth}
-                  onChange={handleDateChange}
-                  renderInput={(params) => <TextField {...params} fullWidth margin="normal" className="form-input" />}
-                  inputFormat="yyyy-MM-dd"
-                />
-              </LocalizationProvider>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
                 label="Phone"
@@ -228,6 +214,17 @@ const GuestAdd = ({ onGuestAdded, isFromBooking = false }) => {
                 label="Email"
                 name="email"
                 value={guest.email}
+                onChange={handleChange}
+                margin="normal"
+                className="form-input"
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Address"
+                name="address"
+                value={guest.address}
                 onChange={handleChange}
                 margin="normal"
                 className="form-input"
