@@ -171,10 +171,11 @@ const BookingEdit = () => {
     if (name === 'rate_price_id') {
       const selectedRatePrice = ratePrices.find(rp => rp.id === parseInt(value));
       if (selectedRatePrice) {
+        const totalAmount = (selectedRatePrice.price_per_night * stayDuration).toFixed(2);
         setBooking(prev => ({
           ...prev,
           [name]: value,
-          total_amount: parseFloat(selectedRatePrice.price_per_night).toFixed(2)
+          total_amount: totalAmount
         }));
       } else {
         setBooking(prev => ({ ...prev, [name]: value }));
@@ -241,6 +242,30 @@ const BookingEdit = () => {
     setBooking(prev => ({ ...prev, customer_id: newGuest.id }));
   };
 
+  const handleStayDurationChange = (event) => {
+    const duration = parseInt(event.target.value);
+    setStayDuration(duration);
+    
+    // Recalculate total amount if rate price is selected
+    if (booking.rate_price_id) {
+      const selectedRatePrice = ratePrices.find(rp => rp.id === parseInt(booking.rate_price_id));
+      if (selectedRatePrice) {
+        const totalAmount = (selectedRatePrice.price_per_night * duration).toFixed(2);
+        setBooking(prev => ({
+          ...prev,
+          total_amount: totalAmount
+        }));
+      }
+    }
+
+    // Update check-out date based on new duration
+    if (booking.check_in_date) {
+      const checkOutDate = new Date(booking.check_in_date);
+      checkOutDate.setDate(checkOutDate.getDate() + duration);
+      setBooking(prev => ({ ...prev, check_out_date: checkOutDate }));
+    }
+  };
+
   return (
     <Box className="form-container">
       <Typography variant="h4" gutterBottom className="form-title">
@@ -294,7 +319,7 @@ const BookingEdit = () => {
                 label="Stay Duration (nights)"
                 type="number"
                 value={stayDuration}
-                onChange={() => {}}
+                onChange={handleStayDurationChange}
                 inputProps={{ min: 1 }}
                 margin="normal"
                 className="form-input"
@@ -332,7 +357,7 @@ const BookingEdit = () => {
                 fullWidth
                 label="Total Amount"
                 name="total_amount"
-                value={booking.total_amount}
+                value={parseInt(booking.total_amount)}
                 onChange={handleChange}
                 margin="normal"
                 className="form-input"

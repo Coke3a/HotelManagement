@@ -154,10 +154,23 @@ const BookingAdd = () => {
   const handleStayDurationChange = (event) => {
     const duration = parseInt(event.target.value);
     setStayDuration(duration);
+    
+    // Recalculate total amount if rate price is selected
+    if (booking.rate_prices_id) {
+      const selectedRatePrice = ratePrices.find(rp => rp.id === parseInt(booking.rate_prices_id));
+      if (selectedRatePrice) {
+        const totalAmount = (selectedRatePrice.price_per_night * duration).toFixed(2);
+        setBooking(prev => ({
+          ...prev,
+          total_amount: totalAmount
+        }));
+      }
+    }
+
     if (booking.check_in_date) {
       const checkOutDate = new Date(booking.check_in_date);
       checkOutDate.setDate(checkOutDate.getDate() + duration);
-      setBooking({ ...booking, check_out_date: checkOutDate });
+      setBooking(prev => ({ ...prev, check_out_date: checkOutDate }));
     }
   };
 
@@ -427,7 +440,7 @@ const BookingAdd = () => {
                   fullWidth
                   label="Total Amount"
                   name="total_amount"
-                  value={booking.total_amount}
+                  value={parseInt(booking.total_amount)}
                   margin="normal"
                   InputProps={{
                     readOnly: true,
