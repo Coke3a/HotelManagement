@@ -2,41 +2,28 @@ import React, { useState } from 'react';
 import { 
   TextField, 
   Button, 
-  Box, 
-  Typography, 
-  CircularProgress,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
+  Box,
+  Grid,
+  Typography,
+  Card,
+  CardContent,
+  Divider,
+  Alert
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import GuestAdd from './GuestAdd';
+import { useNavigate } from 'react-router-dom';
+import { handleTokenExpiration } from '../utils/api';
 
-const GuestSearch = ({ onGuestSelected, showTable = true }) => {
+const GuestSearch = ({ onGuestSelected, currentGuestId, guests, setGuests, onAddNewGuest }) => {
   const [identityNumber, setIdentityNumber] = useState('');
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [guests, setGuests] = useState([]);
-  const [openGuestModal, setOpenGuestModal] = useState(false);
+  const [selectedGuest, setSelectedGuest] = useState(null);
   const token = localStorage.getItem('token');
+  const navigate = useNavigate();
 
   const handleSearch = async () => {
-    if (!identityNumber.trim()) {
-      setError('Please enter an identity number');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
+    if (!identityNumber.trim()) return;
 
     try {
       const queryParams = new URLSearchParams({
@@ -51,118 +38,112 @@ const GuestSearch = ({ onGuestSelected, showTable = true }) => {
         },
       });
 
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
+
       if (!response.ok) {
         throw new Error('Failed to search for guests');
       }
 
       const data = await response.json();
-      if (data.success && data.data && data.data.customers) {
-        setGuests(data.data.customers);
-        if (data.data.customers.length === 0) {
-          setError('No guests found with this identity number.');
-        }
+      if (data.success && data.data && data.data.customers && data.data.customers.length > 0) {
+        const foundGuest = data.data.customers[0]; // Get the first matching guest
+        setSelectedGuest(foundGuest);
+        onGuestSelected(foundGuest.id);
+        setError('');
       } else {
-        setError('No guests found with this identity number.');
-        setGuests([]);
+        setSelectedGuest(null);
+        onGuestSelected('');
+        setError('No guest found with this identity number');
       }
     } catch (error) {
+      console.error('Error searching guests:', error);
+      setSelectedGuest(null);
+      onGuestSelected('');
       setError(error.message);
-      setGuests([]);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const handleSelectGuest = (guest) => {
-    onGuestSelected(guest);
-  };
-
-  const handleAddNewGuest = () => {
-    setOpenGuestModal(true);
-  };
-
-  const handleCloseGuestModal = () => {
-    setOpenGuestModal(false);
-  };
-
-  const handleGuestAdded = (newGuest) => {
-    setOpenGuestModal(false);
-    onGuestSelected(newGuest);
-  };
-
   return (
-    <Box>
-      <Box display="flex" gap={2} alignItems="center" mb={2}>
-        <TextField
-          fullWidth
-          label="Guest Identity Number"
-          value={identityNumber}
-          onChange={(e) => setIdentityNumber(e.target.value)}
-          disabled={loading}
-          error={!!error}
-          helperText={error}
-          size="small"
-        />
-        <Button
-          variant="contained"
-          onClick={handleSearch}
-          disabled={loading}
-          startIcon={<SearchIcon />}
-        >
-          {loading ? <CircularProgress size={24} /> : 'Search'}
-        </Button>
-        <Button
-          variant="outlined"
-          onClick={handleAddNewGuest}
-          disabled={loading}
-          startIcon={<PersonAddIcon />}
-        >
-          Add New Guest
-        </Button>
-      </Box>
-
-      {showTable && guests.length > 0 && (
-        <TableContainer component={Paper}>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Identity Number</TableCell>
-                <TableCell>Action</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {guests.map((guest) => (
-                <TableRow key={guest.id}>
-                  <TableCell>{guest.id}</TableCell>
-                  <TableCell>{`${guest.firstname} ${guest.surname}`}</TableCell>
-                  <TableCell>{guest.identity_number}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => handleSelectGuest(guest)}
-                    >
-                      Select
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-
-      <Dialog open={openGuestModal} onClose={handleCloseGuestModal} maxWidth="md" fullWidth>
-        <DialogTitle>Add New Guest</DialogTitle>
-        <DialogContent>
-          <GuestAdd onGuestAdded={handleGuestAdded} isFromBooking={true} />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseGuestModal}>Cancel</Button>
-        </DialogActions>
-      </Dialog>
+    <Box sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+      <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'medium', color: 'text.secondary' }}>
+        Guest Information
+      </Typography>
+      <Grid container spacing={2} alignItems="center">
+        <Grid item xs={12} md={6}>
+          <TextField
+            fullWidth
+            size="small"
+            label="Guest Identity Number"
+            value={identityNumber}
+            onChange={(e) => setIdentityNumber(e.target.value)}
+            error={!!error}
+            helperText={error}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
+          />
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={handleSearch}
+            startIcon={<SearchIcon />}
+            size="small"
+            sx={{ height: '40px' }}
+          >
+            Search Guest
+          </Button>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Button
+            fullWidth
+            variant="outlined"
+            onClick={onAddNewGuest}
+            startIcon={<PersonAddIcon />}
+            size="small"
+            sx={{ height: '40px' }}
+          >
+            Add New Guest
+          </Button>
+        </Grid>
+        
+        {selectedGuest && (
+          <Grid item xs={12}>
+            <Card variant="outlined" sx={{ mt: 2 }}>
+              <CardContent>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="body2" color="text.secondary">Name</Typography>
+                    <Typography variant="body1">{`${selectedGuest.firstname} ${selectedGuest.surname}`}</Typography>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Typography variant="body2" color="text.secondary">Identity Number</Typography>
+                    <Typography variant="body1">{selectedGuest.identity_number}</Typography>
+                  </Grid>
+                  {selectedGuest.phone && (
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" color="text.secondary">Phone</Typography>
+                      <Typography variant="body1">{selectedGuest.phone}</Typography>
+                    </Grid>
+                  )}
+                  {selectedGuest.email && (
+                    <Grid item xs={12} md={6}>
+                      <Typography variant="body2" color="text.secondary">Email</Typography>
+                      <Typography variant="body1">{selectedGuest.email}</Typography>
+                    </Grid>
+                  )}
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
+      </Grid>
     </Box>
   );
 };

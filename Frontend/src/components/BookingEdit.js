@@ -5,6 +5,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import GuestAdd from './GuestAdd';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
+import GuestSearch from './GuestSearch';
 
 const BookingEdit = () => {
   const token = localStorage.getItem('token');
@@ -363,31 +364,14 @@ const BookingEdit = () => {
                 className="form-input"
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth margin="normal" required className="form-input">
-                <InputLabel>Guest</InputLabel>
-                <Select
-                  name="customer_id"
-                  value={booking.customer_id}
-                  onChange={handleChange}
-                >
-                  {guests.map((guest) => (
-                    <MenuItem key={guest.id} value={guest.id}>
-                      {guest.firstname} {guest.surname}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={handleAddNewGuest}
-                style={{ marginTop: '16px', height: '56px' }}
-              >
-                Add New Guest
-              </Button>
+            <Grid item xs={12}>
+              <GuestSearch
+                onGuestSelected={(guestId) => setBooking(prev => ({ ...prev, customer_id: guestId }))}
+                currentGuestId={booking.customer_id}
+                guests={guests}
+                setGuests={setGuests}
+                onAddNewGuest={handleAddNewGuest}
+              />
             </Grid>
             <Grid item xs={12}>
               <FormControl fullWidth margin="normal" required className="form-input">
