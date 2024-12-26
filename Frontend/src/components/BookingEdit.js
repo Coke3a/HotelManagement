@@ -29,6 +29,7 @@ const BookingEdit = () => {
   const [ratePrices, setRatePrices] = useState([]);
   const [stayDuration, setStayDuration] = useState(1);
   const [openGuestModal, setOpenGuestModal] = useState(false);
+  const [customerIdentityNumber, setCustomerIdentityNumber] = useState('');
 
   useEffect(() => {
     const fetchBookingData = async () => {
@@ -50,6 +51,7 @@ const BookingEdit = () => {
         }
 
         const data = await response.json();
+        setCustomerIdentityNumber(data.data.customer_identity_number);
         setBooking({
           booking_id: data.data.booking_id,
           customer_id: data.data.customer_id,
@@ -64,16 +66,33 @@ const BookingEdit = () => {
           total_amount: data.data.booking_price,
         });
 
+        // Ensure customer_id and rate_price_id are set
+        if (data.data.customer_id && data.data.rate_price_id) {
+          setBooking(prev => ({
+            ...prev,
+            customer_id: data.data.customer_id,
+            rate_price_id: data.data.rate_price_id,
+          }));
+        }
+
         // Calculate stay duration
         const diffTime = Math.abs(new Date(data.data.check_out_date) - new Date(data.data.check_in_date));
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         setStayDuration(diffDays);
 
-        // Fetch guests, rooms, and rate prices
         await Promise.all([
-          fetchGuests(),
           fetchRatePrices(data.data.room_type_id)
         ]);
+
+        const initialGuest = {
+          id: data.data.customer_id,
+          firstname: data.data.customer_firstname,
+          surname: data.data.customer_surname,
+          identity_number: data.data.customer_identity_number,
+          phone: data.data.customer_phone || '',
+          email: data.data.customer_email || ''
+        };
+        setGuests([initialGuest]);
       } catch (error) {
         console.error('Error fetching booking data:', error);
         alert(error.message);
@@ -87,7 +106,13 @@ const BookingEdit = () => {
 
   const fetchGuests = async () => {
     try {
-      const response = await fetch('http://localhost:8080/v1/customers/?skip=0&limit=100', {
+      const queryParams = new URLSearchParams({
+        skip: '0',
+        limit: '100',
+        identity_number: customerIdentityNumber
+      });
+
+      const response = await fetch(`http://localhost:8080/v1/customers/?${queryParams.toString()}`, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
@@ -100,11 +125,25 @@ const BookingEdit = () => {
       }
 
       const data = await response.json();
-      setGuests(data.data.customers || []);
+      if (data.success && data.data && data.data.customers) {
+        setGuests(data.data.customers);
+        // If we found the guest, update the booking's customer_id
+        if (data.data.customers.length > 0) {
+          const foundGuest = data.data.customers[0];
+          setBooking(prev => ({ ...prev, customer_id: foundGuest.id }));
+        }
+      }
     } catch (error) {
       console.error('Error fetching guests:', error);
     }
   };
+
+  // Add useEffect to trigger guest search when customerIdentityNumber changes
+  useEffect(() => {
+    if (customerIdentityNumber) {
+      fetchGuests();
+    }
+  }, [customerIdentityNumber]);
 
   const fetchRooms = async () => {
     try {
@@ -214,12 +253,11 @@ const BookingEdit = () => {
         return;
       }
 
-      if (!response.ok) {
-        throw new Error('Failed to update booking');
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.messages[0] || 'Failed to update booking');
       }
 
-      const data = await response.json();
-      console.log('Updated booking data:', data);
       navigate('/booking');
     } catch (error) {
       console.error('Error updating booking:', error);
@@ -267,6 +305,14 @@ const BookingEdit = () => {
     }
   };
 
+  const isFormValid = () => {
+    return booking.customer_id && 
+           booking.check_in_date && 
+           booking.check_out_date && 
+           booking.room_id && 
+           booking.rate_price_id;
+  };
+
   return (
     <Box className="form-container">
       <Typography variant="h4" gutterBottom className="form-title">
@@ -291,28 +337,34 @@ const BookingEdit = () => {
         <form onSubmit={handleSubmit} className="form">
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Check-in Date"
-                  value={booking.check_in_date}
-                  onChange={() => {}}
-                  renderInput={(params) => <TextField {...params} fullWidth margin="normal" required className="form-input" />}
-                  inputFormat="yyyy-MM-dd"
-                  disabled
-                />
-              </LocalizationProvider>
+              <FormControl fullWidth margin="normal" required className="form-input">
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DatePicker
+                    label="Check-in Date"
+                    value={booking.check_in_date}
+                    onChange={() => {}}
+                    renderInput={(params) => <TextField {...params} fullWidth />}
+                    inputFormat="yyyy-MM-dd"
+                    disabled
+                    timezone="Asia/Bangkok"
+                  />
+                </LocalizationProvider>
+              </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label="Check-out Date"
-                  value={booking.check_out_date}
-                  onChange={() => {}}
-                  renderInput={(params) => <TextField {...params} fullWidth margin="normal" required className="form-input" />}
-                  inputFormat="yyyy-MM-dd"
-                  disabled
-                />
-              </LocalizationProvider>
+              <FormControl fullWidth margin="normal" required className="form-input">
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  <DatePicker
+                    label="Check-out Date"
+                    value={booking.check_out_date}
+                    onChange={() => {}}
+                    renderInput={(params) => <TextField {...params} fullWidth />}
+                    inputFormat="yyyy-MM-dd"
+                    disabled
+                    timezone="Asia/Bangkok"
+                  />
+                </LocalizationProvider>
+              </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField
@@ -354,15 +406,20 @@ const BookingEdit = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Total Amount"
-                name="total_amount"
-                value={parseInt(booking.total_amount)}
-                onChange={handleChange}
-                margin="normal"
-                className="form-input"
-              />
+              {booking.total_amount && (
+                <TextField
+                  fullWidth
+                  label="Total Amount"
+                  name="total_amount"
+                  value={parseInt(booking.total_amount)}
+                  onChange={handleChange}
+                  margin="normal"
+                  className="form-input"
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                />
+              )}
             </Grid>
             <Grid item xs={12}>
               <GuestSearch
@@ -371,6 +428,7 @@ const BookingEdit = () => {
                 guests={guests}
                 setGuests={setGuests}
                 onAddNewGuest={handleAddNewGuest}
+                initialSelectedGuest={guests[0]}
               />
             </Grid>
             <Grid item xs={12}>
@@ -390,13 +448,13 @@ const BookingEdit = () => {
               </FormControl>
             </Grid>
             <Grid item xs={12}>
-              <Button 
-                type="submit" 
-                variant="contained" 
-                color="primary" 
-                className="form-submit" 
-                disabled={loading}
-                style={{ marginTop: '16px' }}
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                className="form-submit"
+                disabled={!isFormValid() || loading}
+                sx={{ mt: 3, mb: 2 }}
               >
                 {loading ? 'Updating Booking...' : 'Update Booking'}
               </Button>

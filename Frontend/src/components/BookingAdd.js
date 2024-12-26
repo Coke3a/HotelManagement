@@ -56,10 +56,8 @@ const BookingAdd = () => {
         return;
       }
 
-      if (!response.ok) throw new Error('Failed to fetch available rooms');
-
       const data = await response.json();
-      if (data.success && data.data && data.data.length > 0) {
+      if (data.success && data.data) {
         setAvailableRooms(data.data);
         setRoomError('');
       } else {
@@ -114,6 +112,16 @@ const BookingAdd = () => {
       setBooking(prev => ({ ...prev, rate_prices_id: '', total_amount: '' }));
       alert('Error fetching rate prices. Please try again.');
     }
+  };
+
+  const isFormValid = () => {
+    const isValid = booking.customer_id && 
+                   booking.check_in_date && 
+                   booking.check_out_date && 
+                   booking.room_id && 
+                   booking.rate_prices_id;
+    
+    return isValid;
   };
 
   const calculateStayDuration = () => {
@@ -179,6 +187,13 @@ const BookingAdd = () => {
     const roomId = e.target.value;
     const selected = availableRooms.find(room => room.id === roomId);
     setSelectedRoom(selected);
+    
+    // Update booking state with the selected room ID
+    setBooking(prev => ({
+      ...prev,
+      room_id: roomId,
+      room_type_id: selected.room_type_id
+    }));
     
     if (selected && selected.room_type_id) {
       await fetchRatePrices(selected.room_type_id);
@@ -417,6 +432,11 @@ const BookingAdd = () => {
                     </MenuItem>
                   )}
                 </Select>
+                {roomError && (
+                  <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                    {roomError}
+                  </Typography>
+                )}
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -466,7 +486,7 @@ const BookingAdd = () => {
                 color="primary"
                 className="form-submit"
                 // fullWidth
-                disabled={loading}
+                disabled={!isFormValid() || loading}
               >
                 {loading ? 'Creating Booking...' : 'Create Booking'}
               </Button>

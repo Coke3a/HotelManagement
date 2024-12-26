@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   TextField, 
   Button, 
@@ -15,12 +15,19 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { useNavigate } from 'react-router-dom';
 import { handleTokenExpiration } from '../utils/api';
 
-const GuestSearch = ({ onGuestSelected, currentGuestId, guests, setGuests, onAddNewGuest }) => {
-  const [identityNumber, setIdentityNumber] = useState('');
+const GuestSearch = ({ onGuestSelected, currentGuestId, guests, setGuests, onAddNewGuest, initialSelectedGuest }) => {
+  const [identityNumber, setIdentityNumber] = useState(initialSelectedGuest?.identity_number || '');
   const [error, setError] = useState('');
-  const [selectedGuest, setSelectedGuest] = useState(null);
+  const [selectedGuest, setSelectedGuest] = useState(initialSelectedGuest || null);
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (initialSelectedGuest && !selectedGuest) {
+      setSelectedGuest(initialSelectedGuest);
+      setIdentityNumber(initialSelectedGuest.identity_number);
+    }
+  }, [initialSelectedGuest]);
 
   const handleSearch = async () => {
     if (!identityNumber.trim()) return;
