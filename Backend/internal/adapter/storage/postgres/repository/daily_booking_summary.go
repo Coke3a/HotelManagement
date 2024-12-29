@@ -38,7 +38,17 @@ func (dbsr *DailyBookingSummaryRepository) CreateDailyBookingSummary(ctx *gin.Co
             summary.TotalAmount,
             summary.Status,
         ).
-        Suffix("RETURNING *")
+        Suffix(`
+            ON CONFLICT (summary_date) 
+            DO UPDATE SET 
+                created_bookings = EXCLUDED.created_bookings,
+                completed_bookings = EXCLUDED.completed_bookings,
+                canceled_bookings = EXCLUDED.canceled_bookings,
+                total_amount = EXCLUDED.total_amount,
+                status = EXCLUDED.status,
+                updated_at = CURRENT_TIMESTAMP
+            RETURNING *
+        `)
 
     sql, args, err := query.ToSql()
     if err != nil {
@@ -57,10 +67,7 @@ func (dbsr *DailyBookingSummaryRepository) CreateDailyBookingSummary(ctx *gin.Co
     )
 
     if err != nil {
-        if errCode := dbsr.db.ErrorCode(err); errCode == "23505" {
-            return nil, fmt.Errorf("duplicate summary for date: %w", domain.ErrConflictingData)
-        }
-        return nil, fmt.Errorf("error creating summary: %w", err)
+        return nil, fmt.Errorf("error upserting summary: %w", err)
     }
 
     return summary, nil

@@ -40,10 +40,11 @@ const DailyBookingSummary = () => {
       }
 
       const data = await response.json();
-      setSummaries(data.data);
+      setSummaries(data.data || []);
     } catch (error) {
       console.error('Error fetching summaries:', error);
       message.error('Failed to fetch summaries');
+      setSummaries([]);
     }
     setLoading(false);
   };
@@ -161,7 +162,7 @@ const DailyBookingSummary = () => {
                   <CircularProgress size={24} />
                 </TableCell>
               </TableRow>
-            ) : summaries.length === 0 ? (
+            ) : (!summaries || summaries.length === 0) ? (
               <TableRow>
                 <TableCell colSpan={8} align="center">
                   <Typography variant="body2">No summaries found</Typography>
