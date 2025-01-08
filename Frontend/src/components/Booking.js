@@ -25,8 +25,10 @@ import {
 } from '@mui/material';
 import { LocalizationProvider, MobileDatePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import { getPaymentStatusMessage } from '../utils/paymentEnums';
+import { getPaymentStatusMessage, getPaymentStatusColor } from '../utils/paymentEnums';
 import SearchIcon from '@mui/icons-material/Search';
+import { getBookingStatusMessage, getBookingStatusColor } from '../utils/bookingStatusEnums';
+import { PaymentStatus } from '../utils/paymentEnums';
 
 const Booking = () => {
   const token = localStorage.getItem('token');
@@ -151,40 +153,8 @@ const Booking = () => {
   };
 
   const renderBookingStatus = (status) => {
-    const statusMessage = getStatusString(status);
-    let statusColor;
-    let backgroundColor;
-    let textColor;
-
-    switch (status) {
-      case 1: // Pending
-        backgroundColor = '#FFF4E5';  // Light orange
-        textColor = '#663C00';
-        break;
-      case 2: // Confirmed
-        backgroundColor = '#E8F4FD';  // Light blue
-        textColor = '#0A4FA6';
-        break;
-      case 3: // Checked In
-        backgroundColor = '#EDF7ED';  // Light green
-        textColor = '#1E4620';
-        break;
-      case 4: // Checked Out
-        backgroundColor = '#F5F5F5';  // Light grey
-        textColor = '#666666';
-        break;
-      case 5: // Canceled
-        backgroundColor = '#FEEBEE';  // Light red
-        textColor = '#7F1D1D';
-        break;
-      case 6: // Completed
-        backgroundColor = '#E5D7FD';  // Light purple
-        textColor = '#4A1D96';
-        break;
-      default:
-        backgroundColor = '#F5F5F5';  // Light grey
-        textColor = '#666666';
-    }
+    const statusMessage = getBookingStatusMessage(status);
+    const { backgroundColor, textColor } = getBookingStatusColor(status);
 
     return (
       <Chip 
@@ -203,30 +173,13 @@ const Booking = () => {
   };
 
   const renderPaymentStatus = (status) => {
-    const statusMessage = getPaymentStatusMessage(parseInt(status));
-    let statusColor;
-
-    switch (parseInt(status)) {
-      case 1: // Pending
-        statusColor = 'warning';
-        break;
-      case 2: // Completed
-        statusColor = 'success';
-        break;
-      case 3: // Failed
-        statusColor = 'error';
-        break;
-      case 4: // Refunded
-        statusColor = 'info';
-        break;
-      default:
-        statusColor = 'default';
-    }
+    const statusMessage = getPaymentStatusMessage(status);
+    const { chipColor } = getPaymentStatusColor(status);
 
     return (
       <Chip 
         label={statusMessage} 
-        color={statusColor} 
+        color={chipColor}
         size="small"
       />
     );
@@ -304,12 +257,11 @@ const Booking = () => {
                       sx={{ height: '40px' }}
                     >
                       <MenuItem value="">All Status</MenuItem>
-                      <MenuItem value="1">Pending</MenuItem>
-                      <MenuItem value="2">Confirmed</MenuItem>
-                      <MenuItem value="3">Checked In</MenuItem>
-                      <MenuItem value="4">Checked Out</MenuItem>
-                      <MenuItem value="5">Canceled</MenuItem>
-                      <MenuItem value="6">Completed</MenuItem>
+                      <MenuItem value="1">Uncheck-in</MenuItem>
+                      <MenuItem value="2">Check-in</MenuItem>
+                      <MenuItem value="3">Check-out</MenuItem>
+                      <MenuItem value="4">Cancelled</MenuItem>
+                      <MenuItem value="5">Completed</MenuItem>
                     </Select>
                   </FormControl>
                   <FormControl size="small" sx={{ width: '50%' }}>
@@ -320,10 +272,10 @@ const Booking = () => {
                       sx={{ height: '40px' }}
                     >
                       <MenuItem value="">All Payments</MenuItem>
-                      <MenuItem value="1">Pending</MenuItem>
-                      <MenuItem value="2">Completed</MenuItem>
-                      <MenuItem value="3">Failed</MenuItem>
-                      <MenuItem value="4">Refunded</MenuItem>
+                      <MenuItem value={PaymentStatus.UNPAID}>Unpaid</MenuItem>
+                      <MenuItem value={PaymentStatus.PAID}>Paid</MenuItem>
+                      <MenuItem value={PaymentStatus.FAILED}>Failed</MenuItem>
+                      <MenuItem value={PaymentStatus.REFUNDED}>Refunded</MenuItem>
                     </Select>
                   </FormControl>
                 </Stack>

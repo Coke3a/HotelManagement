@@ -1,16 +1,57 @@
 export const PaymentStatus = {
   UNPAID: 1,
-  PAID: 2
+  PAID: 2,
+  FAILED: 3,
+  REFUNDED: 4
 };
 
 export const getPaymentStatusMessage = (status) => {
-  switch (status) {
+  switch (parseInt(status)) {
     case PaymentStatus.UNPAID:
       return 'Unpaid';
     case PaymentStatus.PAID:
       return 'Paid';
+    case PaymentStatus.FAILED:
+      return 'Failed';
+    case PaymentStatus.REFUNDED:
+      return 'Refunded';
     default:
       return 'Unknown';
+  }
+};
+
+export const getPaymentStatusColor = (status) => {
+  switch (parseInt(status)) {
+    case PaymentStatus.UNPAID:
+      return {
+        backgroundColor: '#FFF4E5',
+        textColor: '#663C00',
+        chipColor: 'warning'
+      };
+    case PaymentStatus.PAID:
+      return {
+        backgroundColor: '#EDF7ED',
+        textColor: '#1E4620',
+        chipColor: 'success'
+      };
+    case PaymentStatus.FAILED:
+      return {
+        backgroundColor: '#FEEBEE',
+        textColor: '#7F1D1D',
+        chipColor: 'error'
+      };
+    case PaymentStatus.REFUNDED:
+      return {
+        backgroundColor: '#E5D7FD',
+        textColor: '#4A1D96',
+        chipColor: 'info'
+      };
+    default:
+      return {
+        backgroundColor: '#F5F5F5',
+        textColor: '#666666',
+        chipColor: 'default'
+      };
   }
 };
 
