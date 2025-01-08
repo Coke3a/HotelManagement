@@ -222,7 +222,7 @@ func (rr *RoomRepository) GetAvailableRooms(ctx *gin.Context, checkInDate, check
 			SELECT 1
 			FROM bookings b
 			WHERE b.room_id = r.id
-			AND b.status NOT IN (5, 6) -- Exclude canceled or completed bookings
+			AND b.status NOT IN (4) -- Exclude canceled
 			AND (
 				(b.check_in_date < $2 AND b.check_out_date > $1)  -- Overlaps with the new booking period
 			)
