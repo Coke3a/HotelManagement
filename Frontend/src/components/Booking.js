@@ -154,7 +154,20 @@ const Booking = () => {
 
   const renderBookingStatus = (status) => {
     const statusMessage = getBookingStatusMessage(status);
-    const { backgroundColor, textColor } = getBookingStatusColor(status);
+    const { chipColor } = getBookingStatusColor(status);
+
+    return (
+      <Chip 
+        label={statusMessage} 
+        color={chipColor}
+        size="small"
+      />
+    );
+  };
+
+  const renderPaymentStatus = (status, bookingId) => {
+    const statusMessage = getPaymentStatusMessage(status);
+    const { backgroundColor, textColor } = getPaymentStatusColor(status);
 
     return (
       <Chip 
@@ -165,24 +178,18 @@ const Booking = () => {
           fontWeight: 'medium',
           '&:hover': {
             backgroundColor: backgroundColor,
+            cursor: 'pointer',
+            opacity: 0.9
           }
         }}
         size="small"
+        onClick={() => handlePaymentClick(bookingId)}
       />
     );
   };
 
-  const renderPaymentStatus = (status) => {
-    const statusMessage = getPaymentStatusMessage(status);
-    const { chipColor } = getPaymentStatusColor(status);
-
-    return (
-      <Chip 
-        label={statusMessage} 
-        color={chipColor}
-        size="small"
-      />
-    );
+  const handlePaymentClick = (bookingId) => {
+    navigate(`/payment/edit/${bookingId}`);
   };
 
   return (
@@ -470,7 +477,12 @@ const Booking = () => {
                   <TableCell>{new Date(booking.check_in_date).toLocaleDateString()}</TableCell>
                   <TableCell>{new Date(booking.check_out_date).toLocaleDateString()}</TableCell>
                   <TableCell>{booking.total_amount || booking.booking_price}</TableCell>
-                  <TableCell>{booking.payment_status ? renderPaymentStatus(booking.payment_status) : '-'}</TableCell>
+                  <TableCell>
+                    {booking.payment_status ? 
+                      renderPaymentStatus(booking.payment_status, booking.id || booking.booking_id) 
+                      : '-'
+                    }
+                  </TableCell>
                   <TableCell>{renderBookingStatus(booking.status || booking.booking_status)}</TableCell>
                   <TableCell>
                     <Button

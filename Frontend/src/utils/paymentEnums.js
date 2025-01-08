@@ -25,32 +25,27 @@ export const getPaymentStatusColor = (status) => {
     case PaymentStatus.UNPAID:
       return {
         backgroundColor: '#FFF4E5',
-        textColor: '#663C00',
-        chipColor: 'warning'
+        textColor: '#663C00'
       };
     case PaymentStatus.PAID:
       return {
         backgroundColor: '#EDF7ED',
-        textColor: '#1E4620',
-        chipColor: 'success'
+        textColor: '#1E4620'
       };
     case PaymentStatus.FAILED:
       return {
         backgroundColor: '#FEEBEE',
-        textColor: '#7F1D1D',
-        chipColor: 'error'
+        textColor: '#7F1D1D'
       };
     case PaymentStatus.REFUNDED:
       return {
         backgroundColor: '#E5D7FD',
-        textColor: '#4A1D96',
-        chipColor: 'info'
+        textColor: '#4A1D96'
       };
     default:
       return {
         backgroundColor: '#F5F5F5',
-        textColor: '#666666',
-        chipColor: 'default'
+        textColor: '#666666'
       };
   }
 };

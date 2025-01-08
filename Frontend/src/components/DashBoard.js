@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, CircularProgress, Button, Card, CardContent, Grid } from '@mui/material';
-import { PaymentStatus } from '../utils/paymentEnums';
-import { BookingStatus, getBookingStatusMessage } from '../utils/bookingStatusEnums';
-import { getPaymentStatusMessage } from '../utils/paymentEnums';
+import { Typography, CircularProgress, Button, Card, CardContent, Grid, Chip } from '@mui/material';
+import { PaymentStatus, getPaymentStatusMessage, getPaymentStatusColor } from '../utils/paymentEnums';
+import { BookingStatus, getBookingStatusMessage, getBookingStatusColor } from '../utils/bookingStatusEnums';
 import { useNavigate } from 'react-router-dom';
 import { handleTokenExpiration } from '../utils/api';
 
@@ -163,10 +162,14 @@ const DashBoard = () => {
               className="p-0.5 h-10 border-r border-gray-200"
             >
               <div
-                className="h-full w-full transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col items-center justify-center p-0.5 space-y-0.5 rounded booking-hover-effect"
+                className="h-full w-full transition-all duration-200 hover:shadow-md cursor-pointer flex flex-col items-center justify-center p-1 space-y-1 rounded booking-hover-effect"
                 style={{ 
                   backgroundColor: getStatusColor(booking),
-                  transition: 'all 0.2s ease-in-out'
+                  transition: 'all 0.2s ease-in-out',
+                  minHeight: '80px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
                 onClick={() => navigate(`/booking/edit/${booking.booking_id}`)}
                 title={`${booking.customer_firstname} ${booking.customer_surname} (${booking.check_in_date} - ${booking.check_out_date})`}
@@ -179,26 +182,12 @@ const DashBoard = () => {
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                <div className="font-semibold text-blue-900 text-[11px]">
-                  {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
-                </div>
-                <div className="flex items-center space-x-0.5 text-[10px] bg-white/50 px-1 py-0.5 rounded-sm">
-                  <span 
-                    className="w-1 h-1 rounded-full"
-                    style={{ backgroundColor: getBookingStatusColor(booking.booking_status) }}
-                  />
-                  <span className="font-medium">
-                    {getBookingStatusMessage(booking.booking_status)}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-0.5 text-[10px] bg-white/50 px-1 py-0.5 rounded-sm">
-                  <span 
-                    className="w-1 h-1 rounded-full"
-                    style={{ backgroundColor: getPaymentStatusColor(booking.payment_status) }}
-                  />
-                  <span className="font-medium">
-                    {getPaymentStatusMessage(booking.payment_status)}
-                  </span>
+                <div className="flex flex-col items-center justify-center space-y-1 w-full">
+                  <div className="font-semibold text-blue-900 text-[11px] text-center">
+                    {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
+                  </div>
+                  {renderBookingStatusBadge(booking.booking_status)}
+                  {renderPaymentStatusBadge(booking.payment_status)}
                 </div>
               </div>
             </td>
@@ -237,42 +226,52 @@ const DashBoard = () => {
   const getStatusColor = (booking) => {
     const currentDate = new Date().toISOString().slice(0, 10);
     if (booking.check_out_date <= currentDate) {
-      return '#e8f5e9'; // lighter green for past stays
+      return '#EDF7ED'; // Past stays - light green
     } else if (booking.check_in_date <= currentDate) {
-      return '#fff8e1'; // lighter yellow for current stays
+      return '#FFF4E5'; // Current stays - light orange
     } else {
-      return '#e3f2fd'; // lighter blue for future stays
+      return '#E8F4FD'; // Future stays - light blue
     }
   };
 
-  const getBookingStatusColor = (status) => {
-    switch (status) {
-      case BookingStatus.CONFIRMED:
-        return '#2e7d32';
-      case BookingStatus.CHECKED_IN:
-        return '#1565c0';
-      case BookingStatus.CHECKED_OUT:
-        return '#795548';
-      case BookingStatus.CANCELLED:
-        return '#c62828';
-      default:
-        return '#795548';
-    }
+  const renderBookingStatusBadge = (status) => {
+    const statusMessage = getBookingStatusMessage(status);
+    const { chipColor } = getBookingStatusColor(status);
+
+    return (
+      <div className="flex items-center space-x-0.5 text-[10px] bg-white/80 px-1.5 py-0.5 rounded">
+        <Chip 
+          label={statusMessage} 
+          color={chipColor}
+          size="small"
+          sx={{ height: '20px', '& .MuiChip-label': { fontSize: '10px', px: 1 } }}
+        />
+      </div>
+    );
   };
 
-  const getPaymentStatusColor = (status) => {
-    switch (status) {
-      case PaymentStatus.PAID:
-        return '#2e7d32';
-      case PaymentStatus.PARTIALLY_PAID:
-        return '#f57c00';
-      case PaymentStatus.UNPAID:
-        return '#c62828';
-      case PaymentStatus.REFUNDED:
-        return '#512da8';
-      default:
-        return '#795548';
-    }
+  const renderPaymentStatusBadge = (status) => {
+    const statusMessage = getPaymentStatusMessage(status);
+    const { backgroundColor, textColor } = getPaymentStatusColor(status);
+
+    return (
+      <div className="flex items-center space-x-0.5 text-[10px] bg-white/80 px-1.5 py-0.5 rounded">
+        <Chip 
+          label={statusMessage}
+          sx={{
+            backgroundColor: backgroundColor,
+            color: textColor,
+            height: '20px',
+            '& .MuiChip-label': { 
+              fontSize: '10px',
+              px: 1,
+              fontWeight: 'medium'
+            }
+          }}
+          size="small"
+        />
+      </div>
+    );
   };
 
   // Calculate today's check-ins, check-outs, and remaining bookings
@@ -340,15 +339,25 @@ const DashBoard = () => {
               <th className="sticky left-0 z-10 bg-indigo-900 p-3 text-sm font-semibold tracking-wide text-left text-white border-b border-r border-indigo-800">
                 ROOM
               </th>
-              {generateDates().map((dateObj) => (
-                <th 
-                  key={dateObj.date}
-                  className="bg-indigo-900 p-1.5 text-[11px] font-semibold tracking-wide text-center text-white border-b border-r border-indigo-800 min-w-[80px]"
-                >
-                  <div className="font-bold">{dateObj.dayOfWeek}</div>
-                  <div className="text-indigo-200 text-[10px] mt-0.5">{dateObj.date}</div>
-                </th>
-              ))}
+              {generateDates().map((dateObj) => {
+                const isToday = dateObj.date === new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }).split(',')[0];
+                return (
+                  <th 
+                    key={dateObj.date}
+                    className={`bg-indigo-900 p-1.5 text-[11px] font-semibold tracking-wide text-center text-white border-b border-r border-indigo-800 min-w-[80px] ${isToday ? 'relative bg-indigo-700' : ''}`}
+                  >
+                    {isToday && (
+                      <div className="absolute top-0 left-0 right-0 bg-yellow-500 text-indigo-900 text-[10px] font-bold px-1 py-0.5">
+                        TODAY
+                      </div>
+                    )}
+                    <div className="font-bold mt-3">{dateObj.dayOfWeek}</div>
+                    <div className={`text-[10px] mt-0.5 ${isToday ? 'text-yellow-300 font-bold' : 'text-indigo-200'}`}>
+                      {dateObj.date}
+                    </div>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
