@@ -25,13 +25,14 @@ type DB struct {
 }
 
 func Connect(ctx context.Context, config *config.DB) (*DB, error) {
-	url := fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable",
+	url := fmt.Sprintf("%s://%s:%s@%s:%s/%s?sslmode=disable&TimeZone=%s",
 		config.Connection,
 		config.User,
 		config.Password,
 		config.Host,
 		config.Port,
 		config.Name,
+		config.Timezone,
 	)
 
 	db, err := pgxpool.New(ctx, url)

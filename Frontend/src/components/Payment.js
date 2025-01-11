@@ -21,6 +21,7 @@ import { getPaymentStatusMessage, getPaymentMethodMessage, PaymentStatus, Paymen
 import { getUserRole } from '../utils/auth';
 import EditIcon from '@mui/icons-material/Edit';
 import { handleTokenExpiration } from '../utils/api';
+import dayjs from 'dayjs';
 
 const Payment = () => {
   const token = localStorage.getItem('token');
@@ -236,7 +237,9 @@ const Payment = () => {
                   <TableCell>{payment.amount}</TableCell>
                   <TableCell>{renderPaymentMethod(payment.payment_method)}</TableCell>
                   <TableCell>{renderPaymentStatus(payment.status)}</TableCell>
-                  <TableCell>{new Date(payment.payment_date).toLocaleString()}</TableCell>
+                  <TableCell>
+                    {dayjs(payment.payment_date).format('DD/MM/YYYY')}
+                  </TableCell>
                   <TableCell>
                     <Button
                       variant="outlined"

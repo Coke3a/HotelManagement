@@ -25,12 +25,13 @@ type (
 	}
 	// Database contains all the environment variables for the database
 	DB struct {
-		Connection string
-		Host       string
-		Port       string
-		User       string
-		Password   string
-		Name       string
+		Connection string `env:"DB_CONNECTION,required"`
+		Host       string `env:"DB_HOST,required"`
+		Port       string `env:"DB_PORT,required"`
+		User       string `env:"DB_USER,required"`
+		Password   string `env:"DB_PASSWORD,required"`
+		Name       string `env:"DB_NAME,required"`
+		Timezone   string `env:"DB_TIMEZONE" envDefault:"Asia/Bangkok"`
 	}
 	// HTTP contains all the environment variables for the http server
 	HTTP struct {
@@ -66,6 +67,7 @@ func New() (*Container, error) {
 		User:       os.Getenv("DB_USER"),
 		Password:   os.Getenv("DB_PASSWORD"),
 		Name:       os.Getenv("DB_NAME"),
+		Timezone:   os.Getenv("DB_TIMEZONE"),
 	}
 
 	http := &HTTP{

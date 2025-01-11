@@ -23,7 +23,12 @@ const DashBoard = () => {
         const dates = generateDates();
         const startDate = dates[0].date;
         const endDate = dates[dates.length - 1].date;
-        const today = new Date().toISOString().slice(0, 10);
+        const today = new Date().toLocaleString('en-GB', { 
+          timeZone: 'Asia/Bangkok',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).split('/').reverse().join('-');
 
         const [bookingsResponse, roomsResponse, checkInsResponse, checkOutsResponse] = await Promise.all([
           fetch(`http://localhost:8080/v1/booking/?${new URLSearchParams({
@@ -113,40 +118,46 @@ const DashBoard = () => {
         return null;
       }
 
-      const booking = bookings.find(
-        (booking) => {
-          const currentDate = new Date(dateObj.date);
-          const checkInDate = new Date(booking.check_in_date);
-          const checkOutDate = new Date(booking.check_out_date);
-          
-          // Reset hours to compare dates properly
-          currentDate.setHours(0, 0, 0, 0);
-          checkInDate.setHours(0, 0, 0, 0);
-          checkOutDate.setHours(0, 0, 0, 0);
-          
-          return booking.room_id === room.id &&
-                 checkInDate <= currentDate &&
-                 checkOutDate > currentDate;
-        }
-      );
+      // Convert dateObj.date (DD/MM/YYYY) to Date object
+      const [day, month, year] = dateObj.date.split('/');
+      const currentDate = new Date(year, month - 1, day);
+      currentDate.setHours(0, 0, 0, 0);
+
+      const booking = bookings.find(booking => {
+        // Convert check-in and check-out dates to Date objects
+        const checkInDate = new Date(booking.check_in_date);
+        const checkOutDate = new Date(booking.check_out_date);
+        
+        checkInDate.setHours(0, 0, 0, 0);
+        checkOutDate.setHours(0, 0, 0, 0);
+
+        return booking.room_id === room.id &&
+               checkInDate.getTime() <= currentDate.getTime() &&
+               checkOutDate.getTime() > currentDate.getTime();
+      });
 
       if (booking) {
-        const startDate = new Date(booking.check_in_date);
-        const endDate = new Date(booking.check_out_date);
-        startDate.setHours(0, 0, 0, 0);
-        endDate.setHours(0, 0, 0, 0);
+        const checkInDate = new Date(booking.check_in_date);
+        const checkOutDate = new Date(booking.check_out_date);
+        checkInDate.setHours(0, 0, 0, 0);
+        checkOutDate.setHours(0, 0, 0, 0);
 
+        // Find the start index in our date range
         const startIndex = datesList.findIndex(d => {
-          const date = new Date(d.date);
+          const [dDay, dMonth, dYear] = d.date.split('/');
+          const date = new Date(dYear, dMonth - 1, dDay);
           date.setHours(0, 0, 0, 0);
-          return date.getTime() === startDate.getTime();
+          return date.getTime() === checkInDate.getTime();
         });
 
-        const dayBeforeCheckout = new Date(endDate);
-        dayBeforeCheckout.setDate(endDate.getDate() - 1);
+        // Calculate the day before checkout
+        const dayBeforeCheckout = new Date(checkOutDate);
+        dayBeforeCheckout.setDate(dayBeforeCheckout.getDate() - 1);
 
+        // Find the end index in our date range
         const endIndex = datesList.findIndex(d => {
-          const date = new Date(d.date);
+          const [dDay, dMonth, dYear] = d.date.split('/');
+          const date = new Date(dYear, dMonth - 1, dDay);
           date.setHours(0, 0, 0, 0);
           return date.getTime() === dayBeforeCheckout.getTime();
         });
@@ -281,7 +292,12 @@ const DashBoard = () => {
   };
 
   // Calculate today's check-ins, check-outs, and remaining bookings
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleString('en-GB', { 
+    timeZone: 'Asia/Bangkok',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).split('/').reverse().join('-');
   const checkInTodayCount = todayCheckIns.length;
   const checkOutTodayCount = todayCheckOuts.length;
   const remainingCheckInCount = todayCheckIns.filter(booking => 

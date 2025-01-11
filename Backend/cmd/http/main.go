@@ -25,7 +25,7 @@ func main() {
 		}
 
 		// Set timezone to Asia/Bangkok
-		location, err := time.LoadLocation("Asia/Bangkok")
+		location, err := time.LoadLocation(config.DB.Timezone)
 		if err != nil {
 			slog.Error("Error setting timezone", "error", err)
 			os.Exit(1)

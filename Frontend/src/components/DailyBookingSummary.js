@@ -21,6 +21,7 @@ import {
 const DailyBookingSummary = () => {
   const [summaries, setSummaries] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(dayjs());
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
 
@@ -126,6 +127,14 @@ const DailyBookingSummary = () => {
     );
   };
 
+  const handleDateChange = (date) => {
+    if (date && dayjs(date).isValid()) {
+      setSelectedDate(dayjs(date));
+    } else {
+      console.error('Invalid date selected');
+    }
+  };
+
   useEffect(() => {
     fetchSummaries();
   }, []);
@@ -134,9 +143,14 @@ const DailyBookingSummary = () => {
     <div className="p-6">
       <div className="flex justify-between mb-4">
         <Space>
-          <DatePicker onChange={handleGenerateSummary} />
-          <Button type="primary" onClick={() => handleGenerateSummary(dayjs())}>
-            Generate Today's Summary
+          <DatePicker
+            value={selectedDate}
+            onChange={handleDateChange}
+            format="DD/MM/YYYY"
+            disabledDate={(current) => current && current > dayjs().endOf('day')}
+          />
+          <Button type="primary" onClick={() => handleGenerateSummary(selectedDate)}>
+            Generate Summary for Selected Date
           </Button>
         </Space>
       </div>
