@@ -19,7 +19,7 @@ import BedroomChildIcon from '@mui/icons-material/BedroomChild';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
 import HistoryIcon from '@mui/icons-material/History';
-import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
+import SummarizeIcon from '@mui/icons-material/Summarize';
 
 const SideBar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -39,6 +39,7 @@ const SideBar = () => {
   const menuItems = [
     { path: "/dashboard", icon: <HomeOutlinedIcon />, text: "Dashboard", roles: [UserRoleEnum.ADMIN, UserRoleEnum.STAFF] },
     { path: "/booking", icon: <MenuBookIcon />, text: "Booking", roles: [UserRoleEnum.ADMIN, UserRoleEnum.STAFF] },
+    { path: "/daily-summary", icon: <SummarizeIcon />, text: "Daily Booking Summary", roles: [UserRoleEnum.ADMIN] },
     {
       group: "Guest",
       icon: <PeopleAltIcon />,
@@ -59,7 +60,6 @@ const SideBar = () => {
     },
     { path: "/user", icon: <AccountBoxIcon />, text: "User", roles: [UserRoleEnum.ADMIN] },
     { path: "/logs", icon: <HistoryIcon />, text: "Logs", roles: [UserRoleEnum.ADMIN] },
-    { path: "/daily-summary", icon: <HistoryOutlinedIcon />, text: "Daily Booking Summary", roles: [UserRoleEnum.ADMIN] },
   ];
 
   const userRole = localStorage.getItem('userRole');
