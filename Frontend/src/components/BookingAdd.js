@@ -386,7 +386,7 @@ const BookingAdd = () => {
                     value={booking.check_out_date}
                     onChange={(date) => handleDateChange('check_out_date')(date)}
                     renderInput={(params) => <TextField {...params} fullWidth />}
-                    inputFormat="yyyy-MM-dd"
+                    inputFormat="dd/MM/yyyy"
                     minDate={booking.check_in_date ? new Date(booking.check_in_date.getTime() + 86400000) : new Date(today.getTime() + 86400000)}
                     timezone="Asia/Bangkok"
                   />

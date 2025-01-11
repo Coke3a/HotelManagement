@@ -171,13 +171,13 @@ const DailyBookingSummary = () => {
             ) : (
               summaries.map((summary, index) => (
                 <TableRow key={summary.SummaryDate} className={index % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                  <TableCell>{dayjs(summary.SummaryDate).format('YYYY-MM-DD')}</TableCell>
+                  <TableCell>{dayjs(summary.SummaryDate).format('DD/MM/YYYY')}</TableCell>
                   <TableCell>{countBookings(summary.CreatedBookings)}</TableCell>
                   <TableCell>{countBookings(summary.CompletedBookings)}</TableCell>
                   <TableCell>{countBookings(summary.CanceledBookings)}</TableCell>
                   <TableCell>{summary.TotalAmount}</TableCell>
                   <TableCell>{renderStatus(summary.Status)}</TableCell>
-                  <TableCell>{dayjs(summary.CreatedAt).format('YYYY-MM-DD HH:mm:ss')}</TableCell>
+                  <TableCell>{dayjs(summary.CreatedAt).format('DD/MM/YYYY HH:mm:ss')}</TableCell>
                   <TableCell>
                     <Button
                       variant="outlined"

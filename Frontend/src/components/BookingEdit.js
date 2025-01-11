@@ -344,7 +344,7 @@ const BookingEdit = () => {
                     value={booking.check_in_date}
                     onChange={() => {}}
                     renderInput={(params) => <TextField {...params} fullWidth />}
-                    inputFormat="yyyy-MM-dd"
+                    inputFormat="dd/MM/yyyy"
                     disabled
                     timezone="Asia/Bangkok"
                   />
@@ -359,7 +359,7 @@ const BookingEdit = () => {
                     value={booking.check_out_date}
                     onChange={() => {}}
                     renderInput={(params) => <TextField {...params} fullWidth />}
-                    inputFormat="yyyy-MM-dd"
+                    inputFormat="dd/MM/yyyy"
                     disabled
                     timezone="Asia/Bangkok"
                   />

@@ -251,8 +251,8 @@ const DailyBookingSummaryEdit = () => {
                         </Button>
                       </TableCell>
                       <TableCell>{booking.room_number}</TableCell>
-                      <TableCell>{dayjs(booking.check_in_date).format('YYYY-MM-DD')}</TableCell>
-                      <TableCell>{dayjs(booking.check_out_date).format('YYYY-MM-DD')}</TableCell>
+                      <TableCell>{dayjs(booking.check_in_date).format('DD/MM/YYYY')}</TableCell>
+                      <TableCell>{dayjs(booking.check_out_date).format('DD/MM/YYYY')}</TableCell>
                       <TableCell>{booking.booking_price}</TableCell>
                       <TableCell>{renderBookingStatus(booking.booking_status)}</TableCell>
                       <TableCell>

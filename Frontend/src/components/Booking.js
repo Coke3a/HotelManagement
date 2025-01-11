@@ -474,8 +474,8 @@ const Booking = () => {
                       </Button>
                     </Box>
                   </TableCell>
-                  <TableCell>{new Date(booking.check_in_date).toLocaleDateString()}</TableCell>
-                  <TableCell>{new Date(booking.check_out_date).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(booking.check_in_date).toLocaleDateString('en-GB')}</TableCell>
+                  <TableCell>{new Date(booking.check_out_date).toLocaleDateString('en-GB')}</TableCell>
                   <TableCell>{booking.total_amount || booking.booking_price}</TableCell>
                   <TableCell>
                     {booking.payment_status ? 

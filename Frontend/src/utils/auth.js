@@ -19,7 +19,6 @@ export const logout = () => {
   localStorage.removeItem('userRole');
   localStorage.removeItem('userId');
 };
-
 export const getUsername = () => localStorage.getItem('username');
 
 export const setUsername = (username) => localStorage.setItem('username', username);

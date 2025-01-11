@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, CircularProgress, Button, Card, CardContent, Grid, Chip } from '@mui/material';
+import { Typography, CircularProgress, Button, Card, CardContent, Grid, Chip, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Box } from '@mui/material';
 import { PaymentStatus, getPaymentStatusMessage, getPaymentStatusColor } from '../utils/paymentEnums';
 import { BookingStatus, getBookingStatusMessage, getBookingStatusColor } from '../utils/bookingStatusEnums';
 import { useNavigate } from 'react-router-dom';
@@ -214,8 +214,14 @@ const DashBoard = () => {
     for (let i = 0; i < 13; i++) {
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + i);
+      const formattedDate = date.toLocaleString('en-GB', { 
+        timeZone: 'Asia/Bangkok',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }).split(',')[0];
       dates.push({
-        date: date.toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }).split(',')[0],
+        date: formattedDate,
         dayOfWeek: date.toLocaleString('en-US', { timeZone: 'Asia/Bangkok', weekday: 'long' }),
       });
     }
@@ -294,39 +300,122 @@ const DashBoard = () => {
       </div>
 
       <Grid container spacing={3} className="mb-4">
-        <Grid item xs={12} sm={6} md={3}>
+        {/* Check-ins Section */}
+        <Grid item xs={12} sm={6}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle2" color="textSecondary">
-                Check-ins Today
-              </Typography>
-              <Typography variant="h6" className="text-indigo-900">
-                {checkInTodayCount}
-              </Typography>
-              <Typography variant="subtitle2" color="textSecondary" className="mt-2">
-                Remaining Check-ins
-              </Typography>
-              <Typography variant="h6" className="text-indigo-900">
-                {remainingCheckInCount}
-              </Typography>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Box>
+                  <Typography variant="h6" className="text-indigo-900">
+                    Today's Check-ins
+                  </Typography>
+                  <Typography variant="subtitle1" color="textSecondary">
+                    Total: {checkInTodayCount}
+                  </Typography>
+                  <Typography variant="subtitle2" color="error">
+                    Remaining: {remainingCheckInCount}
+                  </Typography>
+                </Box>
+              </Box>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Guest</TableCell>
+                      <TableCell>Room</TableCell>
+                      <TableCell align="right">Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {todayCheckIns.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center">
+                          <Typography variant="body2">No check-ins for today</Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      todayCheckIns.map((booking) => (
+                        <TableRow 
+                          key={booking.booking_id}
+                          onClick={() => navigate(`/booking/edit/${booking.booking_id}`)}
+                          sx={{ 
+                            cursor: 'pointer',
+                            '&:hover': { backgroundColor: '#f5f5f5' }
+                          }}
+                        >
+                          <TableCell>
+                            {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
+                          </TableCell>
+                          <TableCell>{booking.room_number}</TableCell>
+                          <TableCell align="right">
+                            {renderBookingStatusBadge(booking.booking_status)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+
+        {/* Check-outs Section */}
+        <Grid item xs={12} sm={6}>
           <Card>
             <CardContent>
-              <Typography variant="subtitle2" color="textSecondary">
-                Check-outs Today
-              </Typography>
-              <Typography variant="h6" className="text-indigo-900">
-                {checkOutTodayCount}
-              </Typography>
-              <Typography variant="subtitle2" color="textSecondary" className="mt-2">
-                Remaining Check-outs
-              </Typography>
-              <Typography variant="h6" className="text-indigo-900">
-                {remainingCheckOutCount}
-              </Typography>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Box>
+                  <Typography variant="h6" className="text-indigo-900">
+                    Today's Check-outs
+                  </Typography>
+                  <Typography variant="subtitle1" color="textSecondary">
+                    Total: {checkOutTodayCount}
+                  </Typography>
+                  <Typography variant="subtitle2" color="error">
+                    Remaining: {remainingCheckOutCount}
+                  </Typography>
+                </Box>
+              </Box>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Guest</TableCell>
+                      <TableCell>Room</TableCell>
+                      <TableCell align="right">Status</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {todayCheckOuts.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} align="center">
+                          <Typography variant="body2">No check-outs for today</Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      todayCheckOuts.map((booking) => (
+                        <TableRow 
+                          key={booking.booking_id}
+                          onClick={() => navigate(`/booking/edit/${booking.booking_id}`)}
+                          sx={{ 
+                            cursor: 'pointer',
+                            '&:hover': { backgroundColor: '#f5f5f5' }
+                          }}
+                        >
+                          <TableCell>
+                            {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
+                          </TableCell>
+                          <TableCell>{booking.room_number}</TableCell>
+                          <TableCell align="right">
+                            {renderBookingStatusBadge(booking.booking_status)}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </CardContent>
           </Card>
         </Grid>
