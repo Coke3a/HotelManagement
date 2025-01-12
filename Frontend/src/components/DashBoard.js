@@ -348,11 +348,11 @@ const DashBoard = () => {
                   </Typography>
                 </Box>
               </Box>
-              <TableContainer>
+              <TableContainer sx={{ maxHeight: 300, overflowY: 'auto' }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Booking ID</TableCell>
+                      <TableCell>BID</TableCell>
                       <TableCell>Guest</TableCell>
                       <TableCell>Room</TableCell>
                       <TableCell align="right">Status</TableCell>
@@ -410,11 +410,11 @@ const DashBoard = () => {
                   </Typography>
                 </Box>
               </Box>
-              <TableContainer>
+              <TableContainer sx={{ maxHeight: 300, overflowY: 'auto' }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Booking ID</TableCell>
+                      <TableCell>BID</TableCell>
                       <TableCell>Guest</TableCell>
                       <TableCell>Room</TableCell>
                       <TableCell align="right">Status</TableCell>
@@ -469,11 +469,11 @@ const DashBoard = () => {
                   </Typography>
                 </Box>
               </Box>
-              <TableContainer sx={{ maxHeight: 400, overflowY: 'auto' }}>
+              <TableContainer sx={{ maxHeight: 300, overflowY: 'auto' }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Booking ID</TableCell>
+                      <TableCell>BID</TableCell>
                       <TableCell>Guest</TableCell>
                       <TableCell>Room</TableCell>
                       <TableCell>Amount</TableCell>
