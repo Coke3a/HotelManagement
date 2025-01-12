@@ -38,7 +38,7 @@ const Booking = () => {
   const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [totalCount, setTotalCount] = useState(0);
   const [filters, setFilters] = useState({
     booking_id: '',
@@ -189,7 +189,7 @@ const Booking = () => {
   };
 
   const handlePaymentClick = (bookingId) => {
-    navigate(`/booking/edit/${bookingId}`);
+    navigate(`/payment/edit/${bookingId}`);
   };
 
   return (
@@ -386,9 +386,9 @@ const Booking = () => {
               border: '1px solid #ccc'
             }}
           >
-            <option value={5}>5 per page</option>
-            <option value={10}>10 per page</option>
             <option value={25}>25 per page</option>
+            <option value={50}>50 per page</option>
+            <option value={75}>75 per page</option>
           </select>
         </Box>
         

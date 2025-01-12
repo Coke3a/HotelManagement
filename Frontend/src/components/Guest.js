@@ -30,7 +30,7 @@ const Guest = () => {
   const [guestTypes, setGuestTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const [totalCount, setTotalCount] = useState(0);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
@@ -182,9 +182,9 @@ const Guest = () => {
                 border: '1px solid #ccc'
               }}
             >
-              <option value={5}>5 per page</option>
-              <option value={10}>10 per page</option>
               <option value={25}>25 per page</option>
+              <option value={50}>50 per page</option>
+              <option value={75}>75 per page</option>
             </select>
           </Box>
           
