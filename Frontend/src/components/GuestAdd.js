@@ -96,7 +96,13 @@ const GuestAdd = ({ onGuestAdded, isFromBooking = false }) => {
       console.log('Guest created:', data);
 
       if (isFromBooking && onGuestAdded) {
-        onGuestAdded(data.data);
+        const newGuest = {
+          ...guest,
+          id: data.data.id,
+          created_at: data.data.created_at,
+          updated_at: data.data.updated_at
+        };
+        onGuestAdded(newGuest);
       } else {
         navigate('/guest');
       }

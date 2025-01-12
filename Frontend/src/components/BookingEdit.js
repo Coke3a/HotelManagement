@@ -314,8 +314,15 @@ const BookingEdit = () => {
 
   const handleGuestAdded = async (newGuest) => {
     setOpenGuestModal(false);
-    await fetchGuests();
+    // Update guests list with the new guest
+    setGuests(prevGuests => [...prevGuests, newGuest]);
+    // Select the newly added guest
     setBooking(prev => ({ ...prev, customer_id: newGuest.id }));
+    // Set the selected guest in GuestSearch component
+    const guestSearchComponent = document.querySelector('GuestSearch');
+    if (guestSearchComponent) {
+      guestSearchComponent.setSelectedGuest(newGuest);
+    }
   };
 
   const handleStayDurationChange = (event) => {

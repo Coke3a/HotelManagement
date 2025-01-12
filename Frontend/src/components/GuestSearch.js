@@ -16,18 +16,21 @@ import { useNavigate } from 'react-router-dom';
 import { handleTokenExpiration } from '../utils/api';
 
 const GuestSearch = ({ onGuestSelected, currentGuestId, guests, setGuests, onAddNewGuest, initialSelectedGuest }) => {
-  const [identityNumber, setIdentityNumber] = useState(initialSelectedGuest?.identity_number || '');
+  const [identityNumber, setIdentityNumber] = useState('');
   const [error, setError] = useState('');
   const [selectedGuest, setSelectedGuest] = useState(initialSelectedGuest || null);
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (initialSelectedGuest && !selectedGuest) {
-      setSelectedGuest(initialSelectedGuest);
-      setIdentityNumber(initialSelectedGuest.identity_number);
+    if (guests.length > 0) {
+      const currentGuest = guests.find(g => g.id === currentGuestId);
+      if (currentGuest) {
+        setSelectedGuest(currentGuest);
+        setIdentityNumber(currentGuest.identity_number);
+      }
     }
-  }, [initialSelectedGuest]);
+  }, [guests, currentGuestId]);
 
   const handleSearch = async () => {
     if (!identityNumber.trim()) return;

@@ -178,18 +178,12 @@ const Booking = () => {
           fontWeight: 'medium',
           '&:hover': {
             backgroundColor: backgroundColor,
-            cursor: 'pointer',
             opacity: 0.9
           }
         }}
         size="small"
-        onClick={() => handlePaymentClick(bookingId)}
       />
     );
-  };
-
-  const handlePaymentClick = (bookingId) => {
-    navigate(`/payment/edit/${bookingId}`);
   };
 
   return (
@@ -453,7 +447,7 @@ const Booking = () => {
                       onClick={() => handleGuestClick(booking.customer_id)}
                     >
                       {booking.customer_firstname ? 
-                        `${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}` :
+                        `${booking.customer_firstname} ${booking.customer_surname}` :
                         `Guest ${booking.customer_id}`
                       }
                     </Button>
