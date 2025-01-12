@@ -85,9 +85,6 @@ const HeaderBar = () => {
           onClose={handleClose}
         >
           <Link to="/profile" className="menu-bars">
-            <MenuItem onClick={handleClose}>
-              <Typography color="#1a365d">Profile</Typography>
-            </MenuItem>
           </Link>
           <MenuItem onClick={handleLogout}>
             <Typography color="#1a365d">Logout</Typography>

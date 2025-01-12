@@ -209,7 +209,7 @@ const DashBoard = () => {
                 }}
               >
                 <div className="flex flex-col items-center justify-center space-y-1 w-full">
-                  <div className="font-semibold text-blue-900 text-[11px] text-center">
+                  <div className="font-semibold text-blue-900 text-[8px] text-center">
                     {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
                   </div>
                   {renderBookingStatusBadge(booking.booking_status)}
@@ -256,14 +256,7 @@ const DashBoard = () => {
   };
 
   const getStatusColor = (booking) => {
-    const currentDate = new Date().toISOString().slice(0, 10);
-    if (booking.check_out_date <= currentDate) {
-      return '#EDF7ED'; // Past stays - light green
-    } else if (booking.check_in_date <= currentDate) {
-      return '#FFF4E5'; // Current stays - light orange
-    } else {
-      return '#E8F4FD'; // Future stays - light blue
-    }
+    return '#E8F4FD'; // Light blue for all bookings
   };
 
   const renderBookingStatusBadge = (status) => {
@@ -271,12 +264,12 @@ const DashBoard = () => {
     const { chipColor } = getBookingStatusColor(status);
 
     return (
-      <div className="flex items-center space-x-0.5 text-[10px] bg-white/80 px-1.5 py-0.5 rounded">
+      <div className="flex items-center space-x-0.5 text-[9px] bg-white/80 px-1.5 py-0.5 rounded">
         <Chip 
           label={statusMessage} 
           color={chipColor}
           size="small"
-          sx={{ height: '20px', '& .MuiChip-label': { fontSize: '10px', px: 1 } }}
+          sx={{ height: '18px', '& .MuiChip-label': { fontSize: '9px', px: 1 } }}
         />
       </div>
     );
@@ -287,15 +280,15 @@ const DashBoard = () => {
     const { backgroundColor, textColor } = getPaymentStatusColor(status);
 
     return (
-      <div className="flex items-center space-x-0.5 text-[10px] bg-white/80 px-1.5 py-0.5 rounded">
+      <div className="flex items-center space-x-0.5 text-[9px] bg-white/80 px-1.5 py-0.5 rounded">
         <Chip 
           label={statusMessage}
           sx={{
             backgroundColor: backgroundColor,
             color: textColor,
-            height: '20px',
+            height: '18px',
             '& .MuiChip-label': { 
-              fontSize: '10px',
+              fontSize: '9px',
               px: 1,
               fontWeight: 'medium'
             }
@@ -521,19 +514,25 @@ const DashBoard = () => {
                 ROOM
               </th>
               {generateDates().map((dateObj) => {
-                const isToday = dateObj.date === new Date().toLocaleString('en-US', { timeZone: 'Asia/Bangkok' }).split(',')[0];
+                const isToday = dateObj.date === new Date().toLocaleString('en-GB', { 
+                  timeZone: 'Asia/Bangkok',
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric'
+                }).split(',')[0];
+                
                 return (
                   <th 
                     key={dateObj.date}
-                    className={`bg-indigo-900 p-1.5 text-[11px] font-semibold tracking-wide text-center text-white border-b border-r border-indigo-800 min-w-[80px] ${isToday ? 'relative bg-indigo-700' : ''}`}
+                    className={`bg-blue-100 p-1.5 text-[11px] font-semibold tracking-wide text-center text-gray-800 border-b border-r border-gray-200 min-w-[80px] ${isToday ? 'relative bg-blue-200' : ''}`}
                   >
                     {isToday && (
-                      <div className="absolute top-0 left-0 right-0 bg-yellow-500 text-indigo-900 text-[10px] font-bold px-1 py-0.5">
+                      <div className="absolute top-0 left-0 right-0 bg-yellow-500 text-gray-900 text-[10px] font-bold px-1 py-0.5">
                         TODAY
                       </div>
                     )}
                     <div className="font-bold mt-3">{dateObj.dayOfWeek}</div>
-                    <div className={`text-[10px] mt-0.5 ${isToday ? 'text-yellow-300 font-bold' : 'text-indigo-200'}`}>
+                    <div className={`text-[10px] mt-0.5 ${isToday ? 'text-gray-900 font-bold' : 'text-gray-600'}`}>
                       {dateObj.date}
                     </div>
                   </th>

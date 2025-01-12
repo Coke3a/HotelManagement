@@ -341,7 +341,7 @@ body,
 }
 
 .dashboard-table thead th {
-  background-color: #312e81;
+  background-color: rgb(74, 74, 82);
   color: white;
   font-weight: 600;
   padding: 0.5rem;
@@ -391,13 +391,13 @@ body,
 }
 
 .dashboard-table .booking-name {
-  font-size: 11px;
+  font-size: 8px;
   font-weight: 600;
   color: #1e40af;
 }
 
 .dashboard-table .booking-status {
-  font-size: 10px;
+  font-size: 8px;
   padding: 1px 4px;
   border-radius: 2px;
   background-color: rgba(255, 255, 255, 0.5);
