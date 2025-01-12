@@ -189,7 +189,7 @@ const Booking = () => {
   };
 
   const handlePaymentClick = (bookingId) => {
-    navigate(`/payment/edit/${bookingId}`);
+    navigate(`/booking/edit/${bookingId}`);
   };
 
   return (

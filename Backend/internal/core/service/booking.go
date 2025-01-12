@@ -147,25 +147,25 @@ func (bs *BookingService) ListBookingsWithFilter(ctx *gin.Context, booking *doma
 }
 
 func (bs *BookingService) UpdateBooking(ctx *gin.Context, booking *domain.Booking) (*domain.Booking, error) {
-	existingBooking, err := bs.repo.GetBookingByID(ctx, booking.ID)
-	if err != nil {
-		if err == domain.ErrDataNotFound {
-			return nil, err
-		}
-		return nil, domain.ErrInternal
-	}
+	// existingBooking, err := bs.repo.GetBookingByID(ctx, booking.ID)
+	// if err != nil {
+	// 	if err == domain.ErrDataNotFound {
+	// 		return nil, err
+	// 	}
+	// 	return nil, domain.ErrInternal
+	// }
 
-	// Check if there are changes
-	if booking.CustomerID == existingBooking.CustomerID &&
-		booking.RatePriceId == existingBooking.RatePriceId &&
-		booking.RoomID == existingBooking.RoomID &&
-		booking.RoomTypeID == existingBooking.RoomTypeID &&
-		booking.CheckInDate.Equal(*existingBooking.CheckInDate) &&
-		booking.CheckOutDate.Equal(*existingBooking.CheckOutDate) &&
-		booking.Status == existingBooking.Status &&
-		booking.TotalAmount == existingBooking.TotalAmount {
-		return nil, domain.ErrNoUpdatedData
-	}
+	// // Check if there are changes
+	// if booking.CustomerID == existingBooking.CustomerID &&
+	// 	booking.RatePriceId == existingBooking.RatePriceId &&
+	// 	booking.RoomID == existingBooking.RoomID &&
+	// 	booking.RoomTypeID == existingBooking.RoomTypeID &&
+	// 	booking.CheckInDate.Equal(*existingBooking.CheckInDate) &&
+	// 	booking.CheckOutDate.Equal(*existingBooking.CheckOutDate) &&
+	// 	booking.Status == existingBooking.Status &&
+	// 	booking.TotalAmount == existingBooking.TotalAmount {
+	// 	return nil, domain.ErrNoUpdatedData
+	// }
 
 	updatedBooking, err := bs.repo.UpdateBooking(ctx, booking)
 	if err != nil {

@@ -189,14 +189,16 @@ const GuestType = () => {
                   <TableCell>{guestType.name}</TableCell>
                   <TableCell>{guestType.description}</TableCell>
                   <TableCell>
-                    <Button
+                    {userRole === UserRoleEnum.ADMIN && (
+                      <Button
                       variant="outlined"
                       color="primary"
                       size="small"
                       onClick={() => handleEditGuestType(guestType.id)}
-                    >
-                      Edit
-                    </Button>
+                      >
+                        Detail
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

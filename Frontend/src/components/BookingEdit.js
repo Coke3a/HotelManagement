@@ -6,6 +6,7 @@ import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
 import GuestAdd from './GuestAdd';
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import GuestSearch from './GuestSearch';
+import { PaymentStatus, PaymentMethod } from '../utils/paymentEnums';
 
 const BookingEdit = () => {
   const token = localStorage.getItem('token');
@@ -30,79 +31,99 @@ const BookingEdit = () => {
   const [stayDuration, setStayDuration] = useState(1);
   const [openGuestModal, setOpenGuestModal] = useState(false);
   const [customerIdentityNumber, setCustomerIdentityNumber] = useState('');
+  const [payment, setPayment] = useState({
+    id: '',
+    amount: '',
+    payment_method: '',
+    status: '',
+    payment_date: null
+  });
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchBookingData = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch(`http://localhost:8080/v1/booking/${id}/details`, {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (response.status === 401) {
-          handleTokenExpiration(new Error("access token has expired"), navigate);
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch booking data');
-        }
-
-        const data = await response.json();
-        setCustomerIdentityNumber(data.data.customer_identity_number);
-        setBooking({
-          booking_id: data.data.booking_id,
-          customer_id: data.data.customer_id,
-          rate_price_id: data.data.rate_price_id || '',
-          room_id: data.data.room_id,
-          room_type_id: data.data.room_type_id,
-          room_number: data.data.room_number,
-          room_type_name: data.data.room_type_name,
-          check_in_date: new Date(data.data.check_in_date),
-          check_out_date: new Date(data.data.check_out_date),
-          status: data.data.booking_status,
-          total_amount: data.data.booking_price,
-        });
-
-        // Ensure customer_id and rate_price_id are set
-        if (data.data.customer_id && data.data.rate_price_id) {
-          setBooking(prev => ({
-            ...prev,
-            customer_id: data.data.customer_id,
-            rate_price_id: data.data.rate_price_id,
-          }));
-        }
-
-        // Calculate stay duration
-        const diffTime = Math.abs(new Date(data.data.check_out_date) - new Date(data.data.check_in_date));
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        setStayDuration(diffDays);
-
-        await Promise.all([
-          fetchRatePrices(data.data.room_type_id)
-        ]);
-
-        const initialGuest = {
-          id: data.data.customer_id,
-          firstname: data.data.customer_firstname,
-          surname: data.data.customer_surname,
-          identity_number: data.data.customer_identity_number,
-          phone: data.data.customer_phone || '',
-          email: data.data.customer_email || ''
-        };
-        setGuests([initialGuest]);
+        await fetchBookingData();
+        await fetchPaymentData(id);
       } catch (error) {
-        console.error('Error fetching booking data:', error);
-        alert(error.message);
-      } finally {
-        setLoading(false);
+        console.error('Error fetching data:', error);
+        setError('Failed to fetch data');
       }
     };
 
-    fetchBookingData();
+    fetchData();
   }, [id]);
+
+  const fetchBookingData = async () => {
+    try {
+      const response = await fetch(`http://localhost:8080/v1/booking/${id}/details`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch booking data');
+      }
+
+      const data = await response.json();
+      setCustomerIdentityNumber(data.data.customer_identity_number);
+      setBooking({
+        booking_id: data.data.booking_id,
+        customer_id: data.data.customer_id,
+        rate_price_id: data.data.rate_price_id || '',
+        room_id: data.data.room_id,
+        room_type_id: data.data.room_type_id,
+        room_number: data.data.room_number,
+        room_type_name: data.data.room_type_name,
+        check_in_date: new Date(data.data.check_in_date),
+        check_out_date: new Date(data.data.check_out_date),
+        status: data.data.booking_status,
+        total_amount: data.data.booking_price,
+      });
+
+      // Ensure customer_id and rate_price_id are set
+      if (data.data.customer_id && data.data.rate_price_id) {
+        setBooking(prev => ({
+          ...prev,
+          customer_id: data.data.customer_id,
+          rate_price_id: data.data.rate_price_id,
+        }));
+      }
+
+      // Calculate stay duration
+      const diffTime = Math.abs(new Date(data.data.check_out_date) - new Date(data.data.check_in_date));
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      setStayDuration(diffDays);
+
+      await Promise.all([
+        fetchRatePrices(data.data.room_type_id)
+      ]);
+
+      const initialGuest = {
+        id: data.data.customer_id,
+        firstname: data.data.customer_firstname,
+        surname: data.data.customer_surname,
+        identity_number: data.data.customer_identity_number,
+        phone: data.data.customer_phone || '',
+        email: data.data.customer_email || ''
+      };
+      setGuests([initialGuest]);
+
+      fetchPaymentData(data.data.booking_id);
+    } catch (error) {
+      console.error('Error fetching booking data:', error);
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchGuests = async () => {
     try {
@@ -229,7 +250,8 @@ const BookingEdit = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/v1/booking/`, {
+      // Update booking
+      const bookingResponse = await fetch(`http://localhost:8080/v1/booking/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -248,20 +270,35 @@ const BookingEdit = () => {
         }),
       });
 
-      if (response.status === 401) {
-        handleTokenExpiration(new Error("access token has expired"), navigate);
-        return;
+      if (!bookingResponse.ok) {
+        throw new Error('Failed to update booking');
       }
 
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.messages[0] || 'Failed to update booking');
+      // Update payment if it exists
+      if (payment.id) {
+        const paymentResponse = await fetch(`http://localhost:8080/v1/payments/`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            id: parseInt(payment.id),
+            amount: parseFloat(payment.amount),
+            payment_method: parseInt(payment.payment_method),
+            status: parseInt(payment.status),
+          }),
+        });
+
+        if (!paymentResponse.ok) {
+          throw new Error('Failed to update payment');
+        }
       }
 
       navigate('/booking');
     } catch (error) {
-      console.error('Error updating booking:', error);
-      alert(error.message);
+      console.error('Error updating booking/payment:', error);
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -311,6 +348,35 @@ const BookingEdit = () => {
            booking.check_out_date && 
            booking.room_id && 
            booking.rate_price_id;
+  };
+
+  const fetchPaymentData = async (bookingId) => {
+    try {
+      const response = await fetch(`http://localhost:8080/v1/payments/${bookingId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        handleTokenExpiration(new Error("access token has expired"), navigate);
+        return;
+      }
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        setPayment({
+          id: data.data.id,
+          amount: data.data.amount,
+          payment_method: data.data.payment_method,
+          status: data.data.status,
+          payment_date: data.data.payment_date
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching payment:', error);
+    }
   };
 
   return (
@@ -444,6 +510,37 @@ const BookingEdit = () => {
                   <MenuItem value={3}>Check-out</MenuItem>
                   <MenuItem value={4}>Cancelled</MenuItem>
                   <MenuItem value={5}>Completed</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth margin="normal" required className="form-input">
+                <InputLabel>Payment Status</InputLabel>
+                <Select
+                  name="payment_status"
+                  value={payment.status}
+                  onChange={(e) => setPayment({ ...payment, status: e.target.value })}
+                >
+                  <MenuItem value={PaymentStatus.UNPAID}>Unpaid</MenuItem>
+                  <MenuItem value={PaymentStatus.PAID}>Paid</MenuItem>
+                  <MenuItem value={PaymentStatus.FAILED}>Failed</MenuItem>
+                  <MenuItem value={PaymentStatus.REFUNDED}>Refunded</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth margin="normal" required className="form-input">
+                <InputLabel>Payment Method</InputLabel>
+                <Select
+                  name="payment_method"
+                  value={payment.payment_method}
+                  onChange={(e) => setPayment({ ...payment, payment_method: e.target.value })}
+                >
+                  <MenuItem value={PaymentMethod.NOT_SPECIFIED}>Not specified</MenuItem>
+                  <MenuItem value={PaymentMethod.CREDIT_CARD}>Credit Card</MenuItem>
+                  <MenuItem value={PaymentMethod.DEBIT_CARD}>Debit Card</MenuItem>
+                  <MenuItem value={PaymentMethod.CASH}>Cash</MenuItem>
+                  <MenuItem value={PaymentMethod.BANK_TRANSFER}>Bank Transfer</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

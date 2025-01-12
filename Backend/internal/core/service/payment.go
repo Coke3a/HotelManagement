@@ -86,21 +86,21 @@ func (ps *PaymentService) ListPayments(ctx *gin.Context, skip, limit uint64) ([]
 }
 
 func (ps *PaymentService) UpdatePayment(ctx *gin.Context, payment *domain.Payment) (*domain.Payment, error) {
-	existingPayment, err := ps.repo.GetPaymentByID(ctx, payment.ID)
-	if err != nil {
-		if err == domain.ErrDataNotFound {
-			return nil, err
-		}
-		return nil, domain.ErrInternal
-	}
+	// existingPayment, err := ps.repo.GetPaymentByID(ctx, payment.ID)
+	// if err != nil {
+	// 	if err == domain.ErrDataNotFound {
+	// 		return nil, err
+	// 	}
+	// 	return nil, domain.ErrInternal
+	// }
 
-	// Check if there are changes
-	isEmpty := payment.Amount <= 0 && payment.PaymentMethod == domain.PaymentMethodNotSpecified
-	isSame := existingPayment.Amount == payment.Amount && existingPayment.PaymentMethod == payment.PaymentMethod && existingPayment.Status == payment.Status
+	// // Check if there are changes
+	// isEmpty := payment.Amount <= 0 && payment.PaymentMethod == domain.PaymentMethodNotSpecified
+	// isSame := existingPayment.Amount == payment.Amount && existingPayment.PaymentMethod == payment.PaymentMethod && existingPayment.Status == payment.Status
 
-	if isEmpty || isSame {
-		return nil, domain.ErrNoUpdatedData
-	}
+	// if isEmpty || isSame {
+	// 	return nil, domain.ErrNoUpdatedData
+	// }
 
 	// Update timestamp
 	now := time.Now()

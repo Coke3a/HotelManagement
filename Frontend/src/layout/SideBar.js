@@ -13,7 +13,6 @@ import { UserRoleEnum, UserRoleName } from '../utils/userRoleEnum';
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import PaymentIcon from '@mui/icons-material/Payment';
 import CorporateFareIcon from '@mui/icons-material/CorporateFare';
 import BedroomChildIcon from '@mui/icons-material/BedroomChild';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
@@ -48,7 +47,6 @@ const SideBar = () => {
         { path: "/guest-type", text: "Guest Types", roles: [UserRoleEnum.ADMIN, UserRoleEnum.STAFF] },
       ],
     },
-    { path: "/payment", icon: <PaymentIcon />, text: "Payment", roles: [UserRoleEnum.ADMIN] },
     { path: "/rate_price", icon: <CorporateFareIcon />, text: "Rate Price", roles: [UserRoleEnum.ADMIN] },
     {
       group: "Room",

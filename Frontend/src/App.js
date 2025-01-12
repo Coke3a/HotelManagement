@@ -13,9 +13,6 @@ import DashBoard from "./components/DashBoard";
 import Guest from "./components/Guest";
 import GuestAdd from "./components/GuestAdd";
 import GuestEdit from "./components/GuestEdit";
-import Payment from "./components/Payment";
-import PaymentAdd from "./components/PaymentAdd";
-import PaymentEdit from "./components/PaymentEdit";
 import RatePrice from "./components/RatePrice";
 import RatePriceAdd from "./components/RatePriceAdd";
 import RatePriceEdit from "./components/RatePriceEdit";
@@ -82,9 +79,6 @@ const App = () => {
                   <Route path="/room-type" element={<RoomType />} />
                 </Route>
                 <Route element={<ProtectedRoute allowedRoles={[UserRoleEnum.ADMIN]} />}>
-                  <Route path="/payment" element={<Payment />} />
-                  <Route path="/payment/add" element={<PaymentAdd />} />
-                  <Route path="/payment/edit/:id" element={<PaymentEdit />} />
                   <Route path="/rate_price" element={<RatePrice />} />
                   <Route path="/rate_price/add" element={<RatePriceAdd />} />
                   <Route path="/rate_price/edit/:id" element={<RatePriceEdit />} />

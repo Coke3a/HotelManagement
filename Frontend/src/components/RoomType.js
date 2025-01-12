@@ -187,14 +187,16 @@ const RoomType = () => {
                   <TableCell>{roomType.capacity}</TableCell>
                   <TableCell>{roomType.default_price}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      size="small"
-                      onClick={() => handleEditRoomType(roomType.id)}
-                    >
-                      Edit
-                    </Button>
+                    {userRole === UserRoleEnum.ADMIN && (
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        onClick={() => handleEditRoomType(roomType.id)}
+                      >
+                        Detail
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

@@ -94,6 +94,9 @@ const Log = () => {
       case 'bookings':
         navigate(`/booking/edit/${recordId}`);
         break;
+      case 'payments':
+        navigate(`/booking/edit/${recordId}`);
+        break;
       default:
         console.log('No redirect configured for this table type');
     }
