@@ -210,7 +210,7 @@ const DashBoard = () => {
               >
                 <div className="flex flex-col items-center justify-center space-y-1 w-full">
                   <div className="font-semibold text-blue-900 text-[8px] text-center">
-                    {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
+                    {`${booking.customer_firstname}`}
                   </div>
                   {renderBookingStatusBadge(booking.booking_status)}
                   {renderPaymentStatusBadge(booking.payment_status)}
@@ -370,7 +370,7 @@ const DashBoard = () => {
                         >
                           <TableCell>{booking.booking_id}</TableCell>
                           <TableCell>
-                            {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
+                            {`${booking.customer_firstname}`}
                           </TableCell>
                           <TableCell>{booking.room_number}</TableCell>
                           <TableCell align="right">
@@ -432,7 +432,7 @@ const DashBoard = () => {
                         >
                           <TableCell>{booking.booking_id}</TableCell>
                           <TableCell>
-                            {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
+                            {`${booking.customer_firstname}`}
                           </TableCell>
                           <TableCell>{booking.room_number}</TableCell>
                           <TableCell align="right">
@@ -491,7 +491,7 @@ const DashBoard = () => {
                         >
                           <TableCell>{booking.booking_id}</TableCell>
                           <TableCell>
-                            {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
+                            {`${booking.customer_firstname}`}
                           </TableCell>
                           <TableCell>{booking.room_number}</TableCell>
                           <TableCell>{booking.booking_price}</TableCell>
