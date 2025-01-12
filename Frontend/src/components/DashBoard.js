@@ -13,6 +13,7 @@ const DashBoard = () => {
   const [todayCheckOuts, setTodayCheckOuts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [unpaidBookings, setUnpaidBookings] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,7 +31,7 @@ const DashBoard = () => {
           day: '2-digit'
         }).split('/').reverse().join('-');
 
-        const [bookingsResponse, roomsResponse, checkInsResponse, checkOutsResponse] = await Promise.all([
+        const [bookingsResponse, roomsResponse, checkInsResponse, checkOutsResponse, unpaidResponse] = await Promise.all([
           fetch(`http://localhost:8080/v1/booking/?${new URLSearchParams({
             skip: '0',
             limit: '100',
@@ -67,6 +68,16 @@ const DashBoard = () => {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`,
             },
+          }),
+          fetch(`http://localhost:8080/v1/booking/?${new URLSearchParams({
+            skip: '0',
+            limit: '100',
+            payment_status: '1',
+          })}`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
           })
         ]);
 
@@ -75,11 +86,12 @@ const DashBoard = () => {
           return;
         }
 
-        const [bookingsData, roomsData, checkInsData, checkOutsData] = await Promise.all([
+        const [bookingsData, roomsData, checkInsData, checkOutsData, unpaidData] = await Promise.all([
           bookingsResponse.json(),
           roomsResponse.json(),
           checkInsResponse.json(),
-          checkOutsResponse.json()
+          checkOutsResponse.json(),
+          unpaidResponse.json()
         ]);
 
         const bookingPayments = bookingsData.data.booking_customer_payments || [];
@@ -93,6 +105,9 @@ const DashBoard = () => {
 
         const roomsWithRoomType = roomsData.data?.rooms || [];
         setRooms(roomsWithRoomType);
+
+        const unpaidPayments = unpaidData.data.booking_customer_payments || [];
+        setUnpaidBookings(unpaidPayments);
       } catch (error) {
         console.error('Error fetching data:', error);
         setError(error.message);
@@ -317,7 +332,7 @@ const DashBoard = () => {
 
       <Grid container spacing={3} className="mb-4">
         {/* Check-ins Section */}
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={6} md={4}>
           <Card>
             <CardContent>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -337,6 +352,7 @@ const DashBoard = () => {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
+                      <TableCell>Booking ID</TableCell>
                       <TableCell>Guest</TableCell>
                       <TableCell>Room</TableCell>
                       <TableCell align="right">Status</TableCell>
@@ -345,7 +361,7 @@ const DashBoard = () => {
                   <TableBody>
                     {todayCheckIns.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={3} align="center">
+                        <TableCell colSpan={4} align="center">
                           <Typography variant="body2">No check-ins for today</Typography>
                         </TableCell>
                       </TableRow>
@@ -359,6 +375,7 @@ const DashBoard = () => {
                             '&:hover': { backgroundColor: '#f5f5f5' }
                           }}
                         >
+                          <TableCell>{booking.booking_id}</TableCell>
                           <TableCell>
                             {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
                           </TableCell>
@@ -377,7 +394,7 @@ const DashBoard = () => {
         </Grid>
 
         {/* Check-outs Section */}
-        <Grid item xs={12} sm={6}>
+        <Grid item xs={12} sm={6} md={4}>
           <Card>
             <CardContent>
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -397,6 +414,7 @@ const DashBoard = () => {
                 <Table size="small">
                   <TableHead>
                     <TableRow>
+                      <TableCell>Booking ID</TableCell>
                       <TableCell>Guest</TableCell>
                       <TableCell>Room</TableCell>
                       <TableCell align="right">Status</TableCell>
@@ -405,7 +423,7 @@ const DashBoard = () => {
                   <TableBody>
                     {todayCheckOuts.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={3} align="center">
+                        <TableCell colSpan={4} align="center">
                           <Typography variant="body2">No check-outs for today</Typography>
                         </TableCell>
                       </TableRow>
@@ -419,6 +437,7 @@ const DashBoard = () => {
                             '&:hover': { backgroundColor: '#f5f5f5' }
                           }}
                         >
+                          <TableCell>{booking.booking_id}</TableCell>
                           <TableCell>
                             {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
                           </TableCell>
@@ -426,6 +445,63 @@ const DashBoard = () => {
                           <TableCell align="right">
                             {renderBookingStatusBadge(booking.booking_status)}
                           </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Unpaid Bookings Section - Moved here */}
+        <Grid item xs={12} sm={6} md={4}>
+          <Card>
+            <CardContent>
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                <Box>
+                  <Typography variant="h6" className="text-indigo-900">
+                    Unpaid Bookings
+                  </Typography>
+                  <Typography variant="subtitle1" color="error">
+                    Total: {unpaidBookings.length}
+                  </Typography>
+                </Box>
+              </Box>
+              <TableContainer sx={{ maxHeight: 400, overflowY: 'auto' }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Booking ID</TableCell>
+                      <TableCell>Guest</TableCell>
+                      <TableCell>Room</TableCell>
+                      <TableCell>Amount</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {unpaidBookings.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">
+                          <Typography variant="body2">No unpaid bookings</Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      unpaidBookings.map((booking) => (
+                        <TableRow 
+                          key={booking.booking_id}
+                          onClick={() => navigate(`/booking/edit/${booking.booking_id}`)}
+                          sx={{ 
+                            cursor: 'pointer',
+                            '&:hover': { backgroundColor: '#f5f5f5' }
+                          }}
+                        >
+                          <TableCell>{booking.booking_id}</TableCell>
+                          <TableCell>
+                            {`${booking.customer_firstname}. ${booking.customer_surname.charAt(0)}`}
+                          </TableCell>
+                          <TableCell>{booking.room_number}</TableCell>
+                          <TableCell>{booking.booking_price}</TableCell>
                         </TableRow>
                       ))
                     )}
